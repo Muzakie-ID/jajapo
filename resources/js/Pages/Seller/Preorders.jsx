@@ -202,6 +202,18 @@ function Menu({ po, live, onClose, onRemove }) {
                                 Lihat halaman PO
                             </Link>
                         )}
+                        {po.stage !== 'draft' && (
+                            <>
+                                <Link href={`/seller/po/${po.id}/lpj`} className={item}>
+                                    <Icon name="receipt" size={18} className="text-leaf" />
+                                    Laporan LPJ
+                                </Link>
+                                <a href={`/seller/po/${po.id}/ekspor`} className={item}>
+                                    <Icon name="download" size={18} className="text-leaf" />
+                                    Unduh Excel pesanan
+                                </a>
+                            </>
+                        )}
                         <Link href={`/seller/po/baru?salin=${po.id}`} className={item}>
                             <Icon name="copy" size={18} className="text-leaf" />
                             Salin jadi PO baru

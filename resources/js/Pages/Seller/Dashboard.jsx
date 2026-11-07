@@ -281,6 +281,18 @@ export default function Dashboard({ shop, active, kpis, perDay, rekap, orders, s
                                 <span className="text-[13px] text-muted">{rekap.reduce((a, r) => a + r.qty, 0)} porsi</span>
                             </div>
                             {rekap.length === 0 && <p className="m-0 text-sm text-muted">Belum ada pesanan lunas.</p>}
+                            {active && rekap.length > 0 && (
+                                <div className="flex gap-2 pt-1">
+                                    <a href={`/seller/po/${active.id}/ekspor`} className="flex h-10 flex-1 items-center justify-center gap-1.5 rounded-xl border border-[#DCE3D9] bg-white text-[13px] font-semibold text-ink no-underline">
+                                        <Icon name="download" size={16} />
+                                        Unduh Excel
+                                    </a>
+                                    <Link href={`/seller/po/${active.id}/lpj`} className="flex h-10 flex-1 items-center justify-center gap-1.5 rounded-xl border border-[#DCE3D9] bg-white text-[13px] font-semibold text-ink no-underline">
+                                        <Icon name="receipt" size={16} />
+                                        Laporan LPJ
+                                    </Link>
+                                </div>
+                            )}
                             {rekap.map((r) => (
                                 <div key={r.name} className="flex flex-col gap-1.5">
                                     <div className="flex justify-between text-[13.5px]">

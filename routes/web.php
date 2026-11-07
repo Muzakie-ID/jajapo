@@ -66,6 +66,8 @@ Route::middleware('auth')->group(function () {
             Route::post('/anggota/{member}/peran', [Seller\MemberController::class, 'updateRole'])->whereNumber('member');
             Route::delete('/anggota/{member}', [Seller\MemberController::class, 'remove'])->whereNumber('member');
         });
+        Route::get('/po/{preorder}/lpj', [Seller\ReportController::class, 'lpj'])->whereNumber('preorder');
+        Route::get('/po/{preorder}/ekspor', [Seller\ReportController::class, 'export'])->whereNumber('preorder');
         Route::get('/komplain', [Seller\ComplaintController::class, 'index']);
         Route::post('/komplain/{complaint}/setujui', [Seller\ComplaintController::class, 'approve'])->whereNumber('complaint');
         Route::post('/komplain/{complaint}/tolak', [Seller\ComplaintController::class, 'reject'])->whereNumber('complaint');

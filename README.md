@@ -20,6 +20,7 @@ Dibangun dengan Laravel 13, Inertia v3 + React 19, Tailwind CSS v4, dan PostgreS
 - Tombol Bagikan ikut mengirim gambar story ke menu bagikan HP, siap dipasang di story.
 - Beranda toko: PO aktif, ringkasan, pesanan terbaru, rekap produksi, saldo. Bisa pindah toko kalau anggota beberapa toko.
 - Scan tiket dengan kamera, cari manual, dan cadangan tiket di HP saat sinyal hilang (antrean dikirim saat online lagi).
+- Laporan per PO: unduh Excel (Ringkasan, Pesanan, Rekap produksi, Daftar ambil dengan kolom paraf) dan halaman LPJ yang bisa dicetak atau disimpan PDF, lengkap dengan kolom tanda tangan ketua dan bendahara.
 - Komplain: setujui refund penuh atau sebagian, atau tolak dengan alasan (lalu super admin memutuskan). Nominal yang diminta ditahan dari saldo selama komplain berjalan, dan refund dipotong dari bagian toko.
 - Anggota toko: admin toko membuat tautan undangan untuk email UGM (berlaku 7 hari, dibagikan lewat WhatsApp atau salin), mengubah peran admin atau anggota, dan mengeluarkan anggota. Anggota bisa mengelola PO, scan, dan komplain; pengaturan, rekening, anggota, dan pencairan khusus admin toko.
 - Pengaturan toko (khusus admin toko): nama, logo, Instagram, WhatsApp. Ganti rekening harus atas nama pembuat toko dan menunggu persetujuan super admin; pencairan tetap ke rekening lama sampai disetujui.
@@ -133,5 +134,5 @@ Tes memakai SQLite di memori. Untuk menjalankannya di PostgreSQL, set `DB_CONNEC
 ## Belum dibuat
 
 - Paket bundling.
-- Ekspor Excel, laporan LPJ, notifikasi push, dan update status antar.
+- Notifikasi push dan update status antar.
 - Kontrak `HttpGateway` menunggu dokumentasi API gateway.

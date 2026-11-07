@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Middleware\EnsureShopAdmin;
 use App\Http\Middleware\EnsureShopMember;
 use App\Http\Middleware\EnsureSuperAdmin;
 use App\Http\Middleware\HandleInertiaRequests;
@@ -22,6 +23,7 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->alias([
             'super-admin' => EnsureSuperAdmin::class,
             'shop-member' => EnsureShopMember::class,
+            'shop-admin' => EnsureShopAdmin::class,
         ]);
 
         $middleware->validateCsrfTokens(except: [

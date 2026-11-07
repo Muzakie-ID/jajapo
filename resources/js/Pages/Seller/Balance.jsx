@@ -42,6 +42,9 @@ export default function Balance({ shop, available, held, heldOrders, minPayout, 
                             <h2 className="m-0 text-[13px] font-semibold text-[#BFD3BF]">Saldo tersedia</h2>
                             <span className="tabular text-[32px] font-bold tracking-[-0.02em]">{rupiah(available)}</span>
                         </div>
+                        {shop.role !== 'admin' ? (
+                            <p className="m-0 rounded-xl bg-white/10 px-3.5 py-3 text-[13px] text-[#D7E5D7]">Pencairan hanya bisa diajukan admin toko.</p>
+                        ) : (
                         <form onSubmit={submit} className="flex flex-wrap items-end gap-2.5">
                             <label className="flex flex-[1_1_180px] flex-col gap-1.5">
                                 <span className="text-[12.5px] font-semibold text-[#D7E5D7]">Nominal pencairan</span>
@@ -61,6 +64,7 @@ export default function Balance({ shop, available, held, heldOrders, minPayout, 
                                 Ajukan pencairan
                             </button>
                         </form>
+                        )}
                         {form.errors.amount && <span className="rounded-lg bg-white px-3 py-2 text-[13px] font-semibold text-danger">{form.errors.amount}</span>}
                         <span id="min-cair" className="text-[12.5px] leading-normal text-[#D7E5D7]">
                             Minimal {rupiah(minPayout)}. Diproses paling lambat 1x24 jam hari kerja, biaya transfer ditanggung Jajapo.
@@ -100,7 +104,17 @@ export default function Balance({ shop, available, held, heldOrders, minPayout, 
                         ) : (
                             <p className="m-0 text-sm text-muted">Belum ada rekening.</p>
                         )}
-                        <p className="m-0 text-[12.5px] leading-normal text-muted">Rekening harus atas nama pembuat toko. Ganti rekening perlu disetujui ulang super admin.</p>
+                        <p className="m-0 text-[12.5px] leading-normal text-muted">
+                            Rekening harus atas nama pembuat toko. Ganti rekening perlu disetujui ulang super admin.
+                            {shop.role === 'admin' && (
+                                <>
+                                    {' '}
+                                    <Link href="/seller/pengaturan" className="font-semibold text-leaf">
+                                        Ganti rekening
+                                    </Link>
+                                </>
+                            )}
+                        </p>
                     </PanelCard>
                 </div>
 

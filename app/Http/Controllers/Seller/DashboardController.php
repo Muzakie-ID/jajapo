@@ -119,7 +119,14 @@ class DashboardController extends Controller
 
     public static function shopPropsFor(Shop $shop): array
     {
-        return ['id' => $shop->id, 'name' => $shop->name, 'slug' => $shop->slug, 'initials' => $shop->initials()];
+        return [
+            'id' => $shop->id,
+            'name' => $shop->name,
+            'slug' => $shop->slug,
+            'initials' => $shop->initials(),
+            'logo_url' => $shop->logoUrl(),
+            'role' => $shop->pivot->role ?? request()->attributes->get('shopRole', 'member'),
+        ];
     }
 
     private function shopProps(Shop $shop): array

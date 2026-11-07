@@ -138,6 +138,9 @@ class DatabaseSeeder extends Seeder
         }
         $old->update(['closes_at' => now()->subDays(5), 'status' => Preorder::STATUS_CLOSED]);
 
+        // Pengajuan ganti rekening Panitia Pensi SV yang menunggu super admin.
+        BankAccount::create(['shop_id' => $sv->id, 'bank' => 'BSI', 'account_number' => '7123456789', 'account_name' => 'Laras Wening', 'is_active' => false]);
+
         // Dua komplain contoh: satu menunggu penjual, satu sudah ditolak penjual dan menunggu super admin.
         $complaints = app(ComplaintService::class);
         $oldOrders = $old->orders()->with('preorder.slots', 'shop')->orderBy('id')->get();

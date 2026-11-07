@@ -26,6 +26,7 @@ class ShopController extends Controller
                 'slug' => $s->slug,
                 'name' => $s->name,
                 'initials' => $s->initials(),
+                'logo_url' => $s->logoUrl(),
                 'open_count' => $s->open_count,
             ]),
         ]);
@@ -42,6 +43,7 @@ class ShopController extends Controller
                 'name' => $shop->name,
                 'slug' => $shop->slug,
                 'initials' => $shop->initials(),
+                'logo_url' => $shop->logoUrl(),
                 'instagram' => $shop->instagram,
                 'whatsapp' => $shop->whatsapp,
             ],

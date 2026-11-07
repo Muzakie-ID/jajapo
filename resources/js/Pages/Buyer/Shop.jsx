@@ -9,7 +9,9 @@ export default function Shop({ shop, open, past }) {
         <BuyerLayout title={shop.name} active="shops">
             <TopBar back="/toko" />
             <section className="flex items-center gap-3.5 rounded-3xl border border-line bg-white p-4">
-                <span className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-forest text-lg font-bold text-white">{shop.initials}</span>
+                <span className="flex h-14 w-14 shrink-0 items-center justify-center overflow-hidden rounded-2xl bg-forest text-lg font-bold text-white">
+                    {shop.logo_url ? <img src={shop.logo_url} alt="" className="h-full w-full object-cover" /> : shop.initials}
+                </span>
                 <div className="flex min-w-0 flex-col gap-1">
                     <h1 className="m-0 text-xl font-bold">{shop.name}</h1>
                     <span className="text-[13px] text-muted">jajapo.app/{shop.slug}</span>

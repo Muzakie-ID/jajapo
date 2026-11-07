@@ -32,6 +32,7 @@ class EnsureShopMember
         $request->session()->put('current_shop_id', $shop->id);
 
         $request->attributes->set('shop', $shop);
+        $request->attributes->set('shopRole', $shop->pivot->role ?? 'member');
         app()->instance(Shop::class, $shop);
 
         return $next($request);

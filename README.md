@@ -21,11 +21,13 @@ Dibangun dengan Laravel 13, Inertia v3 + React 19, Tailwind CSS v4, dan PostgreS
 - Beranda toko: PO aktif, ringkasan, pesanan terbaru, rekap produksi, saldo. Bisa pindah toko kalau anggota beberapa toko.
 - Scan tiket dengan kamera, cari manual, dan cadangan tiket di HP saat sinyal hilang (antrean dikirim saat online lagi).
 - Komplain: setujui refund penuh atau sebagian, atau tolak dengan alasan (lalu super admin memutuskan). Nominal yang diminta ditahan dari saldo selama komplain berjalan, dan refund dipotong dari bagian toko.
+- Pengaturan toko (khusus admin toko): nama, logo, Instagram, WhatsApp. Ganti rekening harus atas nama pembuat toko dan menunggu persetujuan super admin; pencairan tetap ke rekening lama sampai disetujui.
 - Saldo tertahan dan tersedia, pengajuan pencairan (minimal Rp50.000), riwayat, dan buku besar.
 
 **Super admin (desktop dan mobile)**
 - Ringkasan hari ini / 7 hari / 30 hari, antrean pencairan (transfer dengan bukti atau tolak), toko menunggu persetujuan.
 - Pembayaran yang perlu perhatian: bayar telat, nominal tidak cocok. Cek status ke gateway, tandai lunas manual, refund.
+- Ganti rekening toko: setujui atau tolak dengan alasan.
 - Komplain dan refund: putuskan komplain yang ditolak penjual atau tidak ditanggapi 24 jam, lalu tandai refund yang sudah ditransfer.
 - Rekonsiliasi saldo gateway dengan buku besar.
 
@@ -130,6 +132,6 @@ Tes memakai SQLite di memori. Untuk menjalankannya di PostgreSQL, set `DB_CONNEC
 ## Belum dibuat
 
 - Paket bundling.
-- Undang anggota toko, pengaturan toko, ganti rekening.
+- Undang anggota toko.
 - Ekspor Excel, laporan LPJ, notifikasi push, dan update status antar.
 - Kontrak `HttpGateway` menunggu dokumentasi API gateway.

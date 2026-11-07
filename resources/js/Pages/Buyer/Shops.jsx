@@ -9,7 +9,7 @@ export default function Shops({ shops }) {
             <div className="flex flex-col gap-2.5">
                 {shops.map((s) => (
                     <Link key={s.slug} href={`/${s.slug}`} className="flex items-center gap-3 rounded-2xl border border-line bg-white p-3 text-ink no-underline hover:text-ink">
-                        <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-forest text-sm font-bold text-white">{s.initials}</span>
+                        <span className="flex h-11 w-11 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-forest text-sm font-bold text-white">{s.logo_url ? <img src={s.logo_url} alt="" className="h-full w-full object-cover" /> : s.initials}</span>
                         <span className="flex min-w-0 flex-1 flex-col gap-0.5">
                             <span className="text-[15px] font-bold">{s.name}</span>
                             <span className="text-xs text-muted">{s.open_count > 0 ? `${s.open_count} PO sedang buka` : 'Belum ada PO yang buka'}</span>

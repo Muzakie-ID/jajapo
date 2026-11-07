@@ -10,7 +10,7 @@ const RANGES = [
     ['30-hari', '30 hari'],
 ];
 
-export default function Overview({ range, dateLabel, kpis, gateway, queue, attention, pendingShops, recon }) {
+export default function Overview({ range, dateLabel, kpis, gateway, queue, attention, pendingShops, pendingAccounts, recon }) {
     const [payoutDialog, setPayoutDialog] = useState(null);
     const rangeLabel = RANGES.find(([v]) => v === range)?.[1].toLowerCase();
     const kpiTiles = [
@@ -30,7 +30,7 @@ export default function Overview({ range, dateLabel, kpis, gateway, queue, atten
             variant="admin"
             active="overview"
             title="Ringkasan platform"
-            badges={{ payouts: kpis.payout_count || null, payments: attention.length || null, shops: kpis.pending_shops || null }}
+            badges={{ payouts: kpis.payout_count || null, payments: attention.length || null, shops: kpis.pending_shops + pendingAccounts.length || null }}
         >
             <header className="flex flex-col gap-3.5 bg-night px-4 pb-16 pt-4 text-white lg:hidden">
                 <div className="flex items-center justify-between gap-2">
@@ -170,6 +170,47 @@ export default function Overview({ range, dateLabel, kpis, gateway, queue, atten
                                 </div>
                             ))}
                         </PanelCard>
+
+                        {pendingAccounts.length > 0 && (
+                            <PanelCard className="flex flex-col gap-1 px-[18px] py-4">
+                                <div className="flex items-baseline justify-between gap-2 pb-2">
+                                    <h2 className="m-0 text-[17px] font-bold">Ganti rekening</h2>
+                                    <span className="text-[13px] text-muted">{pendingAccounts.length} pengajuan</span>
+                                </div>
+                                {pendingAccounts.map((a) => (
+                                    <div key={a.id} className="flex flex-col gap-2.5 border-t border-[#EDF1EB] py-3">
+                                        <div className="flex items-start gap-3">
+                                            <span className="flex h-[38px] w-[38px] shrink-0 items-center justify-center rounded-[10px] bg-[#F0F3EE] text-[13px] font-bold text-forest">{a.initials}</span>
+                                            <span className="flex min-w-0 flex-1 flex-col gap-1 text-xs">
+                                                <span className="text-sm font-bold">{a.shop}</span>
+                                                <span className="text-muted">Pembuat toko: {a.owner}, diajukan {a.date}</span>
+                                                <span className="text-muted line-through">{a.old}</span>
+                                                <span className="font-semibold text-ink">{a.new}</span>
+                                            </span>
+                                        </div>
+                                        <div className="flex gap-2">
+                                            <button
+                                                type="button"
+                                                onClick={() => post(`/admin/rekening/${a.id}/setujui`, `Setujui rekening ${a.new} untuk ${a.shop}? Pencairan berikutnya ke rekening ini.`)}
+                                                className="h-10 flex-1 rounded-[10px] bg-forest text-[13px] font-semibold text-white"
+                                            >
+                                                Setujui
+                                            </button>
+                                            <button
+                                                type="button"
+                                                onClick={() => {
+                                                    const note = window.prompt(`Alasan menolak rekening ${a.shop}:`);
+                                                    if (note) router.post(`/admin/rekening/${a.id}/tolak`, { note }, { preserveScroll: true });
+                                                }}
+                                                className="h-10 flex-1 rounded-[10px] border border-[#E5C7C2] bg-white text-[13px] font-semibold text-danger"
+                                            >
+                                                Tolak
+                                            </button>
+                                        </div>
+                                    </div>
+                                ))}
+                            </PanelCard>
+                        )}
                     </div>
                 </div>
 

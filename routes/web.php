@@ -44,7 +44,7 @@ Route::middleware('auth')->group(function () {
         Route::get('/scan', [Seller\ScanController::class, 'index']);
         Route::post('/scan', [Seller\ScanController::class, 'store'])->middleware('throttle:120,1');
         Route::get('/saldo', [Seller\BalanceController::class, 'index']);
-        Route::post('/saldo/pencairan', [Seller\BalanceController::class, 'store']);
+        Route::post('/saldo/pencairan', [Seller\BalanceController::class, 'store'])->middleware('shop-admin');
         Route::get('/po', [Seller\PreorderController::class, 'index']);
         Route::get('/po/baru', [Seller\PreorderController::class, 'create']);
         Route::post('/po', [Seller\PreorderController::class, 'store']);
@@ -52,6 +52,12 @@ Route::middleware('auth')->group(function () {
         Route::put('/po/{preorder}', [Seller\PreorderController::class, 'update'])->whereNumber('preorder');
         Route::post('/po/{preorder}/tutup', [Seller\PreorderController::class, 'close'])->whereNumber('preorder');
         Route::delete('/po/{preorder}', [Seller\PreorderController::class, 'destroy'])->whereNumber('preorder');
+        Route::middleware('shop-admin')->group(function () {
+            Route::get('/pengaturan', [Seller\SettingsController::class, 'show']);
+            Route::post('/pengaturan', [Seller\SettingsController::class, 'update']);
+            Route::post('/pengaturan/rekening', [Seller\SettingsController::class, 'requestAccount']);
+            Route::delete('/pengaturan/rekening', [Seller\SettingsController::class, 'cancelAccount']);
+        });
         Route::get('/komplain', [Seller\ComplaintController::class, 'index']);
         Route::post('/komplain/{complaint}/setujui', [Seller\ComplaintController::class, 'approve'])->whereNumber('complaint');
         Route::post('/komplain/{complaint}/tolak', [Seller\ComplaintController::class, 'reject'])->whereNumber('complaint');
@@ -67,6 +73,8 @@ Route::middleware('auth')->group(function () {
         Route::post('/pesanan/{order}/cek-status', [Admin\PaymentController::class, 'checkStatus']);
         Route::post('/pesanan/{order}/lunasi', [Admin\PaymentController::class, 'markPaid']);
         Route::post('/pesanan/{order}/refund', [Admin\PaymentController::class, 'refund']);
+        Route::post('/rekening/{account}/setujui', [Admin\BankAccountController::class, 'approve']);
+        Route::post('/rekening/{account}/tolak', [Admin\BankAccountController::class, 'reject']);
         Route::get('/komplain', [Admin\ComplaintController::class, 'index']);
         Route::post('/komplain/{complaint}/putuskan', [Admin\ComplaintController::class, 'decide']);
         Route::post('/refund/{refund}/selesai', [Admin\ComplaintController::class, 'transferred']);

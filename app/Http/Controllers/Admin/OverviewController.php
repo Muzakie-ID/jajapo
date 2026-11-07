@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\Enums\OrderStatus;
 use App\Http\Controllers\Controller;
+use App\Models\BankAccount;
 use App\Models\LedgerEntry;
 use App\Models\Order;
 use App\Models\Payment;
@@ -34,6 +35,12 @@ class OverviewController extends Controller
 
         $queue = Payout::query()->with('shop', 'bankAccount')->where('status', Payout::STATUS_REQUESTED)->oldest()->get();
         $pendingShops = Shop::query()->with('creator', 'bankAccounts')->where('status', Shop::STATUS_PENDING)->oldest()->get();
+        $pendingAccounts = BankAccount::query()
+            ->with('shop.creator', 'shop.bankAccount')
+            ->where('is_active', false)->whereNull('verified_at')->whereNull('rejected_at')
+            ->whereHas('shop', fn ($q) => $q->where('status', Shop::STATUS_ACTIVE))
+            ->oldest()
+            ->get();
 
         $attention = Payment::query()
             ->with('order.shop')
@@ -93,6 +100,15 @@ class OverviewController extends Controller
                 'owner' => $s->creator->name,
                 'bank' => $s->bankAccounts->first()?->label(),
                 'account_name' => $s->bankAccounts->first()?->account_name,
+            ]),
+            'pendingAccounts' => $pendingAccounts->map(fn (BankAccount $a) => [
+                'id' => $a->id,
+                'shop' => $a->shop->name,
+                'initials' => $a->shop->initials(),
+                'owner' => $a->shop->creator->name,
+                'old' => $a->shop->bankAccount ? $a->shop->bankAccount->bank.' '.$a->shop->bankAccount->account_number.' a.n. '.$a->shop->bankAccount->account_name : '-',
+                'new' => $a->bank.' '.$a->account_number.' a.n. '.$a->account_name,
+                'date' => tanggal($a->created_at, withTime: true),
             ]),
             'recon' => [
                 'ledger' => (int) LedgerEntry::query()->where('bucket', LedgerEntry::GATEWAY_CLEARING)->where('type', 'order_paid')->where('created_at', '>=', $today)->sum('amount'),

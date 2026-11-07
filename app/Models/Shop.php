@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
+use Illuminate\Support\Facades\Storage;
 
 class Shop extends Model
 {
@@ -70,7 +71,19 @@ class Shop extends Model
 
     public function bankAccount(): HasOne
     {
-        return $this->hasOne(BankAccount::class)->where('is_active', true)->latestOfMany();
+        // Filter harus di dalam ofMany: kalau di luar, pengajuan rekening yang lebih baru menutupi rekening aktif.
+        return $this->hasOne(BankAccount::class)->ofMany(['id' => 'max'], fn ($q) => $q->where('is_active', true));
+    }
+
+    /** Pengajuan ganti rekening terakhir yang masih menunggu super admin. */
+    public function pendingBankAccount(): HasOne
+    {
+        return $this->hasOne(BankAccount::class)->ofMany(['id' => 'max'], fn ($q) => $q->where('is_active', false)->whereNull('verified_at')->whereNull('rejected_at'));
+    }
+
+    public function logoUrl(): ?string
+    {
+        return $this->logo_path ? Storage::disk('public')->url($this->logo_path) : null;
     }
 
     public function isActive(): bool

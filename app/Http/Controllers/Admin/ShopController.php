@@ -17,7 +17,7 @@ class ShopController extends Controller
 
         DB::transaction(function () use ($request, $shop) {
             $shop->update(['status' => Shop::STATUS_ACTIVE, 'approved_at' => now()]);
-            $shop->bankAccounts()->whereNull('verified_at')->update(['verified_at' => now()]);
+            $shop->bankAccounts()->where('is_active', true)->whereNull('verified_at')->update(['verified_at' => now()]);
             AuditLog::record($request->user(), 'shop.approved', $shop);
         });
 

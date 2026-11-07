@@ -138,6 +138,12 @@ class DatabaseSeeder extends Seeder
         }
         $old->update(['closes_at' => now()->subDays(5), 'status' => Preorder::STATUS_CLOSED]);
 
+        // Undangan anggota yang belum dipakai: Yoga diundang ke Danus Dies FTP.
+        $ftp->invitations()->create([
+            'email' => $yoga->email, 'role' => 'member', 'invited_by' => $raka->id,
+            'token' => 'contoh-undangan-yoga-danus-dies-ftp', 'expires_at' => now()->addDays(7),
+        ]);
+
         // Pengajuan ganti rekening Panitia Pensi SV yang menunggu super admin.
         BankAccount::create(['shop_id' => $sv->id, 'bank' => 'BSI', 'account_number' => '7123456789', 'account_name' => 'Laras Wening', 'is_active' => false]);
 

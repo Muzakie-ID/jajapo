@@ -44,6 +44,11 @@ class Shop extends Model
         return $this->belongsToMany(User::class, 'shop_members')->withPivot('role')->withTimestamps();
     }
 
+    public function invitations(): HasMany
+    {
+        return $this->hasMany(ShopInvitation::class);
+    }
+
     public function preorders(): HasMany
     {
         return $this->hasMany(Preorder::class);

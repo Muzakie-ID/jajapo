@@ -3,6 +3,7 @@
 use App\Http\Controllers\Admin;
 use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\Buyer;
+use App\Http\Controllers\InvitationController;
 use App\Http\Controllers\PaymentWebhookController;
 use App\Http\Controllers\Seller;
 use Illuminate\Support\Facades\Route;
@@ -35,6 +36,8 @@ Route::middleware('auth')->group(function () {
     Route::put('/akun', [Buyer\AccountController::class, 'update']);
 
     // Penjual
+    Route::get('/undangan/{token}', [InvitationController::class, 'show']);
+    Route::post('/undangan/{token}', [InvitationController::class, 'accept']);
     Route::get('/seller/daftar', [Seller\RegisterController::class, 'create']);
     Route::post('/seller/daftar', [Seller\RegisterController::class, 'store']);
 
@@ -57,6 +60,11 @@ Route::middleware('auth')->group(function () {
             Route::post('/pengaturan', [Seller\SettingsController::class, 'update']);
             Route::post('/pengaturan/rekening', [Seller\SettingsController::class, 'requestAccount']);
             Route::delete('/pengaturan/rekening', [Seller\SettingsController::class, 'cancelAccount']);
+            Route::get('/anggota', [Seller\MemberController::class, 'index']);
+            Route::post('/anggota/undang', [Seller\MemberController::class, 'invite'])->middleware('throttle:30,1');
+            Route::delete('/anggota/undangan/{invitation}', [Seller\MemberController::class, 'cancelInvitation'])->whereNumber('invitation');
+            Route::post('/anggota/{member}/peran', [Seller\MemberController::class, 'updateRole'])->whereNumber('member');
+            Route::delete('/anggota/{member}', [Seller\MemberController::class, 'remove'])->whereNumber('member');
         });
         Route::get('/komplain', [Seller\ComplaintController::class, 'index']);
         Route::post('/komplain/{complaint}/setujui', [Seller\ComplaintController::class, 'approve'])->whereNumber('complaint');

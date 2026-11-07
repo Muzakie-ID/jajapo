@@ -11,6 +11,7 @@ const SELLER_NAV = [
     { key: 'complaints', label: 'Komplain', icon: 'flag', href: '/seller/komplain' },
     { key: 'rekap', label: 'Rekap produksi', icon: 'chart', href: '/seller#rekap' },
     { key: 'balance', label: 'Saldo dan pencairan', icon: 'wallet', href: '/seller/saldo' },
+    { key: 'members', label: 'Anggota', icon: 'users', href: '/seller/anggota', adminOnly: true },
     { key: 'settings', label: 'Pengaturan toko', icon: 'sliders', href: '/seller/pengaturan', adminOnly: true },
 ];
 
@@ -129,7 +130,7 @@ export default function PanelLayout({ variant = 'seller', active, title, shop, b
                             </span>
                             <span className="flex min-w-0 flex-col gap-px">
                                 <span className={`truncate text-sm font-bold ${dark ? 'text-white' : ''}`}>{user.name}</span>
-                                <span className={`text-xs ${dark ? 'text-[#A9BDA8]' : 'text-muted'}`}>{dark ? 'Pemilik platform' : 'Admin toko'}</span>
+                                <span className={`text-xs ${dark ? 'text-[#A9BDA8]' : 'text-muted'}`}>{dark ? 'Pemilik platform' : shop?.role === 'admin' ? 'Admin toko' : 'Anggota toko'}</span>
                             </span>
                         </div>
                         <button
@@ -260,6 +261,12 @@ function MoreSheet({ dark, shop, badges, onClose }) {
                         <Link href="/seller#rekap" onClick={onClose} className="flex min-h-12 items-center gap-3 text-sm font-semibold text-ink no-underline">
                             <Icon name="chart" size={20} className="text-leaf" />
                             Rekap produksi
+                        </Link>
+                    )}
+                    {!dark && shop?.role === 'admin' && (
+                        <Link href="/seller/anggota" onClick={onClose} className="flex min-h-12 items-center gap-3 text-sm font-semibold text-ink no-underline">
+                            <Icon name="users" size={20} className="text-leaf" />
+                            Anggota
                         </Link>
                     )}
                     {!dark && shop?.role === 'admin' && (

@@ -9,6 +9,7 @@ use App\Models\Preorder;
 use App\Models\Shop;
 use App\Models\User;
 use App\Payments\PaymentGateway;
+use App\Services\ComplaintService;
 use App\Services\OrderService;
 use App\Services\PaymentService;
 use App\Services\PayoutService;
@@ -136,6 +137,19 @@ class DatabaseSeeder extends Seeder
             $orders->markPickedUp($order->fresh(), $raka);
         }
         $old->update(['closes_at' => now()->subDays(5), 'status' => Preorder::STATUS_CLOSED]);
+
+        // Dua komplain contoh: satu menunggu penjual, satu sudah ditolak penjual dan menunggu super admin.
+        $complaints = app(ComplaintService::class);
+        $oldOrders = $old->orders()->with('preorder.slots', 'shop')->orderBy('id')->get();
+        $complaints->open($oldOrders[0], $buyers[0], [
+            'reason' => 'missing_item', 'description' => 'Di kotak cuma ada 3 risol, harusnya 5. Sudah saya foto pas buka.',
+            'amount' => 6000, 'refund_to' => 'BCA 7710023345 a.n. '.$buyers[0]->name,
+        ]);
+        $disputed = $complaints->open($oldOrders[1], $buyers[1], [
+            'reason' => 'bad_quality', 'description' => 'Risolnya sudah dingin dan kulitnya lembek waktu diambil jam 11.',
+            'amount' => 15000, 'refund_to' => 'DANA 085712340002 a.n. '.$buyers[1]->name,
+        ]);
+        $complaints->sellerRejects($disputed, $raka, 'Risol dibuat pagi itu juga, dan pembeli mengambil di akhir slot. Kami sudah mengingatkan di grup.');
 
         $first = $payouts->request($ftp, 180000, $raka);
         $payouts->markTransferred($first, $admin);

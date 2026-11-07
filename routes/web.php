@@ -29,6 +29,8 @@ Route::middleware('auth')->group(function () {
     Route::get('/api/orders/{order}/status', [Buyer\PaymentController::class, 'status']);
     Route::get('/pesanan', [Buyer\OrderController::class, 'index']);
     Route::get('/pesanan/{order}', [Buyer\OrderController::class, 'show']);
+    Route::get('/pesanan/{order}/komplain', [Buyer\ComplaintController::class, 'create']);
+    Route::post('/pesanan/{order}/komplain', [Buyer\ComplaintController::class, 'store'])->middleware('throttle:10,1');
     Route::get('/akun', [Buyer\AccountController::class, 'show']);
     Route::put('/akun', [Buyer\AccountController::class, 'update']);
 
@@ -50,6 +52,9 @@ Route::middleware('auth')->group(function () {
         Route::put('/po/{preorder}', [Seller\PreorderController::class, 'update'])->whereNumber('preorder');
         Route::post('/po/{preorder}/tutup', [Seller\PreorderController::class, 'close'])->whereNumber('preorder');
         Route::delete('/po/{preorder}', [Seller\PreorderController::class, 'destroy'])->whereNumber('preorder');
+        Route::get('/komplain', [Seller\ComplaintController::class, 'index']);
+        Route::post('/komplain/{complaint}/setujui', [Seller\ComplaintController::class, 'approve'])->whereNumber('complaint');
+        Route::post('/komplain/{complaint}/tolak', [Seller\ComplaintController::class, 'reject'])->whereNumber('complaint');
     });
 
     // Super admin
@@ -62,6 +67,9 @@ Route::middleware('auth')->group(function () {
         Route::post('/pesanan/{order}/cek-status', [Admin\PaymentController::class, 'checkStatus']);
         Route::post('/pesanan/{order}/lunasi', [Admin\PaymentController::class, 'markPaid']);
         Route::post('/pesanan/{order}/refund', [Admin\PaymentController::class, 'refund']);
+        Route::get('/komplain', [Admin\ComplaintController::class, 'index']);
+        Route::post('/komplain/{complaint}/putuskan', [Admin\ComplaintController::class, 'decide']);
+        Route::post('/refund/{refund}/selesai', [Admin\ComplaintController::class, 'transferred']);
     });
 });
 

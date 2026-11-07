@@ -1,3 +1,4 @@
+import { Link } from '@inertiajs/react';
 import { QRCodeSVG } from 'qrcode.react';
 import BuyerLayout, { TopBar } from '@/Layouts/BuyerLayout';
 import Icon from '@/Components/Icon';
@@ -87,8 +88,21 @@ export default function Ticket({ order }) {
                             Hubungi penjual lewat WhatsApp
                         </a>
                     )}
-                    {!done && order.complaint_until && (
-                        <p className="m-0 text-xs text-muted">Ada masalah dengan pesanan? Hubungi penjual atau ajukan komplain sampai {order.complaint_until}.</p>
+                    {order.complaint ? (
+                        <ComplaintCard complaint={order.complaint} />
+                    ) : (
+                        order.can_complain && (
+                            <div className="flex flex-col gap-2">
+                                <Link
+                                    href={`/pesanan/${order.code}/komplain`}
+                                    className="flex h-[50px] items-center justify-center gap-2 rounded-2xl border border-[#E5C7C2] bg-white text-sm font-bold text-danger no-underline hover:text-danger"
+                                >
+                                    <Icon name="flag" size={19} />
+                                    Ajukan komplain
+                                </Link>
+                                <p className="m-0 text-center text-xs text-muted">Pesanan bermasalah? Komplain bisa diajukan sampai {order.complaint_until}.</p>
+                            </div>
+                        )
                     )}
                 </div>
             </div>
@@ -102,5 +116,60 @@ function Info({ label, value, tabular }) {
             <dt className="text-xs text-muted">{label}</dt>
             <dd className={`m-0 text-sm font-bold ${tabular ? 'tabular' : ''}`}>{value}</dd>
         </div>
+    );
+}
+
+const COMPLAINT_STEP = {
+    open: { title: 'Menunggu tanggapan penjual', text: 'Penjual punya waktu 24 jam. Setelah itu super admin ikut memeriksa.', tone: 'amber' },
+    disputed: { title: 'Diperiksa super admin', text: 'Penjual tidak menyetujui refund. Super admin akan memutuskan.', tone: 'amber' },
+    refunded: { title: 'Refund disetujui', text: null, tone: 'green' },
+    rejected: { title: 'Komplain ditolak', text: null, tone: 'grey' },
+};
+
+function ComplaintCard({ complaint: c }) {
+    const step = COMPLAINT_STEP[c.status];
+    const tone = { amber: 'bg-amber-bg text-amber-ink', green: 'bg-[#DCEFD6] text-[#1F5A2D]', grey: 'bg-[#ECEFEA] text-[#4A564C]' }[step.tone];
+
+    return (
+        <section aria-label="Komplain" className="flex flex-col gap-3 rounded-[20px] border border-line bg-white p-4">
+            <div className="flex items-start justify-between gap-3">
+                <div className="flex flex-col gap-0.5">
+                    <span className="text-xs text-muted">Komplain, {c.created_label}</span>
+                    <span className="text-[15px] font-bold">{c.reason}</span>
+                </div>
+                <span className={`shrink-0 rounded-full px-2.5 py-1 text-xs font-bold ${tone}`}>{step.title}</span>
+            </div>
+            <p className="m-0 text-[13px] leading-[1.5] text-body">{c.description}</p>
+            <dl className="m-0 grid grid-cols-2 gap-3 text-[13px]">
+                <div className="flex flex-col gap-0.5">
+                    <dt className="text-xs text-muted">Refund diminta</dt>
+                    <dd className="tabular m-0 font-bold">{rupiah(c.amount_requested)}</dd>
+                </div>
+                {c.amount_approved !== null && (
+                    <div className="flex flex-col gap-0.5">
+                        <dt className="text-xs text-muted">Refund disetujui</dt>
+                        <dd className="tabular m-0 font-bold">{rupiah(c.amount_approved)}</dd>
+                    </div>
+                )}
+            </dl>
+            {step.text && <p className="m-0 text-xs text-muted">{step.text}</p>}
+            {c.seller_response && c.status !== 'refunded' && (
+                <p className="m-0 rounded-xl bg-[#F6F8F5] px-3 py-2.5 text-[13px] text-body">
+                    <span className="font-semibold text-ink">Tanggapan penjual: </span>
+                    {c.seller_response}
+                </p>
+            )}
+            {c.decision_note && c.status === 'rejected' && (
+                <p className="m-0 rounded-xl bg-[#F6F8F5] px-3 py-2.5 text-[13px] text-body">
+                    <span className="font-semibold text-ink">Alasan: </span>
+                    {c.decision_note}
+                </p>
+            )}
+            {c.status === 'refunded' && (
+                <p className="m-0 rounded-xl bg-[#F3F8F1] px-3 py-2.5 text-[13px] text-forest">
+                    {c.refund_status === 'done' ? `Refund sudah ditransfer ke ${c.refund_to}.` : `Refund akan ditransfer ke ${c.refund_to}, paling lambat 1x24 jam hari kerja.`}
+                </p>
+            )}
+        </section>
     );
 }

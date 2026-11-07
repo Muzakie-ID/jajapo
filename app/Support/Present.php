@@ -2,6 +2,7 @@
 
 namespace App\Support;
 
+use App\Models\Complaint;
 use App\Models\Order;
 use App\Models\PickupSlot;
 use App\Models\Preorder;
@@ -51,6 +52,37 @@ class Present
             'slot' => $order->isDelivery() ? $order->placeLabel().': '.$order->address_note : $order->slot?->place.', '.jam($order->slot?->starts_at),
             'amount' => $order->shopAmount(),
             'status' => $order->status->value,
+        ];
+    }
+
+    /** Komplain untuk pembeli, penjual, dan super admin. Nomor rekening refund hanya untuk super admin dan pembelinya. */
+    public static function complaint(Complaint $c, bool $withRefundTo = false): array
+    {
+        $order = $c->order;
+
+        return [
+            'id' => $c->id,
+            'code' => $order->code,
+            'status' => $c->status,
+            'reason' => $c->reasonLabel(),
+            'description' => $c->description,
+            'photo_url' => $c->photoUrl(),
+            'amount_requested' => $c->amount_requested,
+            'amount_approved' => $c->amount_approved,
+            'max_amount' => $order->shopAmount(),
+            'seller_response' => $c->seller_response,
+            'decision_note' => $c->decision_note,
+            'created_label' => tanggal($c->created_at, withTime: true),
+            'decided_label' => $c->decided_at ? tanggal($c->decided_at, withTime: true) : null,
+            'overdue' => $c->isOverdue(),
+            'refund_status' => $c->refund?->status,
+            'refund_to' => $withRefundTo ? $c->refund_to : null,
+            'buyer' => $c->buyer->name,
+            'buyer_phone' => $order->buyer_phone,
+            'shop' => $c->shop->name,
+            'items' => $order->itemsLabel(),
+            'place' => $order->slotLabel(),
+            'order_status' => $order->status->value,
         ];
     }
 }

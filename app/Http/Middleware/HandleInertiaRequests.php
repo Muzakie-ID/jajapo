@@ -3,6 +3,8 @@
 namespace App\Http\Middleware;
 
 use App\Enums\OrderStatus;
+use App\Models\Complaint;
+use App\Models\Refund;
 use Illuminate\Http\Request;
 use Inertia\Middleware;
 
@@ -48,6 +50,7 @@ class HandleInertiaRequests extends Middleware
             ],
             'isLocal' => app()->environment('local'),
             'ticketHref' => fn () => $this->ticketHref($request),
+            'panelBadges' => fn () => $this->panelBadges($request),
         ];
     }
 
@@ -59,5 +62,24 @@ class HandleInertiaRequests extends Middleware
             ->first();
 
         return $order ? "/pesanan/{$order->code}" : null;
+    }
+
+    /** Angka kecil di menu panel penjual dan super admin. */
+    private function panelBadges(Request $request): array
+    {
+        if ($shop = $request->attributes->get('shop')) {
+            return ['complaints' => Complaint::query()->where('shop_id', $shop->id)->where('status', Complaint::STATUS_OPEN)->count() ?: null];
+        }
+
+        if ($request->is('admin', 'admin/*') && $request->user()?->is_super_admin) {
+            $decide = Complaint::query()
+                ->where(fn ($q) => $q->where('status', Complaint::STATUS_DISPUTED)
+                    ->orWhere(fn ($o) => $o->where('status', Complaint::STATUS_OPEN)->where('created_at', '<=', now()->subDay())))
+                ->count();
+
+            return ['complaints' => ($decide + Refund::query()->where('status', Refund::STATUS_OPEN)->count()) ?: null];
+        }
+
+        return [];
     }
 }

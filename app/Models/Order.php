@@ -53,6 +53,11 @@ class Order extends Model
         return $this->hasMany(OrderItem::class);
     }
 
+    public function complaints(): HasMany
+    {
+        return $this->hasMany(Complaint::class);
+    }
+
     public function deliveryZone(): BelongsTo
     {
         return $this->belongsTo(DeliveryZone::class);

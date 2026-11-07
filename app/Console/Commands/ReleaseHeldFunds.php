@@ -3,6 +3,7 @@
 namespace App\Console\Commands;
 
 use App\Enums\OrderStatus;
+use App\Models\Complaint;
 use App\Models\Order;
 use App\Services\OrderService;
 use Illuminate\Console\Attributes\Description;
@@ -28,7 +29,7 @@ class ReleaseHeldFunds extends Command
             ->with('shop', 'preorder.slots')
             ->whereNull('released_at')
             ->whereIn('status', [...OrderStatus::paidStates(), OrderStatus::NotPickedUp->value])
-            ->whereDoesntHave('refunds', fn ($q) => $q->where('status', 'open'))
+            ->whereDoesntHave('complaints', fn ($q) => $q->whereIn('status', Complaint::ACTIVE))
             ->each(function (Order $order) use ($orders, &$released) {
                 $serviceEnd = $order->preorder->serviceEndsAt();
                 if ($serviceEnd && $serviceEnd->copy()->addDay()->isPast()) {

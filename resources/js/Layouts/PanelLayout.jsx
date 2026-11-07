@@ -8,6 +8,7 @@ const SELLER_NAV = [
     { key: 'po', label: 'PO dan menu', icon: 'box', href: '/seller/po' },
     { key: 'orders', label: 'Pesanan', icon: 'list', href: '/seller#pesanan' },
     { key: 'scan', label: 'Scan tiket', icon: 'scan', href: '/seller/scan' },
+    { key: 'complaints', label: 'Komplain', icon: 'flag', href: '/seller/komplain' },
     { key: 'rekap', label: 'Rekap produksi', icon: 'chart', href: '/seller#rekap' },
     { key: 'balance', label: 'Saldo dan pencairan', icon: 'wallet', href: '/seller/saldo' },
 ];
@@ -17,6 +18,7 @@ const ADMIN_NAV = [
     { key: 'shops', label: 'Toko', icon: 'store', href: '/admin#toko' },
     { key: 'payments', label: 'Pembayaran', icon: 'card', href: '/admin#pembayaran' },
     { key: 'payouts', label: 'Pencairan', icon: 'wallet', href: '/admin#pencairan' },
+    { key: 'complaints', label: 'Komplain dan refund', icon: 'flag', href: '/admin/komplain' },
     { key: 'recon', label: 'Rekonsiliasi', icon: 'scale', href: '/admin#rekonsiliasi' },
 ];
 
@@ -58,8 +60,9 @@ export function ShopSwitcher({ shop }) {
     );
 }
 
-export default function PanelLayout({ variant = 'seller', active, title, shop, badges = {}, children }) {
-    const { auth } = usePage().props;
+export default function PanelLayout({ variant = 'seller', active, title, shop, badges: pageBadges = {}, children }) {
+    const { auth, panelBadges } = usePage().props;
+    const badges = { ...(panelBadges || {}), ...pageBadges };
     const [moreOpen, setMoreOpen] = useState(false);
     const dark = variant === 'admin';
     const nav = dark ? ADMIN_NAV : SELLER_NAV;
@@ -141,7 +144,7 @@ export default function PanelLayout({ variant = 'seller', active, title, shop, b
             </div>
 
             <MobileNav variant={variant} active={active} badges={badges} onMore={() => setMoreOpen(true)} />
-            {moreOpen && <MoreSheet dark={dark} shop={shop} onClose={() => setMoreOpen(false)} />}
+            {moreOpen && <MoreSheet dark={dark} shop={shop} badges={badges} onClose={() => setMoreOpen(false)} />}
         </div>
     );
 }
@@ -203,14 +206,21 @@ function MobileNav({ variant, active, badges, onMore }) {
                 onClick={onMore}
                 className={`flex min-h-12 flex-col items-center justify-center gap-1 text-[11px] font-semibold ${dark ? 'text-[#A9BDA8]' : 'text-muted'}`}
             >
-                <Icon name="menu" size={22} />
+                <span className="relative flex">
+                    <Icon name="menu" size={22} />
+                    {badges.complaints ? (
+                        <span className={`absolute -right-3 -top-1.5 min-w-[18px] rounded-full px-[5px] py-px text-center text-[10.5px] font-bold ${dark ? 'bg-[#FFE2A8] text-[#5C3A00]' : 'bg-danger text-white'}`}>
+                            {badges.complaints}
+                        </span>
+                    ) : null}
+                </span>
                 Lainnya
             </button>
         </nav>
     );
 }
 
-function MoreSheet({ dark, shop, onClose }) {
+function MoreSheet({ dark, shop, badges, onClose }) {
     return (
         <div className="fixed inset-0 z-40 flex items-end bg-black/40 lg:hidden" onClick={onClose}>
             <div role="dialog" aria-modal="true" aria-label="Menu lainnya" className="w-full rounded-t-[26px] bg-white px-5 pb-8 pt-3" onClick={(e) => e.stopPropagation()}>
@@ -218,9 +228,23 @@ function MoreSheet({ dark, shop, onClose }) {
                 <div className="flex flex-col gap-3">
                     {!dark && shop && <ShopSwitcher shop={shop} />}
                     {dark && (
+                        <Link href="/admin/komplain" onClick={onClose} className="flex min-h-12 items-center gap-3 text-sm font-semibold text-ink no-underline">
+                            <Icon name="flag" size={20} className="text-leaf" />
+                            Komplain dan refund
+                            <Badge value={badges.complaints} />
+                        </Link>
+                    )}
+                    {dark && (
                         <Link href="/admin#rekonsiliasi" onClick={onClose} className="flex min-h-12 items-center gap-3 text-sm font-semibold text-ink no-underline">
                             <Icon name="scale" size={20} className="text-leaf" />
                             Rekonsiliasi
+                        </Link>
+                    )}
+                    {!dark && (
+                        <Link href="/seller/komplain" onClick={onClose} className="flex min-h-12 items-center gap-3 text-sm font-semibold text-ink no-underline">
+                            <Icon name="flag" size={20} className="text-leaf" />
+                            Komplain
+                            <Badge value={badges.complaints} />
                         </Link>
                     )}
                     {!dark && (

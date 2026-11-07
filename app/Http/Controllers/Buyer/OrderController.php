@@ -5,6 +5,8 @@ namespace App\Http\Controllers\Buyer;
 use App\Enums\OrderStatus;
 use App\Http\Controllers\Controller;
 use App\Models\Order;
+use App\Services\ComplaintService;
+use App\Support\Present;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
@@ -42,7 +44,10 @@ class OrderController extends Controller
             return redirect("/bayar/{$order->code}");
         }
 
-        $order->load('items', 'shop', 'preorder', 'slot', 'deliveryZone');
+        $order->load('items', 'shop', 'preorder.slots', 'slot', 'deliveryZone', 'complaints.refund', 'complaints.order.items', 'complaints.order.preorder', 'complaints.buyer', 'complaints.shop');
+        $complaints = app(ComplaintService::class);
+        $deadline = $complaints->deadline($order);
+        $complaint = $order->complaints->first();
         $slot = $order->slot;
         $pickupDate = $order->isDelivery() ? $order->preorder->delivery_starts_at : $slot?->starts_at;
         $pickupDate = $pickupDate ? Carbon::parse($pickupDate) : null;
@@ -65,7 +70,9 @@ class OrderController extends Controller
                     : ($slot ? tanggal($slot->starts_at).', '.$slot->timeLabel() : '-'),
                 'ready_label' => $pickupDate ? tanggal($pickupDate) : '',
                 'paid_label' => tanggal($order->paid_at, withTime: true),
-                'complaint_until' => $pickupDate ? tanggal($pickupDate->copy()->addDay()) : '',
+                'complaint_until' => $deadline ? tanggal($deadline, withTime: true) : '',
+                'can_complain' => $complaints->canComplain($order),
+                'complaint' => $complaint ? Present::complaint($complaint, withRefundTo: true) : null,
                 'whatsapp_href' => $order->shop->whatsapp
                     ? 'https://wa.me/'.preg_replace('/^0/', '62', $order->shop->whatsapp).'?text='.rawurlencode($waText)
                     : null,

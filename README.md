@@ -11,6 +11,7 @@ Dibangun dengan Laravel 13, Inertia v3 + React 19, Tailwind CSS v4, dan PostgreS
 - Checkout dengan kunci kuota, maksimal 10 porsi per pesanan, satu pesanan menunggu bayar per PO.
 - Halaman bayar QRIS dengan hitung mundur 15 menit, cek status otomatis, simpan QR, dan batal.
 - Tiket QR untuk pengambilan, riwayat pesanan, dan akun.
+- Komplain dari tiket sampai H+1 setelah jadwal ambil atau antar: alasan, cerita, foto bukti, nominal refund, dan rekening tujuan. Status komplain dan refund tampil di tiket.
 - Login Google (Socialite). Bisa dipasang ke layar utama HP (manifest + service worker).
 
 **Penjual (desktop dan mobile)**
@@ -19,11 +20,13 @@ Dibangun dengan Laravel 13, Inertia v3 + React 19, Tailwind CSS v4, dan PostgreS
 - Tombol Bagikan ikut mengirim gambar story ke menu bagikan HP, siap dipasang di story.
 - Beranda toko: PO aktif, ringkasan, pesanan terbaru, rekap produksi, saldo. Bisa pindah toko kalau anggota beberapa toko.
 - Scan tiket dengan kamera, cari manual, dan cadangan tiket di HP saat sinyal hilang (antrean dikirim saat online lagi).
+- Komplain: setujui refund penuh atau sebagian, atau tolak dengan alasan (lalu super admin memutuskan). Nominal yang diminta ditahan dari saldo selama komplain berjalan, dan refund dipotong dari bagian toko.
 - Saldo tertahan dan tersedia, pengajuan pencairan (minimal Rp50.000), riwayat, dan buku besar.
 
 **Super admin (desktop dan mobile)**
 - Ringkasan hari ini / 7 hari / 30 hari, antrean pencairan (transfer dengan bukti atau tolak), toko menunggu persetujuan.
 - Pembayaran yang perlu perhatian: bayar telat, nominal tidak cocok. Cek status ke gateway, tandai lunas manual, refund.
+- Komplain dan refund: putuskan komplain yang ditolak penjual atau tidak ditanggapi 24 jam, lalu tandai refund yang sudah ditransfer.
 - Rekonsiliasi saldo gateway dengan buku besar.
 
 **Uang**
@@ -128,5 +131,5 @@ Tes memakai SQLite di memori. Untuk menjalankannya di PostgreSQL, set `DB_CONNEC
 
 - Paket bundling.
 - Undang anggota toko, pengaturan toko, ganti rekening.
-- Ekspor Excel, laporan LPJ, notifikasi push, update status antar, dan alur komplain.
+- Ekspor Excel, laporan LPJ, notifikasi push, dan update status antar.
 - Kontrak `HttpGateway` menunggu dokumentasi API gateway.

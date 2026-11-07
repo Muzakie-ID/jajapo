@@ -1,0 +1,54 @@
+<?php
+
+namespace App\Support;
+
+use App\Models\Order;
+use App\Models\PickupSlot;
+use App\Models\Preorder;
+
+/**
+ * Mengubah model jadi data yang dikirim ke halaman React.
+ */
+class Present
+{
+    public static function preorderCard(Preorder $po): array
+    {
+        $slot = $po->slots->first();
+
+        return [
+            'id' => $po->id,
+            'url' => $po->url(),
+            'title' => $po->title,
+            'shop_name' => $po->shop->name,
+            'price_from' => $po->priceFrom(),
+            'remaining' => $po->remaining(),
+            'closes_at' => $po->closes_at->toIso8601String(),
+            'pickup_label' => $slot ? str_replace(',', '', tanggal($slot->starts_at)).' di '.$slot->point->name : 'Diantar',
+            'seed' => $po->id,
+            'poster_url' => $po->posterUrl(),
+            'category' => $po->category,
+        ];
+    }
+
+    public static function slot(PickupSlot $slot): array
+    {
+        return [
+            'id' => $slot->id,
+            'place' => $slot->point->name,
+            'date_label' => tanggal($slot->starts_at),
+            'time_label' => $slot->timeLabel(),
+        ];
+    }
+
+    public static function orderRow(Order $order): array
+    {
+        return [
+            'code' => $order->code,
+            'buyer' => $order->buyer->name,
+            'item' => $order->itemsLabel(),
+            'slot' => $order->isDelivery() ? 'Antar: '.$order->address_note : $order->slot?->point->name.', '.jam($order->slot?->starts_at),
+            'amount' => $order->shopAmount(),
+            'status' => $order->status->value,
+        ];
+    }
+}

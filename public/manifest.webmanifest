@@ -1,0 +1,21 @@
+{
+    "name": "Jajapo",
+    "short_name": "Jajapo",
+    "description": "Semua open PO makanan dan danusan mahasiswa UGM di satu tempat.",
+    "lang": "id",
+    "start_url": "/",
+    "scope": "/",
+    "display": "standalone",
+    "background_color": "#EEF3EC",
+    "theme_color": "#2F7A3E",
+    "icons": [
+        { "src": "/icons/icon-192.png", "sizes": "192x192", "type": "image/png" },
+        { "src": "/icons/icon-512.png", "sizes": "512x512", "type": "image/png" },
+        { "src": "/icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" },
+        { "src": "/icons/icon.svg", "sizes": "any", "type": "image/svg+xml" }
+    ],
+    "shortcuts": [
+        { "name": "Pesanan saya", "url": "/pesanan" },
+        { "name": "Scan tiket", "url": "/seller/scan" }
+    ]
+}

@@ -1,0 +1,70 @@
+@import 'tailwindcss';
+
+@source '../../storage/framework/views/*.php';
+@source '../views/**/*.blade.php';
+@source '../js/**/*.{js,jsx}';
+
+/* Token warna dan huruf Jajapo, diambil dari desain di canvas Jajapo UI. */
+@theme {
+    --font-sans: 'Plus Jakarta Sans', ui-sans-serif, system-ui, sans-serif;
+
+    --color-mint: #eef3ec;
+    --color-line: #dce6d8;
+    --color-leaf: #2f7a3e;
+    --color-forest: #1f3a26;
+    --color-night: #16281b;
+    --color-sprout: #a8d5a2;
+    --color-ink: #18241b;
+    --color-muted: #5b6b5e;
+    --color-body: #3e4c41;
+    --color-amber-ink: #8a5200;
+    --color-amber-bg: #fff4e0;
+    --color-panel: #f3f5f2;
+    --color-panel-line: #e1e7de;
+    --color-panel-soft: #f8faf7;
+    --color-danger: #a3281c;
+}
+
+@layer base {
+    html {
+        -webkit-text-size-adjust: 100%;
+    }
+
+    body {
+        @apply bg-mint font-sans text-ink antialiased;
+    }
+
+    a {
+        color: var(--color-leaf);
+    }
+
+    a:hover {
+        color: #1f5a2d;
+    }
+
+    button {
+        cursor: pointer;
+    }
+
+    button:disabled {
+        cursor: default;
+    }
+
+    :where(a, button, input, select, textarea, summary):focus-visible {
+        outline: 2px solid var(--color-leaf);
+        outline-offset: 2px;
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+        *,
+        *::before,
+        *::after {
+            animation-duration: 0.01ms !important;
+            transition-duration: 0.01ms !important;
+        }
+    }
+}
+
+@utility tabular {
+    font-variant-numeric: tabular-nums;
+}

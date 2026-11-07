@@ -1,0 +1,88 @@
+name: Tests
+
+on:
+  push:
+    branches:
+      - main
+      - 'claude/**'
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  tests:
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: jajapo
+          POSTGRES_PASSWORD: jajapo
+          POSTGRES_DB: jajapo_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U jajapo"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+
+    strategy:
+      fail-fast: true
+      matrix:
+        db: [sqlite, pgsql]
+
+    name: Tests (${{ matrix.db }})
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: 8.3
+          extensions: dom, curl, libxml, mbstring, zip, pcntl, pdo, sqlite, pdo_sqlite, pgsql, pdo_pgsql
+          coverage: none
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install Composer dependencies
+        run: composer install --prefer-dist --no-interaction --no-progress
+
+      - name: Install and build frontend
+        run: |
+          npm ci
+          npm run build
+
+      - name: Prepare environment
+        run: |
+          cp .env.example .env
+          php artisan key:generate
+
+      - name: Code style
+        if: matrix.db == 'sqlite'
+        run: vendor/bin/pint --test
+
+      - name: Execute tests (SQLite)
+        if: matrix.db == 'sqlite'
+        run: php artisan test
+
+      - name: Execute tests (PostgreSQL)
+        if: matrix.db == 'pgsql'
+        env:
+          DB_CONNECTION: pgsql
+          DB_HOST: 127.0.0.1
+          DB_PORT: 5432
+          DB_DATABASE: jajapo_test
+          DB_USERNAME: jajapo
+          DB_PASSWORD: jajapo
+        run: php artisan test

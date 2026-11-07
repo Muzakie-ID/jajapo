@@ -1,6 +1,7 @@
 import { Link, router, usePage } from '@inertiajs/react';
 import PanelLayout, { PanelCard, ShopSwitcher } from '@/Layouts/PanelLayout';
 import Icon from '@/Components/Icon';
+import { sharePreorder } from '@/lib/share';
 import Plate from '@/Components/Plate';
 import StatusPill from '@/Components/StatusPill';
 import { rupiah } from '@/lib/format';
@@ -14,26 +15,13 @@ const FILTERS = [
     { value: 'cancelled', label: 'Dibatalkan' },
 ];
 
-export default function Dashboard({ shop, active, kpis, perDay, rekap, orders, statusFilter, balance }) {
+export default function Dashboard({ shop, active, kpis, perDay, rekap, orders, statusFilter, balance, draftCount }) {
     const { auth } = usePage().props;
     const firstName = auth.user.name.split(' ')[0];
     const maxDay = Math.max(1, ...perDay.map((d) => d.value));
     const maxRekap = Math.max(1, ...rekap.map((r) => r.qty));
 
-    const share = async () => {
-        if (!active) return;
-        const url = `${window.location.origin}${active.url}`;
-        const text = `${active.title} dari ${shop.name}. Pesan di Jajapo: ${url}`;
-        if (navigator.share) {
-            try {
-                await navigator.share({ title: active.title, text, url });
-            } catch {
-                // dibatalkan
-            }
-        } else {
-            window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, '_blank', 'noopener');
-        }
-    };
+    const share = () => active && sharePreorder({ title: active.title, shopName: shop.name, url: active.url, storyUrl: active.story_url });
 
     const kpiTiles = kpis
         ? [
@@ -46,7 +34,12 @@ export default function Dashboard({ shop, active, kpis, perDay, rekap, orders, s
 
     const poCard = active && (
 <PanelCard className="flex flex-col gap-3.5 px-[18px] py-4">
-                                <h2 className="m-0 hidden text-[17px] font-bold lg:block">PO aktif</h2>
+                                <div className="hidden items-center justify-between lg:flex">
+                                    <h2 className="m-0 text-[17px] font-bold">PO aktif</h2>
+                                    <Link href="/seller/po" className="text-[13px] font-semibold text-leaf no-underline">
+                                        Semua PO
+                                    </Link>
+                                </div>
                                 <div className="flex items-center gap-3">
                                     <span className="flex h-[52px] w-[52px] shrink-0 items-center justify-center rounded-[14px] bg-[#F6ECD4]">
                                         <Plate seed={active.seed} size={44} />
@@ -91,8 +84,9 @@ export default function Dashboard({ shop, active, kpis, perDay, rekap, orders, s
                                         <Icon name="share" size={18} />
                                         Bagikan PO
                                     </button>
-                                    <Link href={active.url} className="flex h-11 flex-1 items-center justify-center rounded-xl bg-forest text-sm font-semibold text-white no-underline hover:text-white">
-                                        Lihat PO
+                                    <Link href={`/seller/po/${active.id}/ubah`} className="flex h-11 flex-1 items-center justify-center gap-2 rounded-xl bg-forest text-sm font-semibold text-white no-underline hover:text-white">
+                                        <Icon name="pencil" size={17} />
+                                        Ubah PO
                                     </Link>
                                 </div>
                             </PanelCard>
@@ -113,11 +107,23 @@ export default function Dashboard({ shop, active, kpis, perDay, rekap, orders, s
                                 ? active.is_open
                                     ? `PO ${active.title} tutup dalam ${closesIn(active.closes_at)}. Pengambilan ${active.pickup_label}.`
                                     : `PO ${active.title} sudah tutup. Pengambilan ${active.pickup_label}.`
-                                : 'Belum ada PO. Buat PO pertamamu lewat super admin untuk saat ini.'}
+                                : draftCount > 0
+                                  ? `Belum ada PO yang terbit. Ada ${draftCount} draf yang menunggu diterbitkan.`
+                                  : 'Belum ada PO. Buat PO pertamamu, isi menu dan slot ambil, lalu bagikan.'}
                         </p>
                     </div>
+                    {!active && (
+                        <Link href={draftCount > 0 ? '/seller/po' : '/seller/po/baru'} className="flex h-11 items-center gap-2 rounded-xl bg-forest px-[18px] text-sm font-semibold text-white no-underline hover:text-white">
+                            <Icon name={draftCount > 0 ? 'box' : 'plus'} size={18} strokeWidth={2.1} />
+                            {draftCount > 0 ? 'Lihat draf PO' : 'Buat PO'}
+                        </Link>
+                    )}
                     {active && (
                         <div className="hidden gap-2.5 lg:flex">
+                            <Link href={`/seller/po/${active.id}/ubah`} className="flex h-11 items-center gap-2 rounded-xl border border-[#DCE3D9] bg-white px-4 text-sm font-semibold text-ink no-underline">
+                                <Icon name="pencil" size={18} />
+                                Ubah PO
+                            </Link>
                             <button type="button" onClick={share} className="flex h-11 items-center gap-2 rounded-xl border border-[#DCE3D9] bg-white px-4 text-sm font-semibold">
                                 <Icon name="share" size={18} />
                                 Bagikan PO

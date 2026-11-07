@@ -16,7 +16,7 @@ class PreorderController extends Controller
     public function show(Request $request, Shop $shop, string $preorder): Response
     {
         abort_unless($shop->isActive(), 404);
-        $po = $shop->preorders()->where('slug', $preorder)->with('shop', 'products.variants', 'slots.point')->firstOrFail();
+        $po = $shop->preorders()->published()->where('slug', $preorder)->with('shop', 'products.variants', 'slots.point')->firstOrFail();
 
         $pending = $request->user()?->orders()
             ->where('preorder_id', $po->id)

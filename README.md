@@ -15,6 +15,8 @@ Dibangun dengan Laravel 13, Inertia v3 + React 19, Tailwind CSS v4, dan PostgreS
 
 **Penjual (desktop dan mobile)**
 - Daftar toko: khusus email `@mail.ugm.ac.id`, alamat toko unik, rekening wajib atas nama pembuat toko.
+- PO dan menu: buat PO (draf atau langsung terbit), atur menu, varian, harga, kuota, slot ambil, antar ke fakultas, poster, dan gambar story. Ubah, salin, tutup lebih awal, atau hapus PO yang belum punya pesanan. Menu, varian, dan slot yang sudah dipesan terkunci dari penghapusan, dan kuota tidak bisa turun di bawah porsi terjual.
+- Tombol Bagikan ikut mengirim gambar story ke menu bagikan HP, siap dipasang di story.
 - Beranda toko: PO aktif, ringkasan, pesanan terbaru, rekap produksi, saldo. Bisa pindah toko kalau anggota beberapa toko.
 - Scan tiket dengan kamera, cari manual, dan cadangan tiket di HP saat sinyal hilang (antrean dikirim saat online lagi).
 - Saldo tertahan dan tersedia, pengajuan pencairan (minimal Rp50.000), riwayat, dan buku besar.
@@ -53,6 +55,7 @@ Isi data contoh lalu jalankan:
 
 ```sh
 php artisan migrate --seed
+php artisan storage:link   # untuk poster dan gambar story
 composer dev               # server, queue, log, dan Vite sekaligus
 php artisan schedule:work  # di terminal lain: kedaluwarsa pesanan dan pencairan otomatis
 ```
@@ -123,7 +126,7 @@ Tes memakai SQLite di memori. Untuk menjalankannya di PostgreSQL, set `DB_CONNEC
 
 ## Belum dibuat
 
-- Halaman penjual untuk membuat dan mengubah PO, menu, varian, dan slot (sekarang PO hanya dari seeder).
+- Kelola titik ambil oleh super admin (sekarang dari seeder), paket bundling.
 - Undang anggota toko, pengaturan toko, ganti rekening.
 - Ekspor Excel, laporan LPJ, notifikasi push, update status antar, dan alur komplain.
 - Kontrak `HttpGateway` menunggu dokumentasi API gateway.

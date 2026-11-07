@@ -5,6 +5,7 @@ import Flash from '@/Components/Flash';
 
 const SELLER_NAV = [
     { key: 'home', label: 'Beranda', icon: 'home', href: '/seller' },
+    { key: 'po', label: 'PO dan menu', icon: 'box', href: '/seller/po' },
     { key: 'orders', label: 'Pesanan', icon: 'list', href: '/seller#pesanan' },
     { key: 'scan', label: 'Scan tiket', icon: 'scan', href: '/seller/scan' },
     { key: 'rekap', label: 'Rekap produksi', icon: 'chart', href: '/seller#rekap' },
@@ -156,7 +157,7 @@ function MobileNav({ variant, active, badges, onMore }) {
           ]
         : [
               { key: 'home', label: 'Beranda', icon: 'home', href: '/seller' },
-              { key: 'orders', label: 'Pesanan', icon: 'list', href: '/seller#pesanan' },
+              { key: 'po', label: 'PO', icon: 'box', href: '/seller/po' },
               { key: 'scan', center: true, label: 'Scan tiket pengambilan', icon: 'scan', href: '/seller/scan' },
               { key: 'balance', label: 'Saldo', icon: 'wallet', href: '/seller/saldo' },
           ];
@@ -220,6 +221,12 @@ function MoreSheet({ dark, shop, onClose }) {
                         <Link href="/admin#rekonsiliasi" onClick={onClose} className="flex min-h-12 items-center gap-3 text-sm font-semibold text-ink no-underline">
                             <Icon name="scale" size={20} className="text-leaf" />
                             Rekonsiliasi
+                        </Link>
+                    )}
+                    {!dark && (
+                        <Link href="/seller#pesanan" onClick={onClose} className="flex min-h-12 items-center gap-3 text-sm font-semibold text-ink no-underline">
+                            <Icon name="list" size={20} className="text-leaf" />
+                            Pesanan
                         </Link>
                     )}
                     {!dark && (

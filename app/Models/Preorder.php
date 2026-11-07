@@ -13,6 +13,8 @@ class Preorder extends Model
 {
     use HasFactory;
 
+    public const STATUS_DRAFT = 'draft';
+
     public const STATUS_ACTIVE = 'active';
 
     public const STATUS_CLOSED = 'closed';
@@ -63,6 +65,34 @@ class Preorder extends Model
             ->where('opens_at', '<=', now())
             ->where('closes_at', '>', now())
             ->whereHas('shop', fn ($q) => $q->where('status', Shop::STATUS_ACTIVE));
+    }
+
+    /** PO yang boleh dilihat pembeli: bukan draf. */
+    public function scopePublished(Builder $query): Builder
+    {
+        return $query->whereIn('status', [self::STATUS_ACTIVE, self::STATUS_CLOSED]);
+    }
+
+    public function isDraft(): bool
+    {
+        return $this->status === self::STATUS_DRAFT;
+    }
+
+    /** Tahap untuk panel penjual: draft, scheduled, open, closed, cancelled. */
+    public function stage(): string
+    {
+        return match (true) {
+            $this->status === self::STATUS_DRAFT => 'draft',
+            $this->status === self::STATUS_CANCELLED => 'cancelled',
+            $this->status === self::STATUS_CLOSED || $this->closes_at->lte(now()) => 'closed',
+            $this->opens_at->gt(now()) => 'scheduled',
+            default => 'open',
+        };
+    }
+
+    public function storyUrl(): ?string
+    {
+        return $this->story_image_path ? Storage::disk('public')->url($this->story_image_path) : null;
     }
 
     public function isOpen(): bool

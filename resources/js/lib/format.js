@@ -19,4 +19,9 @@ export const STATUS_STYLE = {
     requested: { label: 'Diproses', cls: 'bg-[#FFF1D6] text-amber-ink' },
     done: { label: 'Selesai', cls: 'bg-[#DCEFD6] text-[#1F5A2D]' },
     rejected: { label: 'Ditolak', cls: 'bg-[#FCE4E1] text-[#A3281C]' },
+    po_open: { label: 'Berjalan', cls: 'bg-[#DCEFD6] text-[#1F5A2D]' },
+    po_scheduled: { label: 'Terjadwal', cls: 'bg-[#E3EBF5] text-[#23426B]' },
+    po_draft: { label: 'Draf', cls: 'bg-[#FFF1D6] text-amber-ink' },
+    po_closed: { label: 'Selesai', cls: 'bg-[#ECEFEA] text-[#4A564C]' },
+    po_cancelled: { label: 'Dibatalkan', cls: 'bg-[#FCE4E1] text-[#A3281C]' },
 };

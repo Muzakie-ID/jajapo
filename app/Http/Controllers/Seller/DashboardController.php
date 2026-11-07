@@ -6,6 +6,7 @@ use App\Enums\OrderStatus;
 use App\Http\Controllers\Controller;
 use App\Models\Order;
 use App\Models\OrderItem;
+use App\Models\Preorder;
 use App\Models\Shop;
 use App\Services\Ledger;
 use App\Support\Present;
@@ -24,7 +25,7 @@ class DashboardController extends Controller
         $soldStates = [...OrderStatus::paidStates(), OrderStatus::PickedUp->value, OrderStatus::Delivered->value, OrderStatus::NotPickedUp->value];
 
         $po = $shop->preorders()->open()->with('products', 'slots.point')->orderBy('closes_at')->first()
-            ?? $shop->preorders()->with('products', 'slots.point')->latest('closes_at')->first();
+            ?? $shop->preorders()->published()->with('products', 'slots.point')->latest('closes_at')->first();
 
         $active = null;
         $kpis = null;
@@ -50,7 +51,9 @@ class DashboardController extends Controller
             ];
 
             $active = [
+                'id' => $po->id,
                 'title' => $po->title,
+                'story_url' => $po->storyUrl(),
                 'url' => $po->url(),
                 'seed' => $po->id,
                 'is_open' => $po->isOpen(),
@@ -101,6 +104,7 @@ class DashboardController extends Controller
             'orders' => $orders->map(fn (Order $o) => Present::orderRow($o)),
             'statusFilter' => $status,
             'balance' => $ledger->balances($shop),
+            'draftCount' => $shop->preorders()->where('status', Preorder::STATUS_DRAFT)->count(),
         ]);
     }
 

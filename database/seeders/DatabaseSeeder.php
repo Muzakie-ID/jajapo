@@ -65,6 +65,13 @@ class DatabaseSeeder extends Seeder
         ], [['Mac n Cheese Panggang', 12000, 60, [['Original', 0], ['Extra keju', 3000], ['Smoked beef', 5000]]]],
             [[$points['FTP'], $pickupDay->copy()->setTime(10, 0), 2], [$points['Taman Code DTK'], $pickupDay->copy()->setTime(13, 0), 2]]);
 
+        // Draf yang belum diterbitkan, supaya tab Draf di panel penjual ada isinya.
+        $this->preorder($ftp, [
+            'slug' => 'es-teh-leci', 'title' => 'Es Teh Leci 500 ml', 'category' => 'minuman', 'status' => Preorder::STATUS_DRAFT,
+            'opens_at' => now()->addDays(2), 'closes_at' => now()->addDays(4),
+        ], [['Es Teh Leci 500 ml', 8000, 80, [['Reguler', 0], ['Less sugar', 0]]]],
+            [[$points['FTP'], $pickupDay->copy()->addDays(7)->setTime(12, 0), 2]]);
+
         $sago = $this->preorder($sv, [
             'slug' => 'mango-sago', 'title' => 'Mango Sago 350 ml', 'category' => 'minuman',
             'description' => 'Mango sago dengan potongan mangga harum manis dan sagu mutiara.', 'labels' => ['Halal', 'Mengandung susu'],

@@ -43,6 +43,13 @@ Route::middleware('auth')->group(function () {
         Route::post('/scan', [Seller\ScanController::class, 'store'])->middleware('throttle:120,1');
         Route::get('/saldo', [Seller\BalanceController::class, 'index']);
         Route::post('/saldo/pencairan', [Seller\BalanceController::class, 'store']);
+        Route::get('/po', [Seller\PreorderController::class, 'index']);
+        Route::get('/po/baru', [Seller\PreorderController::class, 'create']);
+        Route::post('/po', [Seller\PreorderController::class, 'store']);
+        Route::get('/po/{preorder}/ubah', [Seller\PreorderController::class, 'edit'])->whereNumber('preorder');
+        Route::put('/po/{preorder}', [Seller\PreorderController::class, 'update'])->whereNumber('preorder');
+        Route::post('/po/{preorder}/tutup', [Seller\PreorderController::class, 'close'])->whereNumber('preorder');
+        Route::delete('/po/{preorder}', [Seller\PreorderController::class, 'destroy'])->whereNumber('preorder');
     });
 
     // Super admin

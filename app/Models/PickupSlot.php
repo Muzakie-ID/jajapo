@@ -21,11 +21,6 @@ class PickupSlot extends Model
         return $this->belongsTo(Preorder::class);
     }
 
-    public function point(): BelongsTo
-    {
-        return $this->belongsTo(PickupPoint::class, 'pickup_point_id');
-    }
-
     public function timeLabel(): string
     {
         return jam($this->starts_at).'–'.jam($this->ends_at);
@@ -34,6 +29,6 @@ class PickupSlot extends Model
     /** "FTP, Sab 14 Nov, 10.00–12.00" */
     public function label(): string
     {
-        return $this->point->name.', '.str_replace(',', '', tanggal($this->starts_at)).', '.$this->timeLabel();
+        return $this->place.', '.str_replace(',', '', tanggal($this->starts_at)).', '.$this->timeLabel();
     }
 }

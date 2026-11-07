@@ -42,6 +42,7 @@ class PreorderService
 
         $po = DB::transaction(function () use ($shop, $po, $data, $opensAt, $closesAt, $creating, $wasDraft, $publish, $tz) {
             $po ??= new Preorder(['shop_id' => $shop->id]);
+            $delivery = (bool) ($data['delivery_enabled'] ?? false);
 
             $status = match (true) {
                 ! $wasDraft => $po->status,
@@ -57,8 +58,9 @@ class PreorderService
                 'opens_at' => $opensAt,
                 'closes_at' => $closesAt,
                 'quota' => $data['quota'] ?? null,
-                'delivery_enabled' => (bool) ($data['delivery_enabled'] ?? false),
-                'delivery_fee' => ($data['delivery_enabled'] ?? false) ? (int) ($data['delivery_fee'] ?? 0) : 0,
+                'delivery_enabled' => $delivery,
+                'delivery_starts_at' => $delivery ? Carbon::parse($data['delivery_date'].' '.$data['delivery_start'], $tz)->utc() : null,
+                'delivery_ends_at' => $delivery ? Carbon::parse($data['delivery_date'].' '.$data['delivery_end'], $tz)->utc() : null,
                 'status' => $status,
             ]);
             $po->save();
@@ -69,13 +71,14 @@ class PreorderService
 
             $this->syncProducts($po, $data['products']);
             $this->syncSlots($po, $data['slots'] ?? [], $tz);
+            $this->syncZones($po, $delivery ? ($data['zones'] ?? []) : []);
 
             $sold = (int) $po->products()->sum('sold_count');
             if ($po->quota !== null && $po->quota < $sold) {
                 throw ValidationException::withMessages(['quota' => "Kuota PO tidak bisa di bawah {$sold} porsi yang sudah dipesan."]);
             }
-            if (! $po->delivery_enabled && $po->slots()->doesntExist()) {
-                throw ValidationException::withMessages(['slots' => 'Tambahkan minimal satu slot ambil, atau aktifkan antar ke fakultas.']);
+            if ($po->slots()->doesntExist() && ! ($delivery && $po->deliveryZones()->exists())) {
+                throw ValidationException::withMessages(['slots' => 'Tambahkan minimal satu titik ambil, atau aktifkan pengantaran.']);
             }
 
             return $po;
@@ -92,7 +95,7 @@ class PreorderService
         };
         AuditLog::record($actor, $action, $po, ['title' => $po->title]);
 
-        return $po->fresh(['products.variants', 'slots.point']);
+        return $po->fresh(['products.variants', 'slots', 'deliveryZones']);
     }
 
     /** Menutup PO lebih awal. Pesanan yang sudah dibuat tetap bisa dibayar sampai batasnya. */
@@ -205,7 +208,12 @@ class PreorderService
             $startsAt = Carbon::parse($row['date'].' '.$row['start'], $tz)->utc();
             $endsAt = Carbon::parse($row['date'].' '.$row['end'], $tz)->utc();
 
-            $values = ['pickup_point_id' => (int) $row['pickup_point_id'], 'starts_at' => $startsAt, 'ends_at' => $endsAt];
+            $values = [
+                'place' => trim($row['place']),
+                'place_note' => filled($row['place_note'] ?? null) ? trim($row['place_note']) : null,
+                'starts_at' => $startsAt,
+                'ends_at' => $endsAt,
+            ];
             if ($slot) {
                 $slot->update($values);
             } else {
@@ -217,9 +225,44 @@ class PreorderService
         $removed = $existing->keys()->diff($keep);
         if ($removed->isNotEmpty()) {
             if (Order::query()->whereIn('pickup_slot_id', $removed)->exists()) {
-                throw ValidationException::withMessages(['slots' => 'Slot yang sudah dipilih pembeli tidak bisa dihapus. Ubah jamnya saja kalau perlu.']);
+                throw ValidationException::withMessages(['slots' => 'Titik ambil yang sudah dipilih pembeli tidak bisa dihapus. Ubah jam atau patokannya saja kalau perlu.']);
             }
             $po->slots()->whereIn('id', $removed)->delete();
+        }
+    }
+
+    /**
+     * Area antar milik PO ini. Mematikan pengantaran sama dengan menghapus semua area,
+     * jadi area yang sudah dipesan menahan pengantaran tetap aktif.
+     *
+     * @param  array<int, array<string, mixed>>  $rows
+     */
+    private function syncZones(Preorder $po, array $rows): void
+    {
+        $existing = $po->deliveryZones()->get()->keyBy('id');
+        $keep = [];
+
+        foreach (array_values($rows) as $i => $row) {
+            $zone = isset($row['id']) ? $existing->get((int) $row['id']) : null;
+            if (isset($row['id']) && ! $zone) {
+                throw ValidationException::withMessages(["zones.{$i}.id" => 'Area ini bukan bagian dari PO ini.']);
+            }
+
+            $values = ['name' => trim($row['name']), 'fee' => (int) ($row['fee'] ?? 0), 'sort' => $i];
+            if ($zone) {
+                $zone->update($values);
+            } else {
+                $zone = $po->deliveryZones()->create($values);
+            }
+            $keep[] = $zone->id;
+        }
+
+        $removed = $existing->keys()->diff($keep);
+        if ($removed->isNotEmpty()) {
+            if (Order::query()->whereIn('delivery_zone_id', $removed)->exists()) {
+                throw ValidationException::withMessages(['zones' => 'Area antar yang sudah dipesan tidak bisa dihapus, dan pengantaran tidak bisa dimatikan. Ubah ongkirnya saja kalau perlu.']);
+            }
+            $po->deliveryZones()->whereIn('id', $removed)->delete();
         }
     }
 

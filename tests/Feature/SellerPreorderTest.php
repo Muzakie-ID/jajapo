@@ -2,7 +2,6 @@
 
 namespace Tests\Feature;
 
-use App\Models\PickupPoint;
 use App\Models\Preorder;
 use App\Services\OrderService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -15,7 +14,7 @@ class SellerPreorderTest extends TestCase
 {
     use BuildsShops, RefreshDatabase;
 
-    private function payload(PickupPoint $point, array $overrides = []): array
+    private function payload(array $overrides = []): array
     {
         $tz = config('jajapo.timezone');
 
@@ -28,7 +27,6 @@ class SellerPreorderTest extends TestCase
             'closes_at' => now($tz)->addDay()->format('Y-m-d\TH:i'),
             'quota' => null,
             'delivery_enabled' => false,
-            'delivery_fee' => 0,
             'products' => [[
                 'name' => 'Risol Mayo',
                 'price' => 5000,
@@ -39,7 +37,8 @@ class SellerPreorderTest extends TestCase
                 ],
             ]],
             'slots' => [[
-                'pickup_point_id' => $point->id,
+                'place' => 'Lobi KPTU FTP',
+                'place_note' => 'Meja panitia depan musala',
                 'date' => now($tz)->addDays(2)->format('Y-m-d'),
                 'start' => '10:00',
                 'end' => '12:00',
@@ -51,15 +50,14 @@ class SellerPreorderTest extends TestCase
     {
         $seller = $this->seller();
         $shop = $this->shopFor($seller);
-        $point = PickupPoint::create(['name' => 'FTP']);
 
-        $this->actingAs($seller)->post('/seller/po', $this->payload($point))->assertRedirect('/seller/po')->assertSessionHasNoErrors();
+        $this->actingAs($seller)->post('/seller/po', $this->payload())->assertRedirect('/seller/po')->assertSessionHasNoErrors();
 
         $po = $shop->preorders()->firstOrFail();
         $this->assertSame(Preorder::STATUS_DRAFT, $po->status);
         $this->get('/danus-dies-ftp/risol-mayo')->assertNotFound();
 
-        $data = $this->payload($point);
+        $data = $this->payload();
         $data['products'][0]['id'] = $po->products->first()->id;
         $data['products'][0]['variants'][0]['id'] = $po->products->first()->variants->first()->id;
         $data['products'][0]['variants'][1]['id'] = $po->products->first()->variants->last()->id;
@@ -81,9 +79,8 @@ class SellerPreorderTest extends TestCase
     {
         $seller = $this->seller();
         $shop = $this->shopFor($seller);
-        $point = PickupPoint::create(['name' => 'FTP']);
 
-        $this->actingAs($seller)->post('/seller/po', [...$this->payload($point), 'publish' => true])->assertSessionHasNoErrors();
+        $this->actingAs($seller)->post('/seller/po', [...$this->payload(), 'publish' => true])->assertSessionHasNoErrors();
 
         $slot = $shop->preorders()->firstOrFail()->slots->first();
         $this->assertSame('10:00', $slot->starts_at->setTimezone('Asia/Jakarta')->format('H:i'));
@@ -94,20 +91,19 @@ class SellerPreorderTest extends TestCase
     {
         $seller = $this->seller();
         $shop = $this->shopFor($seller);
-        $point = PickupPoint::create(['name' => 'FTP']);
 
-        $this->actingAs($seller)->post('/seller/po', [...$this->payload($point, ['slots' => []]), 'publish' => true])->assertSessionHasErrors('slots');
-        $this->actingAs($seller)->post('/seller/po', $this->payload($point, ['products' => []]))->assertSessionHasErrors('products');
-        $this->actingAs($seller)->post('/seller/po', $this->payload($point, ['slug' => 'Risol Mayo']))->assertSessionHasErrors('slug');
+        $this->actingAs($seller)->post('/seller/po', [...$this->payload(['slots' => []]), 'publish' => true])->assertSessionHasErrors('slots');
+        $this->actingAs($seller)->post('/seller/po', $this->payload(['products' => []]))->assertSessionHasErrors('products');
+        $this->actingAs($seller)->post('/seller/po', $this->payload(['slug' => 'Risol Mayo']))->assertSessionHasErrors('slug');
 
-        $bad = $this->payload($point);
+        $bad = $this->payload();
         $bad['slots'][0]['end'] = '09:00';
         $this->actingAs($seller)->post('/seller/po', $bad)->assertSessionHasErrors('slots.0.end');
 
-        $this->actingAs($seller)->post('/seller/po', [...$this->payload($point, ['slots' => [], 'delivery_enabled' => true, 'delivery_fee' => 3000]), 'publish' => true])->assertSessionHasNoErrors();
+        $this->actingAs($seller)->post('/seller/po', [...$this->payload(['slots' => [], 'delivery_enabled' => true, 'delivery_date' => now('Asia/Jakarta')->addDays(2)->format('Y-m-d'), 'delivery_start' => '10:00', 'delivery_end' => '14:00', 'zones' => [['name' => 'FEB', 'fee' => 3000]]]), 'publish' => true])->assertSessionHasNoErrors();
         $this->assertTrue($shop->preorders()->firstOrFail()->delivery_enabled);
 
-        $this->actingAs($seller)->post('/seller/po', $this->payload($point, ['slug' => 'risol-mayo']))->assertSessionHasErrors('slug');
+        $this->actingAs($seller)->post('/seller/po', $this->payload(['slug' => 'risol-mayo']))->assertSessionHasErrors('slug');
     }
 
     public function test_ordered_menu_cannot_be_removed_and_quota_cannot_drop_below_sales(): void
@@ -124,10 +120,13 @@ class SellerPreorderTest extends TestCase
             'opens_at' => $po->opens_at->setTimezone('Asia/Jakarta')->format('Y-m-d\TH:i'),
             'closes_at' => $po->closes_at->setTimezone('Asia/Jakarta')->format('Y-m-d\TH:i'),
             'delivery_enabled' => true,
-            'delivery_fee' => 3000,
+            'delivery_date' => now('Asia/Jakarta')->addDays(2)->format('Y-m-d'),
+            'delivery_start' => '10:00',
+            'delivery_end' => '14:00',
+            'zones' => [['id' => $po->deliveryZones->first()->id, 'name' => 'FEB', 'fee' => 3000]],
             'slots' => [[
                 'id' => $po->slots->first()->id,
-                'pickup_point_id' => $po->slots->first()->pickup_point_id,
+                'place' => 'Lobi KPTU FTP',
                 'date' => $po->slots->first()->starts_at->setTimezone('Asia/Jakarta')->format('Y-m-d'),
                 'start' => '10:00',
                 'end' => '12:00',
@@ -186,10 +185,9 @@ class SellerPreorderTest extends TestCase
         Storage::fake('public');
         $seller = $this->seller();
         $shop = $this->shopFor($seller);
-        $point = PickupPoint::create(['name' => 'FTP']);
 
         $this->actingAs($seller)->post('/seller/po', [
-            ...$this->payload($point),
+            ...$this->payload(),
             'poster' => UploadedFile::fake()->image('poster.jpg', 800, 800),
             'story' => UploadedFile::fake()->image('story.png', 1080, 1920),
         ])->assertSessionHasNoErrors();
@@ -197,12 +195,12 @@ class SellerPreorderTest extends TestCase
         $po = $shop->preorders()->firstOrFail();
         Storage::disk('public')->assertExists([$po->poster_path, $po->story_image_path]);
 
-        $this->actingAs($seller)->post('/seller/po', [...$this->payload($point, ['slug' => 'lain']), 'poster' => UploadedFile::fake()->create('poster.pdf', 10)])
+        $this->actingAs($seller)->post('/seller/po', [...$this->payload(['slug' => 'lain']), 'poster' => UploadedFile::fake()->create('poster.pdf', 10)])
             ->assertSessionHasErrors('poster');
 
         $old = $po->poster_path;
         $this->actingAs($seller)->get("/seller/po/{$po->id}/ubah")->assertOk();
-        $form = $this->payload($point);
+        $form = $this->payload();
         $form['products'][0]['id'] = $po->products->first()->id;
         $form['products'][0]['variants'][0]['id'] = $po->products->first()->variants[0]->id;
         $form['products'][0]['variants'][1]['id'] = $po->products->first()->variants[1]->id;
@@ -215,5 +213,81 @@ class SellerPreorderTest extends TestCase
         $this->actingAs($seller)->delete("/seller/po/{$po->id}")->assertRedirect('/seller/po');
         $this->assertNull($po->fresh());
         Storage::disk('public')->assertMissing($po->story_image_path);
+    }
+
+    public function test_every_preorder_has_its_own_pickup_places_and_delivery_areas(): void
+    {
+        $seller = $this->seller();
+        $shop = $this->shopFor($seller);
+        $date = now('Asia/Jakarta')->addDays(2)->format('Y-m-d');
+
+        $this->actingAs($seller)->post('/seller/po', [...$this->payload([
+            'delivery_enabled' => true,
+            'delivery_date' => $date,
+            'delivery_start' => '10:00',
+            'delivery_end' => '14:00',
+            'zones' => [['name' => 'FEB', 'fee' => 3000], ['name' => 'Kos sekitar Pogung', 'fee' => 5000]],
+        ]), 'publish' => true])->assertSessionHasNoErrors();
+
+        $this->actingAs($seller)->post('/seller/po', [...$this->payload([
+            'slug' => 'es-kopi',
+            'slots' => [['place' => 'Kantin Teknik', 'date' => $date, 'start' => '08:00', 'end' => '09:00']],
+        ]), 'publish' => true])->assertSessionHasNoErrors();
+
+        [$risol, $kopi] = $shop->preorders()->with('slots', 'deliveryZones')->orderBy('id')->get()->all();
+        $this->assertSame(['Lobi KPTU FTP'], $risol->slots->pluck('place')->all());
+        $this->assertSame('Meja panitia depan musala', $risol->slots->first()->place_note);
+        $this->assertSame([['FEB', 3000], ['Kos sekitar Pogung', 5000]], $risol->deliveryZones->map(fn ($z) => [$z->name, $z->fee])->all());
+        $this->assertSame('10:00', $risol->delivery_starts_at->setTimezone('Asia/Jakarta')->format('H:i'));
+        $this->assertSame(['Kantin Teknik'], $kopi->slots->pluck('place')->all());
+        $this->assertFalse($kopi->offersDelivery());
+        $this->assertCount(0, $kopi->deliveryZones);
+
+        // Saran isian berisi tempat dan area yang pernah dipakai toko ini.
+        $this->actingAs($seller)->get('/seller/po/baru')->assertInertia(fn ($page) => $page
+            ->where('suggestions.places', ['Kantin Teknik', 'Lobi KPTU FTP'])
+            ->where('suggestions.zones', ['FEB', 'Kos sekitar Pogung']));
+    }
+
+    public function test_delivery_needs_a_schedule_and_areas_and_ordered_areas_stay(): void
+    {
+        $seller = $this->seller();
+        $shop = $this->shopFor($seller);
+
+        $this->actingAs($seller)->post('/seller/po', [...$this->payload(['delivery_enabled' => true, 'zones' => []]), 'publish' => true])
+            ->assertSessionHasErrors(['delivery_date', 'zones']);
+        $this->actingAs($seller)->post('/seller/po', $this->payload([
+            'delivery_enabled' => true, 'delivery_date' => now('Asia/Jakarta')->addDays(2)->format('Y-m-d'), 'delivery_start' => '14:00', 'delivery_end' => '10:00',
+            'zones' => [['name' => 'FEB', 'fee' => 0], ['name' => 'feb', 'fee' => 0]],
+        ]))->assertSessionHasErrors(['delivery_end', 'zones.1.name']);
+
+        $po = $this->openPreorder($shop);
+        $zone = $po->deliveryZones->first();
+        app(OrderService::class)->checkout($this->buyer(), $po, [['variant_id' => $this->variant($po), 'qty' => 1]], 'delivery', null, 'Gedung C', zoneId: $zone->id);
+
+        $form = [
+            'title' => $po->title,
+            'slug' => $po->slug,
+            'opens_at' => $po->opens_at->setTimezone('Asia/Jakarta')->format('Y-m-d\TH:i'),
+            'closes_at' => $po->closes_at->setTimezone('Asia/Jakarta')->format('Y-m-d\TH:i'),
+            'products' => [[
+                'id' => $po->products->first()->id, 'name' => 'Mac n Cheese', 'price' => 12000, 'quota' => 60,
+                'variants' => $po->products->first()->variants->map(fn ($v) => ['id' => $v->id, 'name' => $v->name, 'price_delta' => $v->price_delta])->all(),
+            ]],
+            'slots' => [['id' => $po->slots->first()->id, 'place' => 'Lobi KPTU FTP', 'date' => now('Asia/Jakarta')->addDays(2)->format('Y-m-d'), 'start' => '10:00', 'end' => '12:00']],
+            'delivery_date' => now('Asia/Jakarta')->addDays(2)->format('Y-m-d'),
+            'delivery_start' => '10:00',
+            'delivery_end' => '14:00',
+        ];
+
+        $this->actingAs($seller)->put("/seller/po/{$po->id}", [...$form, 'delivery_enabled' => false])->assertSessionHasErrors('zones');
+        $this->actingAs($seller)->put("/seller/po/{$po->id}", [...$form, 'delivery_enabled' => true, 'zones' => [['name' => 'FMIPA', 'fee' => 4000]]])->assertSessionHasErrors('zones');
+        $this->actingAs($seller)->put("/seller/po/{$po->id}", [...$form, 'delivery_enabled' => true, 'zones' => [
+            ['id' => $zone->id, 'name' => 'FEB', 'fee' => 4000],
+            ['name' => 'FMIPA', 'fee' => 4000],
+        ]])->assertSessionHasNoErrors();
+
+        $this->assertSame(['FEB', 'FMIPA'], $po->deliveryZones()->pluck('name')->all());
+        $this->assertSame(3000, $po->orders()->first()->delivery_fee);
     }
 }

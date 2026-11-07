@@ -32,9 +32,10 @@ function slugify(value) {
 
 const emptyVariant = (name = '') => ({ _key: key(), id: null, name, price_delta: 0, locked: false });
 const emptyProduct = () => ({ _key: key(), id: null, name: '', price: '', quota: '', sold: 0, locked: false, variants: [emptyVariant('Reguler')] });
-const emptySlot = (points) => ({ _key: key(), id: null, pickup_point_id: points[0]?.id ?? '', date: '', start: '10:00', end: '12:00', locked: false });
+const emptySlot = () => ({ _key: key(), id: null, place: '', place_note: '', date: '', start: '10:00', end: '12:00', locked: false });
+const emptyZone = () => ({ _key: key(), id: null, name: '', fee: '', locked: false });
 
-export default function PreorderForm({ shop, preorder, pickupPoints }) {
+export default function PreorderForm({ shop, preorder, suggestions }) {
     const editing = Boolean(preorder?.id);
     const stage = preorder?.stage ?? 'draft';
     const isDraft = stage === 'draft';
@@ -48,11 +49,14 @@ export default function PreorderForm({ shop, preorder, pickupPoints }) {
         closes_at: preorder?.closes_at || '',
         quota: preorder?.quota ?? '',
         delivery_enabled: preorder?.delivery_enabled ?? false,
-        delivery_fee: preorder?.delivery_fee || 3000,
+        delivery_date: preorder?.delivery_date ?? '',
+        delivery_start: preorder?.delivery_start ?? '10:00',
+        delivery_end: preorder?.delivery_end ?? '14:00',
+        zones: preorder?.zones?.length ? preorder.zones.map((z) => ({ ...z, _key: key() })) : [emptyZone()],
         products: preorder?.products?.length
             ? preorder.products.map((p) => ({ ...p, _key: key(), variants: p.variants.map((v) => ({ ...v, _key: key() })) }))
             : [emptyProduct()],
-        slots: preorder?.slots?.length ? preorder.slots.map((s) => ({ ...s, _key: key() })) : [emptySlot(pickupPoints)],
+        slots: preorder?.slots?.length ? preorder.slots.map((s) => ({ ...s, _key: key() })) : [emptySlot()],
         poster: null,
         story: null,
         remove_poster: false,
@@ -69,6 +73,8 @@ export default function PreorderForm({ shop, preorder, pickupPoints }) {
     const updateVariant = (i, j, patch) =>
         updateProduct(i, { variants: data.products[i].variants.map((v, idx) => (idx === j ? { ...v, ...patch } : v)) });
     const updateSlot = (i, patch) => setData('slots', data.slots.map((s, idx) => (idx === i ? { ...s, ...patch } : s)));
+    const updateZone = (i, patch) => setData('zones', data.zones.map((z, idx) => (idx === i ? { ...z, ...patch } : z)));
+    const zonesLocked = data.zones.some((z) => z.locked);
 
     const summary = useMemo(() => {
         const prices = data.products.flatMap((p) => p.variants.map((v) => Number(p.price || 0) + Number(v.price_delta || 0))).filter((n) => n > 0);
@@ -87,6 +93,7 @@ export default function PreorderForm({ shop, preorder, pickupPoints }) {
             labels: d.labels.filter(Boolean),
             products: d.products.map(({ _key, sold, locked, ...p }) => ({ ...p, variants: p.variants.map(({ _key: k, locked: l, ...v }) => v) })),
             slots: d.slots.map(({ _key, locked, ...s }) => s),
+            zones: d.delivery_enabled ? d.zones.map(({ _key, locked, ...z }) => ({ ...z, fee: z.fee === '' ? 0 : z.fee })) : [],
         }));
         form.post(editing ? `/seller/po/${preorder.id}` : '/seller/po', {
             forceFormData: true,
@@ -243,13 +250,24 @@ export default function PreorderForm({ shop, preorder, pickupPoints }) {
                             </Field>
                         </Section>
 
-                        <Section title="Pengambilan" error={typeof errors.slots === 'string' ? errors.slots : null}>
+                        <Section
+                            title="Titik ambil"
+                            description="Tulis tempat ambil khusus untuk PO ini. Satu PO boleh punya beberapa tempat atau beberapa jam."
+                            error={typeof errors.slots === 'string' ? errors.slots : null}
+                        >
+                            <datalist id="saran-tempat">
+                                {suggestions.places.map((p) => (
+                                    <option key={p} value={p} />
+                                ))}
+                            </datalist>
+                            {data.slots.length === 0 && (
+                                <p className="m-0 rounded-xl bg-[#F6F8F5] px-3 py-2.5 text-[13px] text-muted">Tidak ada titik ambil. Pembeli hanya bisa memilih diantar.</p>
+                            )}
                             {data.slots.map((s, i) => (
                                 <SlotEditor
                                     key={s._key}
                                     slot={s}
                                     index={i}
-                                    points={pickupPoints}
                                     errors={errors}
                                     onChange={(patch) => updateSlot(i, patch)}
                                     onRemove={() => setData('slots', data.slots.filter((_, idx) => idx !== i))}
@@ -259,34 +277,97 @@ export default function PreorderForm({ shop, preorder, pickupPoints }) {
                                 type="button"
                                 onClick={() => {
                                     const last = data.slots[data.slots.length - 1];
-                                    setData('slots', [...data.slots, { ...emptySlot(pickupPoints), ...(last ? { pickup_point_id: last.pickup_point_id, date: last.date } : {}) }]);
+                                    setData('slots', [...data.slots, { ...emptySlot(), ...(last ? { place: last.place, place_note: last.place_note, date: last.date } : {}) }]);
                                 }}
                                 className="flex h-11 items-center justify-center gap-2 rounded-xl border border-dashed border-[#BFD0BA] bg-[#F6F8F5] text-sm font-semibold text-forest"
                             >
                                 <Icon name="plus" size={18} strokeWidth={2.2} />
-                                Tambah slot ambil
+                                Tambah titik atau jam ambil
                             </button>
+                        </Section>
 
-                            <div className="flex flex-col gap-3 rounded-[14px] border border-line p-3.5">
-                                <label className="flex cursor-pointer items-center gap-3">
-                                    <Icon name="truck" size={20} className="text-leaf" />
-                                    <span className="flex flex-1 flex-col gap-px">
-                                        <span className="text-sm font-semibold">Antar ke fakultas</span>
-                                        <span className="text-xs text-muted">Pembeli bisa minta diantar dengan ongkir tetap.</span>
-                                    </span>
-                                    <input
-                                        type="checkbox"
-                                        checked={data.delivery_enabled}
-                                        onChange={(e) => setData('delivery_enabled', e.target.checked)}
-                                        className="h-5 w-5 accent-[#1F4B2C]"
-                                    />
-                                </label>
-                                {data.delivery_enabled && (
-                                    <Field label="Ongkir" error={errors.delivery_fee}>
-                                        <MoneyInput value={data.delivery_fee} onChange={(v) => setData('delivery_fee', v)} />
-                                    </Field>
-                                )}
-                            </div>
+                        <Section title="Pengantaran" error={typeof errors.zones === 'string' ? errors.zones : null}>
+                            <label className="flex cursor-pointer items-center gap-3">
+                                <Icon name="truck" size={20} className="text-leaf" />
+                                <span className="flex flex-1 flex-col gap-px">
+                                    <span className="text-sm font-semibold">Terima pesanan antar</span>
+                                    <span className="text-xs text-muted">Tentukan area yang kamu layani dan ongkir tiap area.</span>
+                                </span>
+                                <input
+                                    type="checkbox"
+                                    checked={data.delivery_enabled}
+                                    disabled={zonesLocked && data.delivery_enabled}
+                                    onChange={(e) => setData('delivery_enabled', e.target.checked)}
+                                    className="h-5 w-5 accent-[#1F4B2C]"
+                                />
+                            </label>
+                            {data.delivery_enabled && (
+                                <>
+                                    <div className="grid grid-cols-2 gap-2 sm:grid-cols-[1.4fr_1fr_1fr]">
+                                        <Field label="Tanggal antar" error={errors.delivery_date} className="col-span-2 sm:col-span-1">
+                                            <input type="date" value={data.delivery_date} onChange={(e) => setData('delivery_date', e.target.value)} className={`${inputCls} px-2.5`} />
+                                        </Field>
+                                        <Field label="Mulai" error={errors.delivery_start}>
+                                            <input type="time" value={data.delivery_start} onChange={(e) => setData('delivery_start', e.target.value)} className={`${inputCls} px-2.5`} />
+                                        </Field>
+                                        <Field label="Selesai" error={errors.delivery_end}>
+                                            <input type="time" value={data.delivery_end} onChange={(e) => setData('delivery_end', e.target.value)} className={`${inputCls} px-2.5`} />
+                                        </Field>
+                                    </div>
+
+                                    <datalist id="saran-area">
+                                        {suggestions.zones.map((z) => (
+                                            <option key={z} value={z} />
+                                        ))}
+                                    </datalist>
+                                    <div className="flex flex-col gap-2">
+                                        <span className="text-[13px] font-semibold text-body">Area antar dan ongkir</span>
+                                        {data.zones.map((z, i) => (
+                                            <div key={z._key} className="flex flex-col gap-1">
+                                                <div className="flex items-center gap-2">
+                                                    <input
+                                                        aria-label={`Nama area ${i + 1}`}
+                                                        list="saran-area"
+                                                        value={z.name}
+                                                        onChange={(e) => updateZone(i, { name: e.target.value })}
+                                                        placeholder="Contoh: FEB, atau Kos sekitar Pogung"
+                                                        maxLength={80}
+                                                        className={`${inputCls} flex-[1.5]`}
+                                                    />
+                                                    <span className="flex-1">
+                                                        <MoneyInput value={z.fee} placeholder="0" onChange={(v) => updateZone(i, { fee: v })} />
+                                                    </span>
+                                                    <button
+                                                        type="button"
+                                                        aria-label={`Hapus area ${z.name || i + 1}`}
+                                                        disabled={data.zones.length === 1 || z.locked}
+                                                        onClick={() => setData('zones', data.zones.filter((_, idx) => idx !== i))}
+                                                        className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl text-muted hover:text-danger disabled:opacity-30"
+                                                    >
+                                                        <Icon name="x" size={18} />
+                                                    </button>
+                                                </div>
+                                                {(errors[`zones.${i}.name`] || errors[`zones.${i}.fee`]) && (
+                                                    <span className="text-xs font-semibold text-danger" data-error="true">
+                                                        {errors[`zones.${i}.name`] || errors[`zones.${i}.fee`]}
+                                                    </span>
+                                                )}
+                                                {z.locked && <span className="text-xs text-muted">Sudah dipesan, tidak bisa dihapus</span>}
+                                            </div>
+                                        ))}
+                                        <button
+                                            type="button"
+                                            disabled={data.zones.length >= 20}
+                                            onClick={() => setData('zones', [...data.zones, emptyZone()])}
+                                            className="flex h-10 items-center gap-1.5 self-start rounded-xl px-1 text-[13px] font-semibold text-forest disabled:opacity-50"
+                                        >
+                                            <Icon name="plus" size={16} strokeWidth={2.2} />
+                                            Tambah area
+                                        </button>
+                                        <span className="text-xs text-muted">Isi ongkir 0 untuk gratis ongkir. Pembeli memilih area, lalu menulis detail alamatnya.</span>
+                                    </div>
+                                </>
+                            )}
                         </Section>
 
                         <div className="lg:hidden">
@@ -308,7 +389,8 @@ export default function PreorderForm({ shop, preorder, pickupPoints }) {
                             <dl className="m-0 flex flex-col gap-2 text-[13px]">
                                 <Row label="Menu" value={`${data.products.length} menu, ${data.products.reduce((n, p) => n + p.variants.length, 0)} varian`} />
                                 <Row label="Kuota" value={summary.quota ? `${summary.quota} porsi` : '-'} />
-                                <Row label="Slot ambil" value={`${data.slots.length} slot${data.delivery_enabled ? ' + antar' : ''}`} />
+                                <Row label="Titik ambil" value={data.slots.length ? `${new Set(data.slots.map((x) => x.place).filter(Boolean)).size || data.slots.length} tempat, ${data.slots.length} jadwal` : '-'} />
+                                <Row label="Antar" value={data.delivery_enabled ? `${data.zones.length} area` : 'Tidak'} />
                             </dl>
                         </PanelCard>
                         <PanelCard className="p-4">{actions}</PanelCard>
@@ -564,31 +646,40 @@ function ProductEditor({ product, index, errors, canRemove, onChange, onVariant,
     );
 }
 
-function SlotEditor({ slot, index, points, errors, onChange, onRemove }) {
+function SlotEditor({ slot, index, errors, onChange, onRemove }) {
     const e = (field) => errors[`slots.${index}.${field}`];
 
     return (
         <div className="flex flex-col gap-3 rounded-2xl border border-line p-3.5">
             <div className="flex items-center justify-between gap-2">
-                <span className="text-[13px] font-bold text-muted">Slot {index + 1}</span>
+                <span className="text-[13px] font-bold text-muted">Titik {index + 1}</span>
                 {slot.locked ? (
                     <span className="text-xs font-semibold text-muted">Sudah dipilih pembeli</span>
                 ) : (
                     <button type="button" onClick={onRemove} className="flex h-8 items-center gap-1 text-xs font-semibold text-danger">
                         <Icon name="trash" size={15} />
-                        Hapus slot
+                        Hapus
                     </button>
                 )}
             </div>
-            <Field label="Titik ambil" error={e('pickup_point_id')}>
-                <select value={slot.pickup_point_id} onChange={(ev) => onChange({ pickup_point_id: Number(ev.target.value) })} className={inputCls}>
-                    {points.map((p) => (
-                        <option key={p.id} value={p.id}>
-                            {p.name}
-                            {p.faculty ? `, ${p.faculty}` : ''}
-                        </option>
-                    ))}
-                </select>
+            <Field label="Tempat" error={e('place')}>
+                <input
+                    list="saran-tempat"
+                    value={slot.place}
+                    onChange={(ev) => onChange({ place: ev.target.value })}
+                    placeholder="Contoh: Lobi KPTU FT"
+                    maxLength={80}
+                    className={inputCls}
+                />
+            </Field>
+            <Field label="Patokan (opsional)" error={e('place_note')}>
+                <input
+                    value={slot.place_note ?? ''}
+                    onChange={(ev) => onChange({ place_note: ev.target.value })}
+                    placeholder="Contoh: meja panitia depan musala"
+                    maxLength={160}
+                    className={inputCls}
+                />
             </Field>
             <div className="grid grid-cols-2 gap-2 sm:grid-cols-[1.4fr_1fr_1fr]">
                 <Field label="Tanggal" error={e('date')} className="col-span-2 sm:col-span-1">

@@ -16,7 +16,7 @@ class PreorderController extends Controller
     public function show(Request $request, Shop $shop, string $preorder): Response
     {
         abort_unless($shop->isActive(), 404);
-        $po = $shop->preorders()->published()->where('slug', $preorder)->with('shop', 'products.variants', 'slots.point')->firstOrFail();
+        $po = $shop->preorders()->published()->where('slug', $preorder)->with('shop', 'products.variants', 'slots', 'deliveryZones')->firstOrFail();
 
         $pending = $request->user()?->orders()
             ->where('preorder_id', $po->id)
@@ -39,7 +39,11 @@ class PreorderController extends Controller
                 'is_open' => $po->isOpen(),
                 'quota' => $po->quotaTotal(),
                 'remaining' => $po->remaining(),
-                'pickup_date_label' => $firstSlot ? tanggal($firstSlot->starts_at) : '-',
+                'pickup_date_label' => match (true) {
+                    $firstSlot !== null => tanggal($firstSlot->starts_at),
+                    $po->delivery_starts_at !== null => tanggal($po->delivery_starts_at),
+                    default => '-',
+                },
                 'products' => $po->products->map(fn (Product $p) => [
                     'id' => $p->id,
                     'name' => $p->name,
@@ -50,7 +54,11 @@ class PreorderController extends Controller
                     ]),
                 ]),
                 'slots' => $po->slots->map(fn ($s) => Present::slot($s)),
-                'delivery' => ['enabled' => $po->delivery_enabled, 'fee' => $po->delivery_fee],
+                'delivery' => [
+                    'enabled' => $po->offersDelivery(),
+                    'schedule' => $po->deliveryLabel(),
+                    'zones' => $po->deliveryZones->map(fn ($z) => ['id' => $z->id, 'name' => $z->name, 'fee' => $z->fee])->values(),
+                ],
             ],
             'pendingOrder' => $pending ? ['code' => $pending->code] : null,
             'savedPhone' => $request->user()?->phone,

@@ -16,6 +16,7 @@ Platform pre-order makanan untuk danusan kampus UGM. Baca `README.md` untuk fitu
 - Kuota dikunci dengan `lockForUpdate` saat checkout. Pesanan menunggu bayar ikut menghitung kuota.
 - Data penjual selalu diambil lewat toko aktif (`$request->attributes->get('shop')` dari middleware `shop-member`), misalnya `$shop->orders()`. Jangan query `Order::` langsung di panel penjual.
 - Kode unik dibuat gateway, bukan Jajapo. Jajapo hanya mengirim nominal dasar.
+- Titik ambil (`preorder_pickup_slots.place`) dan area antar (`preorder_delivery_zones`) milik masing-masing PO, tidak ada daftar global. Ongkir pesanan diambil dari area yang dipilih dan disalin ke `orders.delivery_fee`.
 - Waktu disimpan UTC; tampilkan dengan helper `tanggal()` / `jam()` (zona `config('jajapo.timezone')`).
 - Alamat toko tidak boleh bentrok dengan rute: tambah rute tingkat atas baru ke `config('jajapo.reserved_slugs')`.
 

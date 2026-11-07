@@ -24,7 +24,7 @@ class PaymentController extends Controller
             return redirect("/pesanan/{$order->code}");
         }
 
-        $order->load('items', 'payment', 'shop', 'slot.point');
+        $order->load('items', 'payment', 'shop', 'slot', 'deliveryZone');
 
         return Inertia::render('Buyer/Pay', [
             'order' => [
@@ -36,7 +36,7 @@ class PaymentController extends Controller
                 'delivery_fee' => $order->delivery_fee,
                 'unique_code' => $order->unique_code,
                 'total' => $order->total,
-                'place' => $order->isDelivery() ? 'diantar' : 'ambil di '.$order->slot?->point->name,
+                'place' => $order->isDelivery() ? 'antar ke '.$order->deliveryZone?->name : 'ambil di '.$order->slot?->place,
                 'expires_at' => $order->expires_at?->toIso8601String(),
                 'qr_string' => $order->payment?->qr_string,
             ],
@@ -70,7 +70,7 @@ class PaymentController extends Controller
         $gateway->markPaid($order->payment->gateway_ref);
         $payments->refreshFromGateway($order->payment);
 
-        return redirect("/pesanan/{$order->code}")->with('success', 'Pembayaran diterima. Ini tiket pengambilanmu.');
+        return redirect("/pesanan/{$order->code}")->with('success', 'Pembayaran diterima. Ini tiket pesananmu.');
     }
 
     private function authorizeBuyer(Request $request, Order $order): void

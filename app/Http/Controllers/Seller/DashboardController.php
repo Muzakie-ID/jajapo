@@ -24,8 +24,8 @@ class DashboardController extends Controller
         $shop = $request->attributes->get('shop');
         $soldStates = [...OrderStatus::paidStates(), OrderStatus::PickedUp->value, OrderStatus::Delivered->value, OrderStatus::NotPickedUp->value];
 
-        $po = $shop->preorders()->open()->with('products', 'slots.point')->orderBy('closes_at')->first()
-            ?? $shop->preorders()->published()->with('products', 'slots.point')->latest('closes_at')->first();
+        $po = $shop->preorders()->open()->with('products', 'slots', 'deliveryZones')->orderBy('closes_at')->first()
+            ?? $shop->preorders()->published()->with('products', 'slots', 'deliveryZones')->latest('closes_at')->first();
 
         $active = null;
         $kpis = null;
@@ -37,7 +37,7 @@ class DashboardController extends Controller
             if ($range === 'hari-ini') {
                 $poOrders->where('paid_at', '>=', now()->startOfDay());
             }
-            $paid = (clone $poOrders)->get(['id', 'subtotal', 'delivery_fee', 'paid_at', 'status', 'fulfillment', 'pickup_slot_id']);
+            $paid = (clone $poOrders)->get(['id', 'subtotal', 'delivery_fee', 'paid_at', 'status', 'fulfillment', 'pickup_slot_id', 'delivery_zone_id']);
 
             $kpis = [
                 'range' => $range,
@@ -58,16 +58,16 @@ class DashboardController extends Controller
                 'seed' => $po->id,
                 'is_open' => $po->isOpen(),
                 'closes_at' => $po->closes_at->toIso8601String(),
-                'pickup_label' => ($s = $po->slots->first()) ? tanggal($s->starts_at) : '-',
+                'pickup_label' => ($s = $po->slots->first()) ? tanggal($s->starts_at) : ($po->delivery_starts_at ? tanggal($po->delivery_starts_at) : '-'),
                 'slots' => $po->slots->map(fn ($s) => [
-                    'place' => $s->point->name,
+                    'place' => $s->place,
                     'time' => tanggal($s->starts_at).', '.$s->timeLabel(),
                     'count' => $paid->where('pickup_slot_id', $s->id)->count(),
-                ])->when($po->delivery_enabled, fn ($c) => $c->push([
-                    'place' => 'Antar ke fakultas',
-                    'time' => 'Ongkir '.rupiah($po->delivery_fee),
-                    'count' => $paid->where('fulfillment', 'delivery')->count(),
-                ]))->values(),
+                ])->concat($po->delivery_enabled ? $po->deliveryZones->map(fn ($z) => [
+                    'place' => 'Antar ke '.$z->name,
+                    'time' => ($po->deliveryLabel() ?? 'Jadwal antar belum diisi').', ongkir '.rupiah($z->fee),
+                    'count' => $paid->where('delivery_zone_id', $z->id)->count(),
+                ]) : [])->values(),
             ];
 
             $days = collect(range(4, 0))->map(fn ($i) => now()->startOfDay()->subDays($i));
@@ -89,7 +89,7 @@ class DashboardController extends Controller
 
         $status = $request->query('status');
         $orders = $shop->orders()
-            ->with('buyer', 'items', 'slot.point')
+            ->with('buyer', 'items', 'slot', 'deliveryZone')
             ->when($status, fn ($q) => $q->where('status', $status))
             ->latest()
             ->limit(10)

@@ -35,7 +35,7 @@ class ShopController extends Controller
     {
         abort_unless($shop->isActive(), 404);
 
-        $preorders = $shop->preorders()->published()->with('shop', 'products.variants', 'slots.point')->latest('closes_at')->get();
+        $preorders = $shop->preorders()->published()->with('shop', 'products.variants', 'slots')->latest('closes_at')->get();
 
         return Inertia::render('Buyer/Shop', [
             'shop' => [

@@ -20,18 +20,23 @@ export default function Preorder({ preorder, pendingOrder, savedPhone }) {
     }, [preorder.id, variants]);
 
     const [qty, setQty] = useState(initialQty);
-    const [slot, setSlot] = useState(preorder.slots[0]?.id ?? (preorder.delivery.enabled ? 'antar' : null));
+    const canPickup = preorder.slots.length > 0;
+    const canDeliver = preorder.delivery.enabled;
+    const [mode, setMode] = useState(canPickup ? 'pickup' : 'delivery');
+    const [slot, setSlot] = useState(preorder.slots[0]?.id ?? null);
+    const [zone, setZone] = useState(preorder.delivery.zones[0]?.id ?? null);
     const [fav, setFav] = useState(false);
     const form = useForm({ phone: savedPhone || '', address_note: '', note: '' });
 
-    const isDelivery = slot === 'antar';
+    const isDelivery = mode === 'delivery';
     const count = variants.reduce((a, v) => a + qty[v.id], 0);
     const subtotal = variants.reduce((a, v) => a + qty[v.id] * v.price, 0);
-    const total = subtotal + (isDelivery && count > 0 ? preorder.delivery.fee : 0);
+    const zoneObj = preorder.delivery.zones.find((z) => z.id === zone);
+    const total = subtotal + (isDelivery && count > 0 ? (zoneObj?.fee ?? 0) : 0);
     const slotObj = preorder.slots.find((s) => s.id === slot);
     const summary = [
         ...variants.filter((v) => qty[v.id] > 0).map((v) => `${qty[v.id]} ${v.name}`),
-        count > 0 ? (isDelivery ? 'Diantar' : slotObj?.place) : null,
+        count > 0 ? (isDelivery ? `Antar ke ${zoneObj?.name ?? '-'}` : slotObj?.place) : null,
     ]
         .filter(Boolean)
         .join(', ');
@@ -57,6 +62,7 @@ export default function Preorder({ preorder, pendingOrder, savedPhone }) {
             preorder_id: preorder.id,
             fulfillment: isDelivery ? 'delivery' : 'pickup',
             slot_id: isDelivery ? null : slot,
+            zone_id: isDelivery ? zone : null,
             items: variants.filter((v) => qty[v.id] > 0).map((v) => ({ variant_id: v.id, qty: qty[v.id] })),
         }));
         form.post('/checkout');
@@ -160,7 +166,7 @@ export default function Preorder({ preorder, pendingOrder, savedPhone }) {
                             </dd>
                         </div>
                         <div className="flex flex-col gap-0.5">
-                            <dt className="text-xs text-muted">Ambil</dt>
+                            <dt className="text-xs text-muted">{canPickup ? 'Ambil' : 'Diantar'}</dt>
                             <dd className="m-0 text-[15px] font-bold">{preorder.pickup_date_label}</dd>
                         </div>
                     </dl>
@@ -213,20 +219,59 @@ export default function Preorder({ preorder, pendingOrder, savedPhone }) {
                 </section>
 
                 <section className="flex flex-col gap-2.5">
-                    <h2 className="m-0 text-base font-bold">Pilih slot ambil</h2>
-                    <div role="radiogroup" aria-label="Slot ambil" className="-mr-5 flex gap-2.5 overflow-x-auto pr-5 [scrollbar-width:none]">
-                        {preorder.slots.map((s) => (
-                            <SlotCard key={s.id} on={slot === s.id} onPick={() => setSlot(s.id)} title={s.place} text={`${s.date_label}, ${s.time_label}`} />
-                        ))}
-                        {preorder.delivery.enabled && (
-                            <SlotCard
-                                on={isDelivery}
-                                onPick={() => setSlot('antar')}
-                                title="Antar ke fakultas"
-                                text={`${preorder.pickup_date_label}, ongkir ${rupiah(preorder.delivery.fee)}`}
-                            />
-                        )}
-                    </div>
+                    <h2 className="m-0 text-base font-bold">Cara terima pesanan</h2>
+                    {canPickup && canDeliver && (
+                        <div role="radiogroup" aria-label="Cara terima pesanan" className="grid grid-cols-2 gap-1 rounded-2xl bg-[#E6EEE3] p-1">
+                            {[
+                                { key: 'pickup', label: 'Ambil sendiri', icon: 'pin' },
+                                { key: 'delivery', label: 'Diantar', icon: 'truck' },
+                            ].map((m) => (
+                                <button
+                                    key={m.key}
+                                    type="button"
+                                    role="radio"
+                                    aria-checked={mode === m.key}
+                                    onClick={() => setMode(m.key)}
+                                    className={`flex h-11 items-center justify-center gap-2 rounded-xl text-sm font-semibold ${
+                                        mode === m.key ? 'bg-white text-forest shadow-[0_2px_8px_rgba(20,26,22,0.08)]' : 'text-muted'
+                                    }`}
+                                >
+                                    <Icon name={m.icon} size={18} />
+                                    {m.label}
+                                </button>
+                            ))}
+                        </div>
+                    )}
+
+                    {!isDelivery ? (
+                        <div role="radiogroup" aria-label="Titik dan waktu ambil" className="-mr-5 flex gap-2.5 overflow-x-auto pr-5 [scrollbar-width:none]">
+                            {preorder.slots.map((s) => (
+                                <SlotCard
+                                    key={s.id}
+                                    on={slot === s.id}
+                                    onPick={() => setSlot(s.id)}
+                                    title={s.place}
+                                    note={s.place_note}
+                                    text={`${s.date_label}, ${s.time_label}`}
+                                />
+                            ))}
+                        </div>
+                    ) : (
+                        <div className="flex flex-col gap-2.5">
+                            {preorder.delivery.schedule && (
+                                <p className="m-0 flex items-center gap-2 rounded-[14px] bg-white px-3.5 py-2.5 text-[13px] text-body">
+                                    <Icon name="clock" size={17} className="text-leaf" />
+                                    Diantar {preorder.delivery.schedule}
+                                </p>
+                            )}
+                            <div role="radiogroup" aria-label="Area antar" className="grid grid-cols-2 gap-2.5">
+                                {preorder.delivery.zones.map((z) => (
+                                    <SlotCard key={z.id} wide on={zone === z.id} onPick={() => setZone(z.id)} title={z.name} text={z.fee > 0 ? `Ongkir ${rupiah(z.fee)}` : 'Gratis ongkir'} />
+                                ))}
+                            </div>
+                            {form.errors.zone_id && <span className="text-xs font-semibold text-danger">{form.errors.zone_id}</span>}
+                        </div>
+                    )}
                 </section>
 
                 {(isDelivery || !savedPhone) && (
@@ -249,7 +294,7 @@ export default function Preorder({ preorder, pendingOrder, savedPhone }) {
                             <Field label="Alamat antar" error={form.errors.address_note}>
                                 <textarea
                                     rows={2}
-                                    placeholder="Fakultas, gedung, lantai, atau ruang"
+                                    placeholder={`Detail di ${zoneObj?.name ?? 'area'}: gedung, lantai, ruang, atau patokan`}
                                     value={form.data.address_note}
                                     onChange={(e) => form.setData('address_note', e.target.value)}
                                     className="rounded-[14px] border border-line bg-white px-3.5 py-3 text-sm outline-none"
@@ -290,17 +335,18 @@ function readCartFor(preorderId) {
     return cart && cart.preorderId === preorderId ? cart : null;
 }
 
-function SlotCard({ on, onPick, title, text }) {
+function SlotCard({ on, onPick, title, note, text, wide = false }) {
     return (
         <label
-            className={`flex w-[156px] shrink-0 cursor-pointer flex-col gap-1.5 rounded-[18px] px-3.5 py-3 ${
+            className={`flex ${wide ? 'min-w-0' : 'w-[156px]'} shrink-0 cursor-pointer flex-col gap-1.5 rounded-[18px] px-3.5 py-3 ${
                 on ? 'border-2 border-leaf bg-[#F3F8F1]' : 'border border-line bg-white'
             }`}
         >
             <span className="flex items-center justify-between gap-2">
                 <span className="text-sm font-bold">{title}</span>
-                <input type="radio" name="slot" checked={on} onChange={onPick} className="m-0 h-[18px] w-[18px] accent-leaf" />
+                <input type="radio" name={`pilih-${title}`} checked={on} onChange={onPick} className="m-0 h-[18px] w-[18px] accent-leaf" />
             </span>
+            {note && <span className="text-xs leading-[1.4] text-body">{note}</span>}
             <span className="text-xs leading-[1.4] text-muted">{text}</span>
         </label>
     );

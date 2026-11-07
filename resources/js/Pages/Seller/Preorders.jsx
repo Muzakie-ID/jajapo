@@ -106,6 +106,12 @@ function PreorderCard({ po, shop }) {
                         <StatusPill status={`po_${po.stage}`} />
                     </div>
                     <p className="m-0 truncate text-[13px] text-muted">{po.menu || 'Belum ada menu'}</p>
+                    {po.places && (
+                        <p className="m-0 flex items-center gap-1 truncate text-xs text-body">
+                            <Icon name="pin" size={13} className="shrink-0 text-leaf" />
+                            <span className="truncate">{po.places}</span>
+                        </p>
+                    )}
                 </div>
             </div>
 
@@ -118,7 +124,7 @@ function PreorderCard({ po, shop }) {
                     </dd>
                 </div>
                 <div className="flex flex-col gap-px">
-                    <dt className="text-muted">Ambil</dt>
+                    <dt className="text-muted">Ambil atau antar</dt>
                     <dd className="m-0 font-semibold">{po.pickup_label}</dd>
                 </div>
                 {po.stage !== 'draft' && (

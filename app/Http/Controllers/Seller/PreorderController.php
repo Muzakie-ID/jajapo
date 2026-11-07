@@ -4,7 +4,7 @@ namespace App\Http\Controllers\Seller;
 
 use App\Enums\OrderStatus;
 use App\Http\Controllers\Controller;
-use App\Models\PickupPoint;
+use App\Models\DeliveryZone;
 use App\Models\PickupSlot;
 use App\Models\Preorder;
 use App\Models\Product;
@@ -27,7 +27,7 @@ class PreorderController extends Controller
         $sold = [...OrderStatus::paidStates(), OrderStatus::PickedUp->value, OrderStatus::Delivered->value, OrderStatus::NotPickedUp->value];
 
         $list = $shop->preorders()
-            ->with('products', 'slots.point')
+            ->with('products', 'slots', 'deliveryZones')
             ->withCount(['orders', 'orders as paid_orders' => fn ($q) => $q->whereIn('status', $sold)])
             ->withSum(['orders as revenue' => fn ($q) => $q->whereIn('status', $sold)], 'subtotal')
             ->latest('closes_at')
@@ -46,7 +46,8 @@ class PreorderController extends Controller
                 'opens_label' => tanggal($po->opens_at, withTime: true),
                 'closes_label' => tanggal($po->closes_at, withTime: true),
                 'closes_at' => $po->closes_at->toIso8601String(),
-                'pickup_label' => ($s = $po->slots->first()) ? tanggal($s->starts_at) : ($po->delivery_enabled ? 'Antar saja' : '-'),
+                'pickup_label' => ($s = $po->slots->first()) ? tanggal($s->starts_at) : ($po->delivery_starts_at ? 'Antar '.tanggal($po->delivery_starts_at) : '-'),
+                'places' => $po->slots->pluck('place')->unique()->values()->concat($po->delivery_enabled ? $po->deliveryZones->map(fn ($z) => 'Antar '.$z->name) : [])->join(', '),
                 'sold' => $po->soldTotal(),
                 'quota' => $po->quotaTotal(),
                 'paid_orders' => (int) $po->paid_orders,
@@ -60,12 +61,12 @@ class PreorderController extends Controller
     public function create(Request $request): Response
     {
         $shop = $this->shop($request);
-        $copy = $request->integer('salin') ? $shop->preorders()->with('products.variants', 'slots')->find($request->integer('salin')) : null;
+        $copy = $request->integer('salin') ? $shop->preorders()->with('products.variants', 'slots', 'deliveryZones')->find($request->integer('salin')) : null;
 
         return Inertia::render('Seller/PreorderForm', [
             'shop' => DashboardController::shopPropsFor($shop),
             'preorder' => $copy ? $this->formData($copy, asCopy: true) : null,
-            'pickupPoints' => $this->pickupPoints(),
+            'suggestions' => $this->suggestions($shop),
         ]);
     }
 
@@ -85,12 +86,12 @@ class PreorderController extends Controller
     public function edit(Request $request, int $preorder): Response
     {
         $shop = $this->shop($request);
-        $po = $shop->preorders()->with('products.variants', 'slots')->findOrFail($preorder);
+        $po = $shop->preorders()->with('products.variants', 'slots', 'deliveryZones')->findOrFail($preorder);
 
         return Inertia::render('Seller/PreorderForm', [
             'shop' => DashboardController::shopPropsFor($shop),
             'preorder' => $this->formData($po),
-            'pickupPoints' => $this->pickupPoints(),
+            'suggestions' => $this->suggestions($shop),
         ]);
     }
 
@@ -135,7 +136,6 @@ class PreorderController extends Controller
     private function validated(Request $request, Shop $shop, ?Preorder $po = null): array
     {
         $publish = $request->boolean('publish') || ($po && ! $po->isDraft());
-        $points = PickupPoint::query()->where('is_active', true)->pluck('id');
 
         return $request->validate([
             'title' => ['required', 'string', 'max:80'],
@@ -150,7 +150,13 @@ class PreorderController extends Controller
             'closes_at' => ['required', 'date', 'after:opens_at'],
             'quota' => ['nullable', 'integer', 'min:1', 'max:10000'],
             'delivery_enabled' => ['boolean'],
-            'delivery_fee' => ['nullable', 'required_if_accepted:delivery_enabled', 'integer', 'min:0', 'max:50000'],
+            'delivery_date' => ['nullable', 'required_if_accepted:delivery_enabled', 'date_format:Y-m-d'],
+            'delivery_start' => ['nullable', 'required_if_accepted:delivery_enabled', 'date_format:H:i'],
+            'delivery_end' => ['nullable', 'required_if_accepted:delivery_enabled', 'date_format:H:i', 'after:delivery_start'],
+            'zones' => ['nullable', 'required_if_accepted:delivery_enabled', 'array', 'max:20'],
+            'zones.*.id' => ['nullable', 'integer'],
+            'zones.*.name' => ['required', 'string', 'max:80', 'distinct:ignore_case'],
+            'zones.*.fee' => ['nullable', 'integer', 'min:0', 'max:100000'],
             'poster' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:4096'],
             'story' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:6144'],
             'remove_poster' => ['boolean'],
@@ -166,7 +172,8 @@ class PreorderController extends Controller
             'products.*.variants.*.price_delta' => ['nullable', 'integer', 'min:-1000000', 'max:1000000'],
             'slots' => [Rule::requiredIf($publish && ! $request->boolean('delivery_enabled')), 'array', 'max:20'],
             'slots.*.id' => ['nullable', 'integer'],
-            'slots.*.pickup_point_id' => ['required', 'integer', Rule::in($points)],
+            'slots.*.place' => ['required', 'string', 'max:80'],
+            'slots.*.place_note' => ['nullable', 'string', 'max:160'],
             'slots.*.date' => ['required', 'date_format:Y-m-d'],
             'slots.*.start' => ['required', 'date_format:H:i'],
             'slots.*.end' => ['required', 'date_format:H:i', 'after:slots.*.start'],
@@ -174,7 +181,13 @@ class PreorderController extends Controller
             'slug.regex' => 'Alamat PO hanya huruf kecil, angka, dan tanda hubung.',
             'slug.unique' => 'Alamat ini sudah dipakai PO lain di tokomu.',
             'closes_at.after' => 'Waktu tutup harus setelah waktu buka.',
-            'delivery_fee.required_if_accepted' => 'Isi ongkir antar.',
+            'delivery_date.required_if_accepted' => 'Isi tanggal antar.',
+            'delivery_start.required_if_accepted' => 'Isi jam mulai antar.',
+            'delivery_end.required_if_accepted' => 'Isi jam selesai antar.',
+            'delivery_end.after' => 'Jam selesai harus setelah jam mulai.',
+            'zones.required_if_accepted' => 'Tambahkan minimal satu area antar.',
+            'zones.*.name.required' => 'Isi nama area.',
+            'zones.*.name.distinct' => 'Nama area tidak boleh dobel.',
             'products.required' => 'Tambahkan minimal satu menu.',
             'products.*.name.required' => 'Isi nama menu.',
             'products.*.price.required' => 'Isi harga.',
@@ -183,9 +196,8 @@ class PreorderController extends Controller
             'products.*.quota.min' => 'Kuota minimal 1 porsi.',
             'products.*.variants.required' => 'Tambahkan minimal satu varian.',
             'products.*.variants.*.name.required' => 'Isi nama varian.',
-            'slots.required' => 'Tambahkan minimal satu slot ambil, atau aktifkan antar ke fakultas.',
-            'slots.*.pickup_point_id.required' => 'Pilih titik ambil.',
-            'slots.*.pickup_point_id.in' => 'Titik ambil ini tidak tersedia.',
+            'slots.required' => 'Tambahkan minimal satu titik ambil, atau aktifkan pengantaran.',
+            'slots.*.place.required' => 'Isi nama tempat ambil.',
             'slots.*.date.required' => 'Isi tanggal ambil.',
             'slots.*.start.required' => 'Isi jam mulai.',
             'slots.*.end.required' => 'Isi jam selesai.',
@@ -205,6 +217,7 @@ class PreorderController extends Controller
         $orderedProducts = $ordered->pluck('product_id')->unique();
         $orderedVariants = $ordered->pluck('variant_id')->unique();
         $usedSlots = $asCopy ? collect() : $po->orders()->whereNotNull('pickup_slot_id')->pluck('pickup_slot_id')->unique();
+        $usedZones = $asCopy ? collect() : $po->orders()->whereNotNull('delivery_zone_id')->pluck('delivery_zone_id')->unique();
 
         return [
             'id' => $asCopy ? null : $po->id,
@@ -218,7 +231,15 @@ class PreorderController extends Controller
             'closes_at' => $asCopy ? '' : $po->closes_at->setTimezone($tz)->format('Y-m-d\TH:i'),
             'quota' => $po->quota,
             'delivery_enabled' => $po->delivery_enabled,
-            'delivery_fee' => $po->delivery_fee,
+            'delivery_date' => $asCopy ? '' : ($po->delivery_starts_at?->setTimezone($tz)->format('Y-m-d') ?? ''),
+            'delivery_start' => $po->delivery_starts_at?->setTimezone($tz)->format('H:i') ?? '10:00',
+            'delivery_end' => $po->delivery_ends_at?->setTimezone($tz)->format('H:i') ?? '14:00',
+            'zones' => $po->deliveryZones->map(fn ($z) => [
+                'id' => $asCopy ? null : $z->id,
+                'name' => $z->name,
+                'fee' => $z->fee,
+                'locked' => $usedZones->contains($z->id),
+            ])->values(),
             'poster_url' => $asCopy ? null : $po->posterUrl(),
             'story_url' => $asCopy ? null : $po->storyUrl(),
             'products' => $po->products->map(fn (Product $p) => [
@@ -235,10 +256,11 @@ class PreorderController extends Controller
                     'locked' => $orderedVariants->contains($v->id),
                 ])->values(),
             ])->values(),
-            'slots' => $asCopy ? [] : $po->slots->map(fn (PickupSlot $s) => [
-                'id' => $s->id,
-                'pickup_point_id' => $s->pickup_point_id,
-                'date' => $s->starts_at->setTimezone($tz)->format('Y-m-d'),
+            'slots' => $po->slots->map(fn (PickupSlot $s) => [
+                'id' => $asCopy ? null : $s->id,
+                'place' => $s->place,
+                'place_note' => $s->place_note ?? '',
+                'date' => $asCopy ? '' : $s->starts_at->setTimezone($tz)->format('Y-m-d'),
                 'start' => $s->starts_at->setTimezone($tz)->format('H:i'),
                 'end' => $s->ends_at->setTimezone($tz)->format('H:i'),
                 'locked' => $usedSlots->contains($s->id),
@@ -246,9 +268,18 @@ class PreorderController extends Controller
         ];
     }
 
-    /** @return array<int, array{id:int, name:string, faculty:?string}> */
-    private function pickupPoints(): array
+    /**
+     * Tempat ambil dan area antar yang pernah dipakai toko ini, untuk saran isian.
+     *
+     * @return array{places: array<int, string>, zones: array<int, string>}
+     */
+    private function suggestions(Shop $shop): array
     {
-        return PickupPoint::query()->where('is_active', true)->orderBy('name')->get(['id', 'name', 'faculty'])->toArray();
+        $ids = $shop->preorders()->pluck('id');
+
+        return [
+            'places' => PickupSlot::query()->whereIn('preorder_id', $ids)->distinct()->orderBy('place')->pluck('place')->all(),
+            'zones' => DeliveryZone::query()->whereIn('preorder_id', $ids)->distinct()->orderBy('name')->pluck('name')->all(),
+        ];
     }
 }

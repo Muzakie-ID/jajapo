@@ -30,9 +30,9 @@ class ReleaseHeldFunds extends Command
             ->whereIn('status', [...OrderStatus::paidStates(), OrderStatus::NotPickedUp->value])
             ->whereDoesntHave('refunds', fn ($q) => $q->where('status', 'open'))
             ->each(function (Order $order) use ($orders, &$released) {
-                $lastSlotEnd = $order->preorder->slots->max('ends_at');
-                if ($lastSlotEnd && $lastSlotEnd->copy()->addDay()->isPast()) {
-                    $orders->release($order, 'otomatis H+1 setelah tanggal ambil');
+                $serviceEnd = $order->preorder->serviceEndsAt();
+                if ($serviceEnd && $serviceEnd->copy()->addDay()->isPast()) {
+                    $orders->release($order, 'otomatis H+1 setelah tanggal ambil atau antar');
                     $released++;
                 }
             });

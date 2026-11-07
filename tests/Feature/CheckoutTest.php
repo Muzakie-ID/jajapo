@@ -69,18 +69,46 @@ class CheckoutTest extends TestCase
         $this->assertSame(0, $po->products->first()->fresh()->sold_count);
     }
 
-    public function test_delivery_adds_shipping_fee_and_needs_an_address(): void
+    public function test_delivery_uses_the_fee_of_the_chosen_area_and_needs_an_address(): void
     {
         $po = $this->openPreorder($this->shopFor($this->seller()));
+        $mipa = $po->deliveryZones()->create(['name' => 'FMIPA', 'fee' => 5000, 'sort' => 1]);
+        $other = $this->openPreorder($this->shopFor($this->seller('Laras Wening'), 'pensi-sv'), slug: 'mango-sago');
         $buyer = $this->buyer();
-        $payload = ['preorder_id' => $po->id, 'items' => [['variant_id' => $this->variant($po), 'qty' => 1]], 'fulfillment' => 'delivery'];
+        $payload = ['preorder_id' => $po->id, 'items' => [['variant_id' => $this->variant($po), 'qty' => 1]], 'fulfillment' => 'delivery', 'address_note' => 'Gedung C lantai 2'];
 
-        $this->actingAs($buyer)->post('/checkout', $payload)->assertSessionHasErrors('address_note');
-        $this->actingAs($buyer)->post('/checkout', [...$payload, 'address_note' => 'FEB lantai 2'])->assertRedirect();
+        $this->actingAs($buyer)->post('/checkout', $payload)->assertSessionHasErrors('zone_id');
+        $this->actingAs($buyer)->post('/checkout', [...$payload, 'zone_id' => $other->deliveryZones->first()->id])->assertSessionHasErrors('zone_id');
+        $this->actingAs($buyer)->post('/checkout', [...$payload, 'zone_id' => $mipa->id, 'address_note' => ''])->assertSessionHasErrors('address_note');
+        $this->actingAs($buyer)->post('/checkout', [...$payload, 'zone_id' => $mipa->id])->assertRedirect();
 
         $order = Order::firstOrFail();
-        $this->assertSame(3000, $order->delivery_fee);
-        $this->assertSame(15000 + $order->unique_code, $order->total);
+        $this->assertSame($mipa->id, $order->delivery_zone_id);
+        $this->assertSame(5000, $order->delivery_fee);
+        $this->assertSame(17000 + $order->unique_code, $order->total);
+        $this->assertStringStartsWith('Antar ke FMIPA', $order->slotLabel());
+    }
+
+    public function test_each_preorder_shows_its_own_pickup_places_and_delivery_areas(): void
+    {
+        $po = $this->openPreorder($this->shopFor($this->seller()));
+        $other = $this->openPreorder($this->shopFor($this->seller('Laras Wening'), 'pensi-sv'), slug: 'mango-sago');
+        $other->slots()->update(['place' => 'Selasar DEB SV', 'place_note' => 'Sebelah ruang himpunan']);
+        $other->deliveryZones()->update(['name' => 'Sekolah Vokasi', 'fee' => 2000]);
+
+        $this->get('/danus-dies-ftp/mac-n-cheese')->assertInertia(fn ($page) => $page
+            ->where('preorder.slots.0.place', 'Lobi KPTU FTP')
+            ->where('preorder.delivery.zones.0.name', 'FEB')
+            ->where('preorder.delivery.zones.0.fee', 3000)
+            ->has('preorder.delivery.zones', 1));
+
+        $this->get('/pensi-sv/mango-sago')->assertInertia(fn ($page) => $page
+            ->where('preorder.slots.0.place', 'Selasar DEB SV')
+            ->where('preorder.slots.0.place_note', 'Sebelah ruang himpunan')
+            ->where('preorder.delivery.zones.0.name', 'Sekolah Vokasi')
+            ->has('preorder.delivery.zones', 1));
+
+        $this->get('/?titik=Selasar%20DEB%20SV')->assertInertia(fn ($page) => $page->has('preorders', 1)->where('preorders.0.title', $other->title));
     }
 
     public function test_expired_orders_release_their_quota(): void

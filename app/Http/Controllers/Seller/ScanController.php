@@ -30,7 +30,7 @@ class ScanController extends Controller
     private function tickets(Shop $shop): array
     {
         return $shop->orders()
-            ->with('buyer', 'items', 'slot.point')
+            ->with('buyer', 'items', 'slot', 'deliveryZone', 'preorder')
             ->whereIn('status', [...OrderStatus::paidStates(), OrderStatus::NotPickedUp->value, OrderStatus::PickedUp->value, OrderStatus::Delivered->value])
             ->where('created_at', '>=', now()->subDays(30))
             ->get()
@@ -39,7 +39,7 @@ class ScanController extends Controller
                 'code' => $o->code,
                 'buyer' => $o->buyer->name,
                 'items' => $o->itemsLabel(),
-                'place' => $o->isDelivery() ? 'Antar' : $o->slot?->point->name,
+                'place' => $o->placeLabel(),
                 'slot' => $o->slotLabel(),
                 'status' => $o->status->value,
             ])
@@ -54,7 +54,7 @@ class ScanController extends Controller
         $data = $request->validate(['token' => ['nullable', 'string', 'max:80'], 'code' => ['nullable', 'string', 'max:20']]);
 
         $order = $shop->orders()
-            ->with('buyer', 'items', 'slot.point')
+            ->with('buyer', 'items', 'slot', 'deliveryZone', 'preorder')
             ->where(fn ($q) => $q->when($data['token'] ?? null, fn ($w, $t) => $w->where('ticket_token', $t))
                 ->when($data['code'] ?? null, fn ($w, $c) => $w->orWhere('code', strtoupper(trim($c)))))
             ->first();
@@ -77,7 +77,7 @@ class ScanController extends Controller
             return response()->json(['ok' => false, 'message' => collect($e->errors())->flatten()->first()], 422);
         }
 
-        $order->refresh()->load('buyer', 'items', 'slot.point');
+        $order->refresh()->load('buyer', 'items', 'slot', 'deliveryZone', 'preorder');
 
         return response()->json([
             'ok' => true,
@@ -104,12 +104,12 @@ class ScanController extends Controller
         if ($order->pickup_slot_id) {
             $base->where('pickup_slot_id', $order->pickup_slot_id);
         } else {
-            $base->where('fulfillment', 'delivery');
+            $base->where('fulfillment', 'delivery')->where('delivery_zone_id', $order->delivery_zone_id);
         }
         $states = [...OrderStatus::paidStates(), OrderStatus::NotPickedUp->value, OrderStatus::PickedUp->value, OrderStatus::Delivered->value];
 
         return [
-            'place' => $order->isDelivery() ? 'pengantaran' : $order->slot?->point->name,
+            'place' => $order->isDelivery() ? 'antar ke '.$order->deliveryZone?->name : $order->slot?->place,
             'done' => (clone $base)->whereIn('status', [OrderStatus::PickedUp, OrderStatus::Delivered])->count(),
             'total' => (clone $base)->whereIn('status', $states)->count(),
         ];

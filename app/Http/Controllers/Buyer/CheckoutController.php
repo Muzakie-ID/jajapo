@@ -19,6 +19,7 @@ class CheckoutController extends Controller
             'items.*.qty' => ['required', 'integer', 'min:1', 'max:20'],
             'fulfillment' => ['required', 'in:pickup,delivery'],
             'slot_id' => ['nullable', 'integer'],
+            'zone_id' => ['nullable', 'integer'],
             'address_note' => ['nullable', 'string', 'max:200'],
             'phone' => [$request->user()->phone ? 'nullable' : 'required', 'nullable', 'regex:/^(\+62|62|0)8[0-9]{7,12}$/'],
             'note' => ['nullable', 'string', 'max:200'],
@@ -37,6 +38,7 @@ class CheckoutController extends Controller
             $data['address_note'] ?? null,
             $data['phone'] ?? null,
             $data['note'] ?? null,
+            $data['zone_id'] ?? null,
         );
 
         return redirect("/bayar/{$order->code}");

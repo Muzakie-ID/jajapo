@@ -23,7 +23,8 @@ class Present
             'price_from' => $po->priceFrom(),
             'remaining' => $po->remaining(),
             'closes_at' => $po->closes_at->toIso8601String(),
-            'pickup_label' => $slot ? str_replace(',', '', tanggal($slot->starts_at)).' di '.$slot->point->name : 'Diantar',
+            'pickup_label' => $slot ? str_replace(',', '', tanggal($slot->starts_at)).' di '.$slot->place : 'Diantar',
+            'delivery' => $po->delivery_enabled,
             'seed' => $po->id,
             'poster_url' => $po->posterUrl(),
             'category' => $po->category,
@@ -34,7 +35,8 @@ class Present
     {
         return [
             'id' => $slot->id,
-            'place' => $slot->point->name,
+            'place' => $slot->place,
+            'place_note' => $slot->place_note,
             'date_label' => tanggal($slot->starts_at),
             'time_label' => $slot->timeLabel(),
         ];
@@ -46,7 +48,7 @@ class Present
             'code' => $order->code,
             'buyer' => $order->buyer->name,
             'item' => $order->itemsLabel(),
-            'slot' => $order->isDelivery() ? 'Antar: '.$order->address_note : $order->slot?->point->name.', '.jam($order->slot?->starts_at),
+            'slot' => $order->isDelivery() ? $order->placeLabel().': '.$order->address_note : $order->slot?->place.', '.jam($order->slot?->starts_at),
             'amount' => $order->shopAmount(),
             'status' => $order->status->value,
         ];

@@ -52,19 +52,10 @@ return new class extends Migration
             $table->timestamp('verified_at')->nullable();
             $table->timestamps();
         });
-
-        Schema::create('pickup_points', function (Blueprint $table) {
-            $table->id();
-            $table->string('name');
-            $table->string('faculty')->nullable();
-            $table->boolean('is_active')->default(true);
-            $table->timestamps();
-        });
     }
 
     public function down(): void
     {
-        Schema::dropIfExists('pickup_points');
         Schema::dropIfExists('bank_accounts');
         Schema::dropIfExists('shop_invitations');
         Schema::dropIfExists('shop_members');

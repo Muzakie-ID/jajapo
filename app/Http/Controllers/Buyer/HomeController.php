@@ -4,7 +4,7 @@ namespace App\Http\Controllers\Buyer;
 
 use App\Enums\OrderStatus;
 use App\Http\Controllers\Controller;
-use App\Models\PickupPoint;
+use App\Models\PickupSlot;
 use App\Models\Preorder;
 use App\Support\Present;
 use Illuminate\Http\Request;
@@ -19,8 +19,8 @@ class HomeController extends Controller
 
         $query = Preorder::query()
             ->open()
-            ->with('shop', 'products.variants', 'slots.point')
-            ->when($filters['titik'] ?? null, fn ($q, $id) => $q->whereHas('slots', fn ($s) => $s->where('pickup_point_id', $id)))
+            ->with('shop', 'products.variants', 'slots')
+            ->when($filters['titik'] ?? null, fn ($q, $place) => $q->whereHas('slots', fn ($s) => $s->where('place', $place)))
             ->when($filters['kategori'] ?? null, function ($q, $cat) {
                 $cat === 'antar' ? $q->where('delivery_enabled', true) : $q->where('category', $cat);
             })
@@ -42,7 +42,14 @@ class HomeController extends Controller
             ->first();
 
         return Inertia::render('Buyer/Home', [
-            'points' => PickupPoint::query()->where('is_active', true)->orderBy('name')->get(['id', 'name']),
+            // Titik ambil ditulis tiap penjual, jadi pilihan filter diambil dari PO yang sedang buka.
+            'points' => PickupSlot::query()
+                ->whereHas('preorder', fn ($q) => $q->open())
+                ->distinct()
+                ->orderBy('place')
+                ->pluck('place')
+                ->map(fn ($place) => ['id' => $place, 'name' => $place])
+                ->values(),
             'filters' => (object) $filters,
             'closingSoon' => $closingSoon->map(fn ($p) => Present::preorderCard($p))->values(),
             'preorders' => $preorders->map(fn ($p) => Present::preorderCard($p))->values(),

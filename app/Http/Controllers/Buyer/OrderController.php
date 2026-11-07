@@ -42,9 +42,9 @@ class OrderController extends Controller
             return redirect("/bayar/{$order->code}");
         }
 
-        $order->load('items', 'shop', 'preorder', 'slot.point');
+        $order->load('items', 'shop', 'preorder', 'slot', 'deliveryZone');
         $slot = $order->slot;
-        $pickupDate = $slot?->starts_at ?? $order->preorder->slots()->min('starts_at');
+        $pickupDate = $order->isDelivery() ? $order->preorder->delivery_starts_at : $slot?->starts_at;
         $pickupDate = $pickupDate ? Carbon::parse($pickupDate) : null;
 
         $waText = "Halo {$order->shop->name}, saya mau tanya pesanan {$order->code} ({$order->itemsLabel()}).";
@@ -58,8 +58,11 @@ class OrderController extends Controller
                 'items' => $order->itemsLabel(),
                 'ticket_token' => $order->ticket_token,
                 'total' => $order->total,
-                'place' => $order->isDelivery() ? 'Diantar' : $slot?->point->name,
-                'time_label' => $order->isDelivery() ? ($order->address_note ?? '-') : ($slot ? tanggal($slot->starts_at).', '.$slot->timeLabel() : '-'),
+                'place' => $order->isDelivery() ? $order->deliveryZone?->name : $slot?->place,
+                'place_note' => $order->isDelivery() ? $order->address_note : $slot?->place_note,
+                'time_label' => $order->isDelivery()
+                    ? ($order->preorder->deliveryLabel() ?? 'Jadwal antar menyusul dari penjual')
+                    : ($slot ? tanggal($slot->starts_at).', '.$slot->timeLabel() : '-'),
                 'ready_label' => $pickupDate ? tanggal($pickupDate) : '',
                 'paid_label' => tanggal($order->paid_at, withTime: true),
                 'complaint_until' => $pickupDate ? tanggal($pickupDate->copy()->addDay()) : '',

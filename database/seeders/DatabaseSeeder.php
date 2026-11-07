@@ -5,7 +5,6 @@ namespace Database\Seeders;
 use App\Enums\OrderStatus;
 use App\Models\BankAccount;
 use App\Models\Order;
-use App\Models\PickupPoint;
 use App\Models\Preorder;
 use App\Models\Shop;
 use App\Models\User;
@@ -46,9 +45,6 @@ class DatabaseSeeder extends Seeder
                 'phone' => '08571234'.str_pad((string) $i, 4, '0', STR_PAD_LEFT),
             ]));
 
-        $points = collect(['FTP' => 'Fakultas Teknologi Pertanian', 'Taman Code DTK' => 'Departemen Teknik Kimia', 'DEB SV' => 'Sekolah Vokasi', 'FEB' => 'Fakultas Ekonomika dan Bisnis', 'DTK' => 'Teknik'])
-            ->map(fn ($faculty, $name) => PickupPoint::create(['name' => $name, 'faculty' => $faculty]));
-
         $ftp = $this->shop('Danus Dies FTP', 'danus-dies-ftp', $raka, 'BNI', '0421889048', 'Raka Pratama');
         $sv = $this->shop('Panitia Pensi SV', 'pensi-sv', $laras, 'BRI', '0937112230', 'Laras Wening');
         $teknik = $this->shop('Danus PSDM Teknik', 'psdm-teknik', $yoga, 'Mandiri', '1370002210', 'Yoga Prasetyo');
@@ -61,37 +57,39 @@ class DatabaseSeeder extends Seeder
             'slug' => 'mac-n-cheese-panggang', 'title' => 'Mac n Cheese Panggang', 'category' => 'makanan',
             'description' => 'Makaroni dipanggang dengan saus keju cheddar dan mozarela. Dimasak pagi hari sebelum jam ambil, jadi masih hangat saat kamu terima.',
             'labels' => ['Halal', 'Mengandung susu', 'Mengandung gluten'],
-            'closes_at' => now()->addHours(4)->addMinutes(12), 'delivery_enabled' => true, 'delivery_fee' => 3000,
+            'closes_at' => now()->addHours(4)->addMinutes(12), 'delivery_enabled' => true,
+            'delivery_starts_at' => $pickupDay->copy()->setTime(10, 0)->utc(), 'delivery_ends_at' => $pickupDay->copy()->setTime(14, 0)->utc(),
         ], [['Mac n Cheese Panggang', 12000, 60, [['Original', 0], ['Extra keju', 3000], ['Smoked beef', 5000]]]],
-            [[$points['FTP'], $pickupDay->copy()->setTime(10, 0), 2], [$points['Taman Code DTK'], $pickupDay->copy()->setTime(13, 0), 2]]);
+            [['Lobi KPTU FTP', 'Meja panitia depan musala', $pickupDay->copy()->setTime(10, 0), 2], ['Taman Code DTK', 'Bangku bawah pohon ketapang', $pickupDay->copy()->setTime(13, 0), 2]],
+            [['FTP', 0], ['FEB', 3000], ['Fakultas Teknik', 3000], ['FMIPA', 4000]]);
 
         // Draf yang belum diterbitkan, supaya tab Draf di panel penjual ada isinya.
         $this->preorder($ftp, [
             'slug' => 'es-teh-leci', 'title' => 'Es Teh Leci 500 ml', 'category' => 'minuman', 'status' => Preorder::STATUS_DRAFT,
             'opens_at' => now()->addDays(2), 'closes_at' => now()->addDays(4),
         ], [['Es Teh Leci 500 ml', 8000, 80, [['Reguler', 0], ['Less sugar', 0]]]],
-            [[$points['FTP'], $pickupDay->copy()->addDays(7)->setTime(12, 0), 2]]);
+            [['Lobi KPTU FTP', null, $pickupDay->copy()->addDays(7)->setTime(12, 0), 2]]);
 
         $sago = $this->preorder($sv, [
             'slug' => 'mango-sago', 'title' => 'Mango Sago 350 ml', 'category' => 'minuman',
             'description' => 'Mango sago dengan potongan mangga harum manis dan sagu mutiara.', 'labels' => ['Halal', 'Mengandung susu'],
             'closes_at' => now()->addHours(2)->addMinutes(40),
         ], [['Mango Sago 350 ml', 10000, 40, [['Reguler', 0], ['Extra mangga', 2000]]]],
-            [[$points['DEB SV'], $pickupDay->copy()->setTime(9, 0), 3]]);
+            [['Selasar DEB SV', 'Sebelah ruang himpunan', $pickupDay->copy()->setTime(9, 0), 3]]);
 
         $this->preorder($teknik, [
             'slug' => 'risol-mayo', 'title' => 'Risol Mayo isi 5', 'category' => 'snack',
             'description' => 'Risol isi smoked beef, telur, dan mayones. Satu kotak isi 5.', 'labels' => ['Halal', 'Mengandung telur'],
             'closes_at' => now(config('jajapo.timezone'))->addDay()->setTime(20, 0)->utc(),
         ], [['Risol Mayo isi 5', 15000, 50, [['Original', 0], ['Pedas', 0]]]],
-            [[$points['Taman Code DTK'], $pickupDay->copy()->setTime(13, 0), 2]]);
+            [['Kantin Teknik', 'Meja paling ujung dekat parkiran', $pickupDay->copy()->setTime(13, 0), 2]]);
 
         $this->preorder($teknik, [
             'slug' => 'es-kopi-susu-aren', 'title' => 'Es Kopi Susu Aren', 'category' => 'minuman',
             'description' => 'Kopi susu dengan gula aren, 250 ml.', 'labels' => ['Halal'],
             'closes_at' => now(config('jajapo.timezone'))->addDays(2)->setTime(18, 0)->utc(),
         ], [['Es Kopi Susu Aren', 9000, 80, [['Reguler', 0], ['Less sugar', 0]]]],
-            [[$points['DTK'], $pickupDay->copy()->setTime(8, 0), 2]]);
+            [['Lobi DTK', null, $pickupDay->copy()->setTime(8, 0), 2]]);
 
         // Pesanan contoh untuk PO Mac n Cheese, mengikuti tabel di desain panel penjual.
         $macVariants = $mac->products->first()->variants->keyBy('name');
@@ -109,7 +107,8 @@ class DatabaseSeeder extends Seeder
         foreach ($samples as [$buyerIndex, $variant, $qty, $slotId, $outcome]) {
             $order = $orders->checkout(
                 $buyers[$buyerIndex], $mac, [['variant_id' => $macVariants[$variant]->id, 'qty' => $qty]],
-                $slotId ? 'pickup' : 'delivery', $slotId, $slotId ? null : 'FEB, gedung pertamina lantai 2',
+                $slotId ? 'pickup' : 'delivery', $slotId, $slotId ? null : 'Gedung Pertamina lantai 2, ruang 2.3',
+                zoneId: $slotId ? null : $mac->deliveryZones->firstWhere('name', 'FEB')->id,
             );
             match ($outcome) {
                 'pay' => $orders->markPaid($order),
@@ -129,7 +128,7 @@ class DatabaseSeeder extends Seeder
             'slug' => 'risol-mayo-oktober', 'title' => 'Risol Mayo Oktober', 'category' => 'snack', 'labels' => ['Halal'],
             'opens_at' => now()->subDays(12), 'closes_at' => now()->addHour(),
         ], [['Risol Mayo isi 5', 15000, 60, [['Original', 0]]]],
-            [[$points['FTP'], now(config('jajapo.timezone'))->addDay()->setTime(10, 0), 2]]);
+            [['Lobi KPTU FTP', null, now(config('jajapo.timezone'))->addDay()->setTime(10, 0), 2]]);
         $oldVariant = $old->products->first()->variants->first();
         foreach ([0, 1, 2, 3, 4, 5] as $i) {
             $order = $orders->checkout($buyers[$i], $old, [['variant_id' => $oldVariant->id, 'qty' => 4]], 'pickup', $old->slots->first()->id);
@@ -164,9 +163,10 @@ class DatabaseSeeder extends Seeder
 
     /**
      * @param  array<int, array{0:string,1:int,2:int,3:array<int, array{0:string,1:int}>}>  $products
-     * @param  array<int, array{0:PickupPoint,1:Carbon,2:int}>  $slots
+     * @param  array<int, array{0:string,1:?string,2:Carbon,3:int}>  $slots  tempat, patokan, mulai, lama (jam)
+     * @param  array<int, array{0:string,1:int}>  $zones  area antar dan ongkirnya
      */
-    private function preorder(Shop $shop, array $data, array $products, array $slots): Preorder
+    private function preorder(Shop $shop, array $data, array $products, array $slots, array $zones = []): Preorder
     {
         $preorder = $shop->preorders()->create([
             'opens_at' => now()->subDays(4),
@@ -179,14 +179,19 @@ class DatabaseSeeder extends Seeder
                 $product->variants()->create(['name' => $variantName, 'price_delta' => $delta, 'sort' => $j]);
             }
         }
-        foreach ($slots as [$point, $start, $hours]) {
+        foreach ($slots as [$place, $note, $start, $hours]) {
             $preorder->slots()->create([
-                'pickup_point_id' => $point->id,
+                'place' => $place,
+                'place_note' => $note,
                 'starts_at' => $start->copy()->utc(),
                 'ends_at' => $start->copy()->addHours($hours)->utc(),
             ]);
         }
 
-        return $preorder->load('shop', 'products.variants', 'slots.point');
+        foreach ($zones as $i => [$name, $fee]) {
+            $preorder->deliveryZones()->create(['name' => $name, 'fee' => $fee, 'sort' => $i]);
+        }
+
+        return $preorder->load('shop', 'products.variants', 'slots', 'deliveryZones');
     }
 }

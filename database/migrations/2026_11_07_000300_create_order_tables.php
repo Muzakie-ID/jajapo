@@ -16,6 +16,7 @@ return new class extends Migration
             $table->foreignId('buyer_id')->constrained('users');
             $table->string('fulfillment')->default('pickup');
             $table->foreignId('pickup_slot_id')->nullable()->constrained('preorder_pickup_slots');
+            $table->foreignId('delivery_zone_id')->nullable()->constrained('preorder_delivery_zones');
             $table->string('address_note')->nullable();
             $table->string('note')->nullable();
             $table->string('buyer_phone', 20)->nullable();

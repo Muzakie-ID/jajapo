@@ -53,6 +53,11 @@ class Order extends Model
         return $this->hasMany(OrderItem::class);
     }
 
+    public function deliveryZone(): BelongsTo
+    {
+        return $this->belongsTo(DeliveryZone::class);
+    }
+
     public function payment(): HasOne
     {
         return $this->hasOne(Payment::class)->latestOfMany();
@@ -90,15 +95,22 @@ class Order extends Model
         return $this->items->map(fn (OrderItem $i) => $i->qty.' '.$i->shortName())->implode(', ');
     }
 
+    /** "FTP" atau "Antar ke FEB" */
     public function placeLabel(): string
     {
-        return $this->isDelivery() ? 'Antar: '.($this->address_note ?: 'alamat belum diisi') : ($this->slot?->point->name ?? '-');
+        return $this->isDelivery() ? 'Antar ke '.($this->deliveryZone?->name ?? 'alamat pembeli') : ($this->slot?->place ?? '-');
     }
 
+    /** "FTP, Sab 14 Nov, 10.00–12.00" atau "Antar ke FEB, Sab 14 Nov, 10.00–14.00" */
     public function slotLabel(): string
     {
         if ($this->isDelivery()) {
-            return 'Antar ke '.($this->address_note ?: 'fakultas');
+            $po = $this->preorder;
+            if (! $po?->delivery_starts_at) {
+                return $this->placeLabel();
+            }
+
+            return $this->placeLabel().', '.str_replace(',', '', tanggal($po->delivery_starts_at)).', '.jam($po->delivery_starts_at).'–'.jam($po->delivery_ends_at);
         }
 
         return $this->slot ? $this->slot->label() : '-';

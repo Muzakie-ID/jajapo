@@ -3,7 +3,6 @@
 namespace Tests\Concerns;
 
 use App\Models\BankAccount;
-use App\Models\PickupPoint;
 use App\Models\Preorder;
 use App\Models\Shop;
 use App\Models\User;
@@ -64,16 +63,17 @@ trait BuildsShops
             'opens_at' => now()->subDay(),
             'closes_at' => now()->addHours(4),
             'delivery_enabled' => true,
-            'delivery_fee' => 3000,
+            'delivery_starts_at' => now()->addDays(2),
+            'delivery_ends_at' => now()->addDays(2)->addHours(4),
             'status' => Preorder::STATUS_ACTIVE,
         ]);
         $product = $po->products()->create(['name' => 'Mac n Cheese Panggang', 'price' => 12000, 'quota' => $quota]);
         $product->variants()->create(['name' => 'Original', 'price_delta' => 0, 'sort' => 0]);
         $product->variants()->create(['name' => 'Extra keju', 'price_delta' => 3000, 'sort' => 1]);
-        $point = PickupPoint::create(['name' => 'FTP']);
-        $po->slots()->create(['pickup_point_id' => $point->id, 'starts_at' => now()->addDays(2), 'ends_at' => now()->addDays(2)->addHours(2)]);
+        $po->deliveryZones()->create(['name' => 'FEB', 'fee' => 3000]);
+        $po->slots()->create(['place' => 'Lobi KPTU FTP', 'starts_at' => now()->addDays(2), 'ends_at' => now()->addDays(2)->addHours(2)]);
 
-        return $po->load('shop', 'products.variants', 'slots');
+        return $po->load('shop', 'products.variants', 'slots', 'deliveryZones');
     }
 
     protected function variant(Preorder $po, string $name = 'Original'): int

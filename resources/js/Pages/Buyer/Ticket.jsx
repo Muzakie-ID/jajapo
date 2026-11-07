@@ -50,12 +50,16 @@ export default function Ticket({ order }) {
                         </div>
                         <span className="tabular text-[17px] font-extrabold tracking-[0.08em]">{order.code}</span>
                         <span className="text-center text-[12.5px] text-muted">
-                            {done ? 'Tiket ini sudah dipakai.' : 'Tunjukkan QR ini ke panitia saat mengambil pesanan.'}
+                            {done
+                                ? 'Tiket ini sudah dipakai.'
+                                : order.is_delivery
+                                  ? 'Tunjukkan QR ini ke kurir panitia saat pesanan sampai.'
+                                  : 'Tunjukkan QR ini ke panitia saat mengambil pesanan.'}
                         </span>
                         <div className="my-1 w-full border-t-2 border-dashed border-line" />
                         <dl className="m-0 grid w-full grid-cols-2 gap-x-4 gap-y-3">
-                            <Info label={order.is_delivery ? 'Diantar ke' : 'Ambil di'} value={order.is_delivery ? order.time_label : order.place} />
-                            {!order.is_delivery && <Info label="Waktu" value={order.time_label} />}
+                            <Info label={order.is_delivery ? 'Diantar ke' : 'Ambil di'} value={order.place_note ? `${order.place}, ${order.place_note}` : order.place} />
+                            <Info label={order.is_delivery ? 'Jadwal antar' : 'Waktu'} value={order.time_label} />
                             <Info label="Total dibayar" value={rupiah(order.total)} tabular />
                             <Info label="Dibayar" value={order.paid_label} />
                         </dl>

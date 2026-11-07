@@ -39,8 +39,9 @@ class OrderService
         ?string $addressNote = null,
         ?string $phone = null,
         ?string $note = null,
+        ?int $zoneId = null,
     ): Order {
-        $preorder->loadMissing('shop', 'products.variants', 'slots');
+        $preorder->loadMissing('shop', 'products.variants', 'slots', 'deliveryZones');
 
         if (! $preorder->isOpen()) {
             throw ValidationException::withMessages(['items' => 'PO ini sudah tutup.']);
@@ -75,15 +76,20 @@ class OrderService
         }
 
         $slot = null;
+        $zone = null;
         $deliveryFee = 0;
         if ($fulfillment === 'delivery') {
-            if (! $preorder->delivery_enabled) {
+            if (! $preorder->offersDelivery()) {
                 throw ValidationException::withMessages(['items' => 'PO ini tidak menerima pengantaran.']);
+            }
+            $zone = $preorder->deliveryZones->firstWhere('id', $zoneId);
+            if (! $zone) {
+                throw ValidationException::withMessages(['zone_id' => 'Pilih area antar.']);
             }
             if (blank($addressNote)) {
                 throw ValidationException::withMessages(['address_note' => 'Isi alamat antar.']);
             }
-            $deliveryFee = (int) $preorder->delivery_fee;
+            $deliveryFee = (int) $zone->fee;
         } else {
             $slot = $preorder->slots->firstWhere('id', $slotId);
             if (! $slot) {
@@ -91,7 +97,7 @@ class OrderService
             }
         }
 
-        $order = DB::transaction(function () use ($buyer, $preorder, $items, $variants, $slot, $fulfillment, $deliveryFee, $addressNote, $phone, $note) {
+        $order = DB::transaction(function () use ($buyer, $preorder, $items, $variants, $slot, $zone, $fulfillment, $deliveryFee, $addressNote, $phone, $note) {
             $products = Product::query()
                 ->where('preorder_id', $preorder->id)
                 ->lockForUpdate()
@@ -132,6 +138,7 @@ class OrderService
                 'buyer_id' => $buyer->id,
                 'fulfillment' => $fulfillment,
                 'pickup_slot_id' => $slot?->id,
+                'delivery_zone_id' => $zone?->id,
                 'address_note' => $fulfillment === 'delivery' ? $addressNote : null,
                 'note' => $note,
                 'buyer_phone' => $phone ?: $buyer->phone,

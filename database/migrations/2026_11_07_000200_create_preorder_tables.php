@@ -22,8 +22,10 @@ return new class extends Migration
             $table->timestamp('closes_at');
             $table->unsignedInteger('quota')->nullable();
             $table->unsignedInteger('min_orders')->nullable();
+            // Pengantaran diatur per PO: jadwal antar di sini, area dan ongkirnya di preorder_delivery_zones.
             $table->boolean('delivery_enabled')->default(false);
-            $table->unsignedInteger('delivery_fee')->default(0);
+            $table->timestamp('delivery_starts_at')->nullable();
+            $table->timestamp('delivery_ends_at')->nullable();
             $table->string('status')->default('active');
             $table->timestamps();
 
@@ -34,9 +36,20 @@ return new class extends Migration
         Schema::create('preorder_pickup_slots', function (Blueprint $table) {
             $table->id();
             $table->foreignId('preorder_id')->constrained()->cascadeOnDelete();
-            $table->foreignId('pickup_point_id')->constrained();
+            // Titik ambil ditulis penjual untuk tiap PO, bukan daftar global.
+            $table->string('place', 80);
+            $table->string('place_note', 160)->nullable();
             $table->timestamp('starts_at');
             $table->timestamp('ends_at');
+            $table->timestamps();
+        });
+
+        Schema::create('preorder_delivery_zones', function (Blueprint $table) {
+            $table->id();
+            $table->foreignId('preorder_id')->constrained()->cascadeOnDelete();
+            $table->string('name', 80);
+            $table->unsignedInteger('fee')->default(0);
+            $table->unsignedSmallInteger('sort')->default(0);
             $table->timestamps();
         });
 
@@ -74,6 +87,7 @@ return new class extends Migration
         Schema::dropIfExists('bundle_items');
         Schema::dropIfExists('product_variants');
         Schema::dropIfExists('products');
+        Schema::dropIfExists('preorder_delivery_zones');
         Schema::dropIfExists('preorder_pickup_slots');
         Schema::dropIfExists('preorders');
     }

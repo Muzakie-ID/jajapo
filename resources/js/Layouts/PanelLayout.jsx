@@ -8,6 +8,7 @@ const SELLER_NAV = [
     { key: 'po', label: 'PO dan menu', icon: 'box', href: '/seller/po' },
     { key: 'orders', label: 'Pesanan', icon: 'list', href: '/seller#pesanan' },
     { key: 'scan', label: 'Scan tiket', icon: 'scan', href: '/seller/scan' },
+    { key: 'deliveries', label: 'Pengantaran', icon: 'truck', href: '/seller/antar' },
     { key: 'complaints', label: 'Komplain', icon: 'flag', href: '/seller/komplain' },
     { key: 'rekap', label: 'Rekap produksi', icon: 'chart', href: '/seller#rekap' },
     { key: 'balance', label: 'Saldo dan pencairan', icon: 'wallet', href: '/seller/saldo' },
@@ -256,6 +257,12 @@ function MoreSheet({ dark, shop, badges, onClose }) {
                             <Icon name="flag" size={20} className="text-leaf" />
                             Komplain
                             <Badge value={badges.complaints} />
+                        </Link>
+                    )}
+                    {!dark && (
+                        <Link href="/seller/antar" onClick={onClose} className="flex min-h-12 items-center gap-3 text-sm font-semibold text-ink no-underline">
+                            <Icon name="truck" size={20} className="text-leaf" />
+                            Pengantaran
                         </Link>
                     )}
                     {!dark && (

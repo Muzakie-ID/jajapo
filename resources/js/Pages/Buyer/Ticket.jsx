@@ -10,11 +10,19 @@ const DONE = ['picked_up', 'delivered'];
 export default function Ticket({ order }) {
     const done = DONE.includes(order.status);
     const paid = ['paid', 'preparing', 'ready', 'out_for_delivery', 'not_picked_up', ...DONE].includes(order.status);
-    const steps = [
-        { label: 'Dibayar', on: paid },
-        { label: order.is_delivery ? 'Siap diantar' : 'Siap diambil', on: paid, current: paid && !done },
-        { label: order.is_delivery ? 'Terkirim' : 'Diambil', on: done },
-    ];
+    const onTheWay = order.status === 'out_for_delivery';
+    const steps = order.is_delivery
+        ? [
+              { label: 'Dibayar', on: paid },
+              { label: 'Siap diantar', on: paid, current: paid && !done && !onTheWay },
+              { label: 'Diantar', on: onTheWay || done, current: onTheWay },
+              { label: 'Terkirim', on: done },
+          ]
+        : [
+              { label: 'Dibayar', on: paid },
+              { label: 'Siap diambil', on: paid, current: paid && !done },
+              { label: 'Diambil', on: done },
+          ];
 
     return (
         <BuyerLayout title={`Tiket ${order.code}`} active="orders">
@@ -31,7 +39,11 @@ export default function Ticket({ order }) {
                         <StatusPill status={order.status} />
                     )}
                     <span className="text-[13px] text-body">
-                        {done ? 'Pesanan sudah kamu terima' : `${order.is_delivery ? 'Diantar' : 'Siap diambil'} ${order.ready_label}`}
+                        {done
+                            ? 'Pesanan sudah kamu terima'
+                            : onTheWay
+                              ? `${order.courier || 'Kurir'} sedang mengantar sejak ${order.out_label}`
+                              : `${order.is_delivery ? 'Diantar' : 'Siap diambil'} ${order.ready_label}`}
                     </span>
                 </div>
 
@@ -67,7 +79,7 @@ export default function Ticket({ order }) {
                     </div>
                 </section>
 
-                <ol aria-label="Status pesanan" className="m-0 grid list-none grid-cols-3 gap-2 p-0">
+                <ol aria-label="Status pesanan" className={`m-0 grid list-none gap-2 p-0 ${steps.length === 4 ? 'grid-cols-4' : 'grid-cols-3'}`}>
                     {steps.map((s) => (
                         <li key={s.label} aria-current={s.current ? 'step' : undefined} className="flex flex-col gap-1.5">
                             <span className={`h-1 rounded-full ${s.on ? 'bg-leaf' : 'bg-[#D3DDD0]'}`} />

@@ -18,6 +18,8 @@ class Order extends Model
             'status' => OrderStatus::class,
             'expires_at' => 'datetime',
             'paid_at' => 'datetime',
+            'out_for_delivery_at' => 'datetime',
+            'reminded_at' => 'datetime',
             'picked_up_at' => 'datetime',
             'released_at' => 'datetime',
         ];
@@ -56,6 +58,11 @@ class Order extends Model
     public function complaints(): HasMany
     {
         return $this->hasMany(Complaint::class);
+    }
+
+    public function courier(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'courier_id');
     }
 
     public function deliveryZone(): BelongsTo

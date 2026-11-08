@@ -13,6 +13,7 @@ use App\Models\ProductVariant;
 use App\Models\Setting;
 use App\Models\User;
 use App\Notifications\NewPaidOrder;
+use App\Notifications\OrderOutForDelivery;
 use App\Notifications\OrderPaid;
 use App\Payments\PaymentGateway;
 use App\Support\Notify;
@@ -245,6 +246,28 @@ class OrderService
 
             return true;
         });
+    }
+
+    /**
+     * Kurir panitia mulai mengantar. Hanya untuk pesanan antar yang sudah lunas.
+     * Mengembalikan false kalau pesanan tidak bisa diubah (misalnya sudah terkirim).
+     */
+    public function startDelivery(Order $order, User $courier): bool
+    {
+        $started = DB::transaction(function () use ($order, $courier) {
+            $order = Order::query()->lockForUpdate()->findOrFail($order->id);
+            $ready = [OrderStatus::Paid, OrderStatus::Preparing, OrderStatus::Ready];
+            if (! $order->isDelivery() || ! in_array($order->status, $ready, true)) {
+                return false;
+            }
+
+            $order->update(['status' => OrderStatus::OutForDelivery, 'out_for_delivery_at' => now(), 'courier_id' => $courier->id]);
+            $order->buyer->notify(new OrderOutForDelivery($order));
+
+            return true;
+        });
+
+        return $started;
     }
 
     /** Scan tiket: pesanan diambil, dana pindah dari tertahan ke tersedia. */

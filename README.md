@@ -19,6 +19,7 @@ Dibangun dengan Laravel 13, Inertia v3 + React 19, Tailwind CSS v4, dan PostgreS
 - PO dan menu: buat PO (draf atau langsung terbit), atur menu, varian, harga, kuota, titik ambil (tempat, patokan, jam), pengantaran (jadwal antar, area dan ongkir per area), poster, dan gambar story. Titik ambil dan area antar milik masing-masing PO, dengan saran dari yang pernah dipakai toko. Ubah, salin, tutup lebih awal, atau hapus PO yang belum punya pesanan. Menu, varian, dan slot yang sudah dipesan terkunci dari penghapusan, dan kuota tidak bisa turun di bawah porsi terjual.
 - Tombol Bagikan ikut mengirim gambar story ke menu bagikan HP, siap dipasang di story.
 - Beranda toko: PO aktif, ringkasan, pesanan terbaru, rekap produksi, saldo. Bisa pindah toko kalau anggota beberapa toko.
+- Pengantaran: pesanan antar per area dengan alamat dan tombol WhatsApp pembeli. Mulai antar per area atau per pesanan (pembeli diberi tahu dan melihat nama kurir di tiket), lalu scan QR saat sampai, atau tandai terkirim manual.
 - Scan tiket dengan kamera, cari manual, dan cadangan tiket di HP saat sinyal hilang (antrean dikirim saat online lagi).
 - Laporan per PO: unduh Excel (Ringkasan, Pesanan, Rekap produksi, Daftar ambil dengan kolom paraf) dan halaman LPJ yang bisa dicetak atau disimpan PDF, lengkap dengan kolom tanda tangan ketua dan bendahara.
 - Komplain: setujui refund penuh atau sebagian, atau tolak dengan alasan (lalu super admin memutuskan). Nominal yang diminta ditahan dari saldo selama komplain berjalan, dan refund dipotong dari bagian toko.
@@ -131,7 +132,7 @@ Setiap kejadian penting tersimpan di lonceng aplikasi (`/notifikasi`), dikirim k
 
 | Kejadian | Penerima | Email |
 | --- | --- | --- |
-| Pembayaran diterima, pengingat 2 jam sebelum ambil/antar | Pembeli | pembayaran saja |
+| Pembayaran diterima, pengingat 2 jam sebelum ambil/antar, pesanan sedang diantar | Pembeli | pembayaran saja |
 | Komplain diputuskan, refund ditransfer | Pembeli | ya |
 | Pesanan baru lunas | Anggota toko | tidak (hanya lonceng) |
 | Komplain baru, komplain diputuskan super admin | Anggota toko | ya |
@@ -154,5 +155,4 @@ Tes memakai SQLite di memori. Untuk menjalankannya di PostgreSQL, set `DB_CONNEC
 ## Belum dibuat
 
 - Paket bundling.
-- Update status antar.
 - Kontrak `HttpGateway` menunggu dokumentasi API gateway.

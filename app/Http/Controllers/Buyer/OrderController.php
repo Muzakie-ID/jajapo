@@ -44,7 +44,7 @@ class OrderController extends Controller
             return redirect("/bayar/{$order->code}");
         }
 
-        $order->load('items', 'shop', 'preorder.slots', 'slot', 'deliveryZone', 'complaints.refund', 'complaints.order.items', 'complaints.order.preorder', 'complaints.buyer', 'complaints.shop');
+        $order->load('items', 'shop', 'preorder.slots', 'slot', 'deliveryZone', 'courier', 'complaints.refund', 'complaints.order.items', 'complaints.order.preorder', 'complaints.buyer', 'complaints.shop');
         $complaints = app(ComplaintService::class);
         $deadline = $complaints->deadline($order);
         $complaint = $order->complaints->first();
@@ -77,6 +77,8 @@ class OrderController extends Controller
                     ? 'https://wa.me/'.preg_replace('/^0/', '62', $order->shop->whatsapp).'?text='.rawurlencode($waText)
                     : null,
                 'is_delivery' => $order->isDelivery(),
+                'courier' => $order->courier?->name,
+                'out_label' => $order->out_for_delivery_at ? jam($order->out_for_delivery_at) : null,
             ],
         ]);
     }

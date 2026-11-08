@@ -9,7 +9,7 @@ export const STATUS_STYLE = {
     paid: { label: 'Lunas', cls: 'bg-[#DCEFD6] text-[#1F5A2D]' },
     ready: { label: 'Siap diambil', cls: 'bg-[#DCEFD6] text-[#1F5A2D]' },
     preparing: { label: 'Disiapkan', cls: 'bg-[#DCEFD6] text-[#1F5A2D]' },
-    out_for_delivery: { label: 'Diantar', cls: 'bg-[#DCEFD6] text-[#1F5A2D]' },
+    out_for_delivery: { label: 'Sedang diantar', cls: 'bg-[#E3EBF5] text-[#23426B]' },
     picked_up: { label: 'Diambil', cls: 'bg-[#E3EBF5] text-[#23426B]' },
     delivered: { label: 'Terkirim', cls: 'bg-[#E3EBF5] text-[#23426B]' },
     not_picked_up: { label: 'Tidak diambil', cls: 'bg-[#ECEFEA] text-[#4A564C]' },

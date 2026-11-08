@@ -20,11 +20,11 @@ export default function BuyerLayout({ title, active, children, bottomBar, hideNa
     return (
         <div className="min-h-dvh bg-[#E4EBE1]">
             <Head title={title} />
-            <div className="relative mx-auto min-h-dvh max-w-[480px] bg-mint text-ink">
+            <div className="mx-auto flex min-h-dvh max-w-[480px] flex-col bg-mint text-ink">
                 <Flash />
-                <main className={`px-5 pt-4 ${hideNav ? 'pb-28' : 'pb-48'}`}>{children}</main>
+                <main className="flex-1 px-5 pt-4 pb-4">{children}</main>
 
-                <div className="fixed inset-x-0 bottom-0 z-20 mx-auto max-w-[480px]">
+                <div className="sticky bottom-0 z-20">
                     {bottomBar && <div className={`px-4 ${hideNav ? 'pb-5' : 'pb-4'}`}>{bottomBar}</div>}
                     {!hideNav && (
                         <nav

@@ -1,0 +1,34 @@
+# Jajapo di Docker (pola triugm). DB pinjam instance postgres qrismuz:
+# container app/worker ikut jaringan qrismuz_default, DB_HOST=db (service postgres di compose qrismuz).
+# Port host 127.0.0.1:8010 -> diumumkan lewat Cloudflare Tunnel.
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: jajapo-app
+    container_name: jajapo_app
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:8010:80"
+    env_file: .env
+    networks:
+      - qrismuz_default
+
+  # Worker antrean (notifikasi, email, web push) + scheduler dipisah supaya hang di worker
+  # tidak mematikan web.
+  worker:
+    image: jajapo-app
+    container_name: jajapo_worker
+    restart: unless-stopped
+    depends_on:
+      - app
+    working_dir: /var/www/html
+    command: sh -c "php artisan schedule:work & exec php artisan queue:work --sleep=3 --tries=3 --max-time=3600"
+    env_file: .env
+    networks:
+      - qrismuz_default
+
+networks:
+  qrismuz_default:
+    external: true

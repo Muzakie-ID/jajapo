@@ -20,6 +20,9 @@ return Application::configure(basePath: dirname(__DIR__))
             HandleInertiaRequests::class,
         ]);
 
+        // Di belakang Cloudflare Tunnel / reverse proxy: ikuti X-Forwarded-* agar HTTPS terdeteksi.
+        $middleware->trustProxies(at: '*');
+
         $middleware->alias([
             'super-admin' => EnsureSuperAdmin::class,
             'shop-member' => EnsureShopMember::class,

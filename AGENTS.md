@@ -26,6 +26,7 @@ Platform pre-order makanan untuk danusan kampus UGM. Baca `README.md` untuk fitu
 - `app/Services`: `OrderService`, `PaymentService`, `PayoutService`, `Ledger`.
 - `app/Http/Controllers/{Buyer,Seller,Admin,Auth}`; `app/Support/Present.php` membentuk props untuk halaman.
 - `app/Console/Commands`: perintah terjadwal, dijadwalkan di `routes/console.php`.
+- `app/Notifications`: turunan `JajapoNotification` (lonceng + web push + email opsional, lewat antrean setelah commit). Kirim ke anggota toko atau super admin lewat `App\Support\Notify`.
 - `tests/Feature`: tes alur checkout, callback, penjual, dan pencairan. `tests/Concerns/BuildsShops.php` untuk data tes.
 
 ## Sebelum commit

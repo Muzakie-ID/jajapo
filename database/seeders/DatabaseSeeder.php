@@ -26,6 +26,8 @@ class DatabaseSeeder extends Seeder
     {
         // Data demo selalu memakai gateway tiruan, apa pun driver di .env.
         config(['services.payment_gateway.driver' => 'fake']);
+        // Notifikasi contoh langsung tersimpan tanpa menunggu worker antrean.
+        config(['queue.default' => 'sync']);
         app()->forgetInstance(PaymentGateway::class);
         $orders = app(OrderService::class);
         $payouts = app(PayoutService::class);

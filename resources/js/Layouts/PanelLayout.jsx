@@ -13,6 +13,7 @@ const SELLER_NAV = [
     { key: 'balance', label: 'Saldo dan pencairan', icon: 'wallet', href: '/seller/saldo' },
     { key: 'members', label: 'Anggota', icon: 'users', href: '/seller/anggota', adminOnly: true },
     { key: 'settings', label: 'Pengaturan toko', icon: 'sliders', href: '/seller/pengaturan', adminOnly: true },
+    { key: 'notifications', label: 'Notifikasi', icon: 'bell', href: '/notifikasi?dari=%2Fseller' },
 ];
 
 const ADMIN_NAV = [
@@ -22,6 +23,7 @@ const ADMIN_NAV = [
     { key: 'payouts', label: 'Pencairan', icon: 'wallet', href: '/admin#pencairan' },
     { key: 'complaints', label: 'Komplain dan refund', icon: 'flag', href: '/admin/komplain' },
     { key: 'recon', label: 'Rekonsiliasi', icon: 'scale', href: '/admin#rekonsiliasi' },
+    { key: 'notifications', label: 'Notifikasi', icon: 'bell', href: '/notifikasi?dari=%2Fadmin' },
 ];
 
 function Badge({ value, dark }) {
@@ -66,7 +68,7 @@ export function ShopSwitcher({ shop }) {
 
 export default function PanelLayout({ variant = 'seller', active, title, shop, badges: pageBadges = {}, children }) {
     const { auth, panelBadges } = usePage().props;
-    const badges = { ...(panelBadges || {}), ...pageBadges };
+    const badges = { ...(panelBadges || {}), notifications: auth.user?.unread || null, ...pageBadges };
     const [moreOpen, setMoreOpen] = useState(false);
     const dark = variant === 'admin';
     const nav = dark ? ADMIN_NAV : SELLER_NAV.filter((item) => !item.adminOnly || shop?.role === 'admin');
@@ -212,9 +214,9 @@ function MobileNav({ variant, active, badges, onMore }) {
             >
                 <span className="relative flex">
                     <Icon name="menu" size={22} />
-                    {badges.complaints ? (
+                    {badges.complaints || badges.notifications ? (
                         <span className={`absolute -right-3 -top-1.5 min-w-[18px] rounded-full px-[5px] py-px text-center text-[10.5px] font-bold ${dark ? 'bg-[#FFE2A8] text-[#5C3A00]' : 'bg-danger text-white'}`}>
-                            {badges.complaints}
+                            {(badges.complaints || 0) + (badges.notifications || 0)}
                         </span>
                     ) : null}
                 </span>
@@ -231,6 +233,11 @@ function MoreSheet({ dark, shop, badges, onClose }) {
                 <span aria-hidden="true" className="mx-auto mb-4 block h-1 w-10 rounded-full bg-[#D3DDD0]" />
                 <div className="flex flex-col gap-3">
                     {!dark && shop && <ShopSwitcher shop={shop} />}
+                    <Link href={`/notifikasi?dari=${dark ? '%2Fadmin' : '%2Fseller'}`} onClick={onClose} className="flex min-h-12 items-center gap-3 text-sm font-semibold text-ink no-underline">
+                        <Icon name="bell" size={20} className="text-leaf" />
+                        Notifikasi
+                        <Badge value={badges.notifications} />
+                    </Link>
                     {dark && (
                         <Link href="/admin/komplain" onClick={onClose} className="flex min-h-12 items-center gap-3 text-sm font-semibold text-ink no-underline">
                             <Icon name="flag" size={20} className="text-leaf" />

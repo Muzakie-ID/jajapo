@@ -33,6 +33,7 @@ class HandleInertiaRequests extends Middleware
                     'email' => $user->email,
                     'initials' => $user->initials(),
                     'is_super_admin' => (bool) $user->is_super_admin,
+                    'unread' => $user->unreadNotifications()->count(),
                     'shops' => $user->shops()
                         ->get(['shops.id', 'shops.name', 'shops.slug', 'shops.status'])
                         ->map(fn ($shop) => [

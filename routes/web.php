@@ -4,6 +4,7 @@ use App\Http\Controllers\Admin;
 use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\Buyer;
 use App\Http\Controllers\InvitationController;
+use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\PaymentWebhookController;
 use App\Http\Controllers\Seller;
 use Illuminate\Support\Facades\Route;
@@ -36,6 +37,11 @@ Route::middleware('auth')->group(function () {
     Route::put('/akun', [Buyer\AccountController::class, 'update']);
 
     // Penjual
+    Route::get('/notifikasi', [NotificationController::class, 'index']);
+    Route::get('/notifikasi/{id}', [NotificationController::class, 'open'])->whereUuid('id');
+    Route::post('/notifikasi/dibaca', [NotificationController::class, 'readAll']);
+    Route::post('/notifikasi/push', [NotificationController::class, 'subscribe'])->middleware('throttle:20,1');
+    Route::delete('/notifikasi/push', [NotificationController::class, 'unsubscribe']);
     Route::get('/undangan/{token}', [InvitationController::class, 'show']);
     Route::post('/undangan/{token}', [InvitationController::class, 'accept']);
     Route::get('/seller/daftar', [Seller\RegisterController::class, 'create']);

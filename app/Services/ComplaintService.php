@@ -9,6 +9,11 @@ use App\Models\LedgerEntry;
 use App\Models\Order;
 use App\Models\Refund;
 use App\Models\User;
+use App\Notifications\AdminAlert;
+use App\Notifications\ComplaintUpdated;
+use App\Notifications\NewComplaint;
+use App\Notifications\RefundTransferred;
+use App\Support\Notify;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
@@ -80,6 +85,7 @@ class ComplaintService
             }
 
             AuditLog::record($buyer, 'complaint.opened', $complaint, ['order' => $order->code, 'amount' => $data['amount']]);
+            Notify::shop($order->shop, new NewComplaint($complaint));
 
             return $complaint;
         });
@@ -104,6 +110,12 @@ class ComplaintService
             'seller_responded_at' => now(),
         ]);
         AuditLog::record($seller, 'complaint.seller_rejected', $complaint);
+        Notify::superAdmins(new AdminAlert(
+            "Komplain {$complaint->order->code} perlu keputusan",
+            "{$complaint->shop->name} menolak refund ".rupiah($complaint->amount_requested).'. Alasan penjual: '.$response,
+            '/admin/komplain',
+            'complaint',
+        ));
     }
 
     /**
@@ -157,6 +169,14 @@ class ComplaintService
                 ...(! $asAdmin ? ['seller_responded_at' => now(), 'seller_response' => $note] : []),
             ]);
             AuditLog::record($actor, $asAdmin ? 'complaint.decided_by_admin' : 'complaint.approved_by_seller', $complaint, ['amount' => $amount]);
+            $complaint->setRelation('order', $order);
+            $complaint->buyer->notify(new ComplaintUpdated($complaint));
+            if ($asAdmin) {
+                Notify::shop($order->shop, new ComplaintUpdated($complaint, forShop: true));
+            }
+            if ($amount > 0) {
+                Notify::superAdmins(new AdminAlert('Refund '.rupiah($amount)." untuk {$order->code} perlu ditransfer", "Transfer ke {$complaint->refund_to}.", '/admin/komplain', 'money'));
+            }
 
             return $complaint;
         });
@@ -178,6 +198,7 @@ class ComplaintService
                 $this->ledger->record(LedgerEntry::GATEWAY_CLEARING, -$refund->amount, 'refund_transferred', "Refund {$refund->order->code} ditransfer", order: $refund->order);
             }
             AuditLog::record($admin, 'refund.transferred', $refund, ['amount' => $refund->amount]);
+            $refund->order->buyer->notify(new RefundTransferred($refund));
         });
     }
 }

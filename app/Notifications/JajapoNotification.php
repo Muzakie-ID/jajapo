@@ -1,0 +1,96 @@
+<?php
+
+namespace App\Notifications;
+
+use Illuminate\Bus\Queueable;
+use Illuminate\Contracts\Queue\ShouldQueue;
+use Illuminate\Notifications\Messages\MailMessage;
+use Illuminate\Notifications\Notification;
+use NotificationChannels\WebPush\WebPushChannel;
+use NotificationChannels\WebPush\WebPushMessage;
+
+/**
+ * Dasar semua notifikasi Jajapo: tersimpan di aplikasi (lonceng), dikirim ke HP lewat
+ * web push kalau pengguna mengaktifkannya, dan lewat email kalau $mail true.
+ * Dikirim lewat antrean setelah transaksi database selesai.
+ */
+abstract class JajapoNotification extends Notification implements ShouldQueue
+{
+    use Queueable;
+
+    /** Kirim juga lewat email. Matikan untuk notifikasi yang sering, misalnya pesanan baru. */
+    protected bool $mail = false;
+
+    /** Kirim juga ke HP lewat web push. */
+    protected bool $push = true;
+
+    public function __construct()
+    {
+        $this->afterCommit();
+    }
+
+    abstract public function title(): string;
+
+    abstract public function body(): string;
+
+    /** Halaman yang dibuka saat notifikasi diketuk, relatif terhadap aplikasi. */
+    abstract public function url(): string;
+
+    /** Jenis notifikasi untuk ikon di daftar: order, complaint, money, shop, reminder. */
+    public function kind(): string
+    {
+        return 'order';
+    }
+
+    public function via(object $notifiable): array
+    {
+        $channels = ['database'];
+
+        if ($this->push && method_exists($notifiable, 'pushSubscriptions') && config('webpush.vapid.public_key') && $notifiable->pushSubscriptions()->exists()) {
+            $channels[] = WebPushChannel::class;
+        }
+        if ($this->mail && filled($notifiable->routeNotificationFor('mail', $this))) {
+            $channels[] = 'mail';
+        }
+
+        return $channels;
+    }
+
+    public function toArray(object $notifiable): array
+    {
+        return ['title' => $this->title(), 'body' => $this->body(), 'url' => $this->url(), 'kind' => $this->kind()];
+    }
+
+    public function toWebPush(object $notifiable, Notification $notification): WebPushMessage
+    {
+        return (new WebPushMessage)
+            ->title($this->title())
+            ->body($this->body())
+            ->icon('/icons/icon-192.png')
+            ->badge('/icons/icon-192.png')
+            ->tag(static::class.':'.$this->url())
+            ->data(['url' => $this->url()]);
+    }
+
+    public function toMail(object $notifiable): MailMessage
+    {
+        $mail = (new MailMessage)
+            ->subject($this->title())
+            ->greeting('Halo'.(isset($notifiable->name) ? ' '.strtok($notifiable->name, ' ') : '').',')
+            ->line($this->body())
+            ->action('Buka Jajapo', url($this->url()))
+            ->salutation('Salam, Jajapo');
+
+        foreach ($this->mailLines() as $line) {
+            $mail->line($line);
+        }
+
+        return $mail;
+    }
+
+    /** Baris tambahan khusus email. */
+    protected function mailLines(): array
+    {
+        return [];
+    }
+}

@@ -51,6 +51,7 @@ export default function Account({ phone, canRegisterShop }) {
                 {user.is_super_admin && <MenuLink href="/admin" icon="grid" label="Buka panel super admin" />}
                 {activeShops.length === 0 && canRegisterShop && <MenuLink href="/seller/daftar" icon="store" label="Daftar jadi penjual" />}
                 <MenuLink href="/pesanan" icon="receipt" label="Pesanan saya" />
+                <MenuLink href="/notifikasi" icon="bell" label={user.unread ? `Notifikasi (${user.unread} baru)` : 'Notifikasi'} />
                 <button
                     type="button"
                     onClick={() => router.post('/logout')}

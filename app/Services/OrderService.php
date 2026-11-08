@@ -12,7 +12,10 @@ use App\Models\Product;
 use App\Models\ProductVariant;
 use App\Models\Setting;
 use App\Models\User;
+use App\Notifications\NewPaidOrder;
+use App\Notifications\OrderPaid;
 use App\Payments\PaymentGateway;
+use App\Support\Notify;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
@@ -236,6 +239,9 @@ class OrderService
             if ($method === Payment::METHOD_MANUAL) {
                 AuditLog::record($actor, 'order.mark_paid_manual', $order, ['total' => $order->total]);
             }
+
+            $order->buyer->notify(new OrderPaid($order));
+            Notify::shop($shop, new NewPaidOrder($order));
 
             return true;
         });

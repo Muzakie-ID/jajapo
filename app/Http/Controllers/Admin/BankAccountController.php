@@ -5,6 +5,8 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\AuditLog;
 use App\Models\BankAccount;
+use App\Notifications\BankAccountReviewed;
+use App\Support\Notify;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -22,6 +24,8 @@ class BankAccountController extends Controller
             AuditLog::record($request->user(), 'bank_account.approved', $account, ['label' => $account->label()]);
         });
 
+        Notify::shop($account->shop, new BankAccountReviewed($account->fresh()), adminsOnly: true);
+
         return back()->with('success', "Rekening {$account->label()} untuk {$account->shop->name} disetujui.");
     }
 
@@ -32,6 +36,7 @@ class BankAccountController extends Controller
 
         $account->update(['rejected_at' => now(), 'review_note' => $data['note']]);
         AuditLog::record($request->user(), 'bank_account.rejected', $account, ['note' => $data['note']]);
+        Notify::shop($account->shop, new BankAccountReviewed($account), adminsOnly: true);
 
         return back()->with('success', "Pengajuan rekening {$account->shop->name} ditolak.");
     }

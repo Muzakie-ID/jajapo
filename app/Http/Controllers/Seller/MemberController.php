@@ -7,8 +7,10 @@ use App\Models\AuditLog;
 use App\Models\Shop;
 use App\Models\ShopInvitation;
 use App\Models\User;
+use App\Notifications\ShopInvited;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Notification;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 use Inertia\Inertia;
@@ -62,7 +64,7 @@ class MemberController extends Controller
 
         // Undangan lama untuk email yang sama diganti, supaya hanya satu tautan yang berlaku.
         $shop->invitations()->where('email', $email)->whereNull('accepted_at')->delete();
-        $shop->invitations()->create([
+        $invitation = $shop->invitations()->create([
             'email' => $email,
             'role' => $data['role'],
             'invited_by' => $request->user()->id,
@@ -70,6 +72,7 @@ class MemberController extends Controller
             'expires_at' => now()->addDays(7),
         ]);
         AuditLog::record($request->user(), 'shop.member_invited', $shop, ['email' => $email, 'role' => $data['role']]);
+        Notification::route('mail', $email)->notify(new ShopInvited($invitation->load('shop', 'inviter')));
 
         return back()->with('success', "Undangan untuk {$email} dibuat. Bagikan tautannya, berlaku 7 hari.");
     }

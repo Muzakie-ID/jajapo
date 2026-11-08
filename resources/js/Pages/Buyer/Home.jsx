@@ -2,6 +2,7 @@ import { Link, router } from '@inertiajs/react';
 import { useEffect, useState } from 'react';
 import BuyerLayout from '@/Layouts/BuyerLayout';
 import Icon from '@/Components/Icon';
+import NotificationBell from '@/Components/NotificationBell';
 import { PlateTile } from '@/Components/Plate';
 import { rupiah } from '@/lib/format';
 import { closesIn } from '@/lib/time';
@@ -97,13 +98,7 @@ export default function Home({ points, filters, closingSoon, preorders, pendingO
                         ))}
                     </select>
                 </label>
-                <Link
-                    href="/pesanan"
-                    aria-label="Pesanan saya"
-                    className="flex h-11 w-11 items-center justify-center rounded-full border border-line bg-white text-ink"
-                >
-                    <Icon name="bell" size={20} />
-                </Link>
+                <NotificationBell />
             </header>
 
             <form

@@ -5,6 +5,8 @@ namespace App\Http\Controllers\Seller;
 use App\Http\Controllers\Controller;
 use App\Models\BankAccount;
 use App\Models\Shop;
+use App\Notifications\AdminAlert;
+use App\Support\Notify;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -70,6 +72,8 @@ class RegisterController extends Controller
                 'account_name' => $data['account_name'],
             ]);
         });
+
+        Notify::superAdmins(new AdminAlert("Toko baru: {$data['name']}", "{$user->name} ({$user->email}) mendaftarkan toko. Periksa email UGM dan rekeningnya.", '/admin#toko'));
 
         return redirect('/seller/daftar')->with('success', 'Pendaftaran terkirim. Super admin akan memeriksa email UGM dan rekeningmu.');
     }

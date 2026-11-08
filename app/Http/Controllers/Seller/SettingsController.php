@@ -6,6 +6,8 @@ use App\Http\Controllers\Controller;
 use App\Models\AuditLog;
 use App\Models\BankAccount;
 use App\Models\Shop;
+use App\Notifications\AdminAlert;
+use App\Support\Notify;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
@@ -97,6 +99,7 @@ class SettingsController extends Controller
             'is_active' => false,
         ]);
         AuditLog::record($request->user(), 'bank_account.change_requested', $account, ['label' => $account->label()]);
+        Notify::superAdmins(new AdminAlert("{$shop->name} mengganti rekening", "Rekening baru {$account->bank} {$account->account_number} a.n. {$account->account_name}.", '/admin#toko', 'money'));
 
         return back()->with('success', 'Pengajuan ganti rekening terkirim. Pencairan tetap ke rekening lama sampai super admin menyetujui.');
     }

@@ -90,6 +90,8 @@ Dengan driver gateway `fake`, halaman bayar punya tombol **Simulasikan bayar** s
 | `PAYMENT_GATEWAY_DRIVER` | `fake` untuk lokal dan tes, `http` untuk gateway sungguhan |
 | `PAYMENT_GATEWAY_URL`, `PAYMENT_GATEWAY_KEY` | Alamat dan API key gateway |
 | `PAYMENT_GATEWAY_WEBHOOK_SECRET` | Secret untuk memeriksa tanda tangan callback |
+| `VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY`, `VAPID_SUBJECT` | Kunci web push, buat dengan `php artisan webpush:vapid` |
+| `MAIL_*` | Pengiriman email notifikasi |
 | `JAJAPO_TIMEZONE` | Zona waktu tampilan, bawaan `Asia/Jakarta` (database tetap UTC) |
 | `JAJAPO_SELLER_EMAIL_DOMAIN` | Domain email yang boleh mendaftar toko, bawaan `mail.ugm.ac.id` |
 
@@ -119,8 +121,26 @@ Hasil callback: `processed`, `duplicate`, `unknown`, `ignored`, `late` (bayar se
 | --- | --- | --- |
 | `jajapo:expire-orders` | tiap menit | Pesanan lewat batas bayar jadi kedaluwarsa, kuota kembali |
 | `jajapo:release-held` | tiap jam | Pesanan tidak diambil ditandai, dananya cair H+1 kalau tidak ada komplain |
+| `jajapo:remind-pickups` | tiap 15 menit | Pengingat ke pembeli 2 jam sebelum slot ambil atau jadwal antar |
 
-Di server, pasang cron `* * * * * php artisan schedule:run`.
+Di server, pasang cron `* * * * * php artisan schedule:run` dan jalankan worker antrean `php artisan queue:work` (notifikasi dan email dikirim lewat antrean).
+
+## Notifikasi
+
+Setiap kejadian penting tersimpan di lonceng aplikasi (`/notifikasi`), dikirim ke HP lewat web push kalau pengguna menekan Aktifkan di halaman notifikasi, dan sebagian juga lewat email.
+
+| Kejadian | Penerima | Email |
+| --- | --- | --- |
+| Pembayaran diterima, pengingat 2 jam sebelum ambil/antar | Pembeli | pembayaran saja |
+| Komplain diputuskan, refund ditransfer | Pembeli | ya |
+| Pesanan baru lunas | Anggota toko | tidak (hanya lonceng) |
+| Komplain baru, komplain diputuskan super admin | Anggota toko | ya |
+| Pencairan ditransfer/ditolak, rekening disetujui/ditolak | Admin toko | ya |
+| Toko disetujui/ditolak | Pembuat toko | ya |
+| Toko baru, pencairan, komplain ditolak penjual, refund perlu ditransfer, ganti rekening | Super admin | ya |
+| Undangan anggota | Email yang diundang | ya |
+
+Web push butuh kunci VAPID (`php artisan webpush:vapid`) dan HTTPS di produksi. Di iPhone, pembeli perlu memasang Jajapo ke layar utama dulu. Email memakai pengaturan `MAIL_*`.
 
 ## Tes
 
@@ -134,5 +154,5 @@ Tes memakai SQLite di memori. Untuk menjalankannya di PostgreSQL, set `DB_CONNEC
 ## Belum dibuat
 
 - Paket bundling.
-- Notifikasi push dan update status antar.
+- Update status antar.
 - Kontrak `HttpGateway` menunggu dokumentasi API gateway.

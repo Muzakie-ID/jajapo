@@ -8,6 +8,9 @@ use App\Models\Payout;
 use App\Models\Setting;
 use App\Models\Shop;
 use App\Models\User;
+use App\Notifications\AdminAlert;
+use App\Notifications\PayoutUpdated;
+use App\Support\Notify;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
@@ -46,6 +49,7 @@ class PayoutService
 
             $this->ledger->record(LedgerEntry::AVAILABLE, -$amount, 'payout_requested', 'Pengajuan pencairan ke '.$account->label(), $shop, payout: $payout);
             AuditLog::record($user, 'payout.requested', $payout, ['amount' => $amount]);
+            Notify::superAdmins(new AdminAlert('Pencairan '.rupiah($amount)." dari {$shop->name}", "Transfer ke {$account->label()} a.n. {$account->account_name}.", '/admin#pencairan', 'money'));
 
             return $payout;
         });
@@ -68,6 +72,7 @@ class PayoutService
             ]);
             $this->ledger->record(LedgerEntry::GATEWAY_CLEARING, -$payout->amount, 'payout_transferred', "Transfer pencairan {$payout->shop->name}", payout: $payout);
             AuditLog::record($admin, 'payout.transferred', $payout, ['amount' => $payout->amount]);
+            Notify::shop($payout->shop, new PayoutUpdated($payout), adminsOnly: true);
         });
     }
 
@@ -87,6 +92,7 @@ class PayoutService
             ]);
             $this->ledger->record(LedgerEntry::AVAILABLE, $payout->amount, 'payout_rejected', 'Pencairan ditolak: '.$note, $payout->shop, payout: $payout);
             AuditLog::record($admin, 'payout.rejected', $payout, ['note' => $note]);
+            Notify::shop($payout->shop, new PayoutUpdated($payout), adminsOnly: true);
         });
     }
 }

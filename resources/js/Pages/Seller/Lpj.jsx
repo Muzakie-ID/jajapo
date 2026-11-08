@@ -9,7 +9,7 @@ export default function Lpj({ report: r, preparer }) {
     const [signers, setSigners] = useState({ ketua: '', bendahara: preparer });
 
     return (
-        <div className="min-h-screen bg-[#E9EEE7] py-0 text-[#141A16] sm:py-6 print:bg-white print:py-0">
+        <div className="min-h-dvh bg-[#E9EEE7] py-0 text-[#141A16] sm:py-6 print:bg-white print:py-0">
             <Head title={`LPJ ${r.title}`} />
             <style>{'@page { size: A4; margin: 14mm; } @media print { html, body { background: #fff !important; } body { -webkit-print-color-adjust: exact; print-color-adjust: exact; } }'}</style>
 

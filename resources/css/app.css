@@ -28,6 +28,8 @@
 @layer base {
     html {
         -webkit-text-size-adjust: 100%;
+        /* Matikan zoom ketuk dua kali; tap tetap cepat. */
+        touch-action: manipulation;
     }
 
     body {

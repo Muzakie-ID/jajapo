@@ -4,10 +4,10 @@ import Flash from '@/Components/Flash';
 
 export default function Login({ googleEnabled, demoUsers }) {
     return (
-        <div className="min-h-screen bg-[#E4EBE1]">
+        <div className="min-h-dvh bg-[#E4EBE1]">
             <Head title="Masuk" />
             <Flash />
-            <main className="mx-auto flex min-h-screen max-w-[480px] flex-col justify-center gap-6 bg-mint px-6 py-10">
+            <main className="mx-auto flex min-h-dvh max-w-[480px] flex-col justify-center gap-6 bg-mint px-6 py-10">
                 <div className="flex flex-col gap-2">
                     <span className="text-[28px] font-extrabold tracking-[-0.03em] text-forest">jajapo</span>
                     <h1 className="m-0 text-2xl font-bold leading-tight">Masuk untuk pesan dan bayar</h1>

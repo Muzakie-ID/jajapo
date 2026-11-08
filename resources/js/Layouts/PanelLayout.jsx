@@ -76,12 +76,12 @@ export default function PanelLayout({ variant = 'seller', active, title, shop, b
     const user = auth.user;
 
     return (
-        <div className="min-h-screen bg-panel text-[#141A16]">
+        <div className="min-h-dvh bg-panel text-[#141A16]">
             <Head title={title} />
             <Flash />
             <div className="lg:flex">
                 <aside
-                    className={`hidden w-[264px] shrink-0 flex-col gap-[18px] px-3.5 py-5 lg:sticky lg:top-0 lg:flex lg:h-screen ${
+                    className={`hidden w-[264px] shrink-0 flex-col gap-[18px] px-3.5 py-5 lg:sticky lg:top-0 lg:flex lg:h-dvh ${
                         dark ? 'bg-night text-[#E6EFE4]' : 'border-r border-panel-line bg-[#FBFCFA]'
                     }`}
                 >

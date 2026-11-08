@@ -16,6 +16,19 @@ createInertiaApp({
     },
 });
 
+// Kunci zoom di HP. Meta viewport sudah melarang zoom, tapi Safari iPhone tetap mengizinkan
+// cubit, jadi gerakan cubit dan dua jari dicegah di sini.
+const blockZoom = (e) => e.preventDefault();
+document.addEventListener('gesturestart', blockZoom, { passive: false });
+document.addEventListener('gesturechange', blockZoom, { passive: false });
+document.addEventListener(
+    'touchmove',
+    (e) => {
+        if (e.touches.length > 1) e.preventDefault();
+    },
+    { passive: false },
+);
+
 if ('serviceWorker' in navigator && import.meta.env.PROD) {
     window.addEventListener('load', () => {
         navigator.serviceWorker.register('/sw.js').catch(() => {});

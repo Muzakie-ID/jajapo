@@ -18,9 +18,9 @@ function NavItem({ href, icon, label, active }) {
 export default function BuyerLayout({ title, active, children, bottomBar, hideNav = false }) {
     const { ticketHref } = usePage().props;
     return (
-        <div className="min-h-screen bg-[#E4EBE1]">
+        <div className="min-h-dvh bg-[#E4EBE1]">
             <Head title={title} />
-            <div className="relative mx-auto min-h-screen max-w-[480px] bg-mint text-ink">
+            <div className="relative mx-auto min-h-dvh max-w-[480px] bg-mint text-ink">
                 <Flash />
                 <main className={`px-5 pt-4 ${hideNav ? 'pb-28' : 'pb-48'}`}>{children}</main>
 

@@ -181,9 +181,9 @@ export default function Scan({ shop, tickets: serverTickets }) {
     const progress = result?.progress;
 
     return (
-        <div className="min-h-screen bg-[#101A13] lg:flex">
+        <div className="min-h-dvh bg-[#101A13] lg:flex">
             <Head title="Scan tiket" />
-            <div className="relative h-[52vh] min-h-[360px] overflow-hidden lg:h-screen lg:flex-1">
+            <div className="relative h-[52dvh] min-h-[360px] overflow-hidden lg:h-dvh lg:flex-1">
                 <video ref={videoRef} muted playsInline className="absolute inset-0 h-full w-full object-cover opacity-80" />
                 <div className="absolute inset-x-0 top-0 flex flex-col gap-3.5 p-4">
                     <div className="flex items-center justify-between">

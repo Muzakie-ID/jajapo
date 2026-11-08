@@ -76,7 +76,7 @@ export default function Home({ points, filters, closingSoon, preorders, pendingO
 
     return (
         <BuyerLayout title="Beranda" active="home" bottomBar={bottomBar}>
-            <header className="flex items-center justify-between gap-3">
+            <header className="sticky top-0 z-10 -mx-5 -mt-4 flex items-center justify-between gap-3 bg-mint px-5 pt-4 pb-2">
                 <label className="relative flex flex-col gap-0.5">
                     <span className="text-xs text-muted">Ambil di</span>
                     <span className="flex min-h-8 items-center gap-1.5 text-[17px] font-bold">

@@ -52,7 +52,7 @@ export default function BuyerLayout({ title, active, children, bottomBar, hideNa
 
 export function TopBar({ back, title, right }) {
     return (
-        <div className="mb-4 flex items-center justify-between gap-3">
+        <div className="sticky top-0 z-10 -mx-5 -mt-4 mb-4 flex items-center justify-between gap-3 bg-mint px-5 pt-4 pb-2">
             {back ? (
                 <Link
                     href={back}

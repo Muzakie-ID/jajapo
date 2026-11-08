@@ -55,9 +55,14 @@ class LoginController extends Controller
             return redirect('/login')->with('error', 'Login Google gagal. Coba lagi.');
         }
 
+        // Email Google yang belum terverifikasi tidak boleh dipakai menautkan akun yang sudah ada.
+        if (($google->user['email_verified'] ?? $google->user['verified_email'] ?? true) === false || blank($google->getEmail())) {
+            return redirect('/login')->with('error', 'Email Google ini belum terverifikasi. Pakai akun Google lain.');
+        }
+
         $user = User::query()->where('google_id', $google->getId())->first()
-            ?? User::query()->where('email', $google->getEmail())->first()
-            ?? new User(['email' => $google->getEmail()]);
+            ?? User::query()->whereRaw('LOWER(email) = ?', [mb_strtolower($google->getEmail())])->first()
+            ?? new User(['email' => mb_strtolower($google->getEmail())]);
 
         $user->fill([
             'name' => $user->name ?: $google->getName(),
@@ -70,7 +75,7 @@ class LoginController extends Controller
         Auth::login($user, remember: true);
         $request->session()->regenerate();
 
-        return redirect()->intended('/');
+        return redirect()->intended($this->homeFor($user));
     }
 
     /** Mode lokal saja: masuk sebagai pengguna demo tanpa Google. */
@@ -81,9 +86,7 @@ class LoginController extends Controller
         Auth::login($user, remember: true);
         $request->session()->regenerate();
 
-        $home = $user->is_super_admin ? '/admin' : ($user->shops()->exists() ? '/seller' : '/');
-
-        return redirect()->intended($home);
+        return redirect()->intended($this->homeFor($user));
     }
 
     public function logout(Request $request): RedirectResponse
@@ -93,6 +96,16 @@ class LoginController extends Controller
         $request->session()->regenerateToken();
 
         return redirect('/');
+    }
+
+    /** Halaman awal sesuai peran: super admin, penjual dengan toko aktif, atau pembeli. */
+    private function homeFor(User $user): string
+    {
+        return match (true) {
+            (bool) $user->is_super_admin => '/admin',
+            $user->shops()->where('shops.status', 'active')->exists() => '/seller',
+            default => '/',
+        };
     }
 
     private function safeBack(?string $path): ?string

@@ -42,6 +42,10 @@ Dibangun dengan Laravel 13, Inertia v3 + React 19, Tailwind CSS v4, dan PostgreS
 - Uang toko tertahan sampai tiket dipindai. Pesanan yang tidak diambil dicairkan otomatis H+1 setelah slot berakhir.
 - Callback gateway ditandatangani HMAC dan diproses sekali per `event_id`.
 
+## Memasang di server
+
+Panduan lengkap ada di [docs/DEPLOY.md](docs/DEPLOY.md): Nginx, PostgreSQL, HTTPS, worker antrean, scheduler, login Google, super admin pertama, dan cadangan database. Berkas contohnya ada di folder `deploy/`. Periksa kesiapan server dengan `php artisan jajapo:doctor`.
+
 ## Menjalankan di lokal
 
 Butuh PHP 8.3+, Composer, Node 22+, dan PostgreSQL 16 (atau SQLite untuk coba cepat).

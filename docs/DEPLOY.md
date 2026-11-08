@@ -59,9 +59,9 @@ GOOGLE_CLIENT_SECRET=...
 GOOGLE_REDIRECT_URI=/auth/google/callback
 
 PAYMENT_GATEWAY_DRIVER=http
-PAYMENT_GATEWAY_URL=...
-PAYMENT_GATEWAY_KEY=...
-PAYMENT_GATEWAY_WEBHOOK_SECRET=...
+PAYMENT_GATEWAY_URL=https://api-qris.muzakie.cloud
+PAYMENT_GATEWAY_KEY=...            # API key dari Proyek & API key di QRIS Muzakie
+PAYMENT_GATEWAY_WEBHOOK_SECRET=... # webhook secret proyek yang sama
 ```
 
 Lalu pasang dependensi, build aset, dan siapkan database:
@@ -125,7 +125,7 @@ sudo -u www-data php artisan jajapo:doctor
 
 Semua baris `PERLU` harus jadi `OK` sebelum dibuka untuk umum. Perintah ini memeriksa env, database, migrasi, super admin, gateway, antrean, scheduler, email, web push, login Google, storage, dan aset.
 
-Daftarkan juga URL callback pembayaran di dashboard payment gateway: `https://DOMAINMU/webhooks/payment`.
+Di dashboard proyek QRIS Muzakie, isi URL webhook `https://DOMAINMU/webhooks/payment`, rentang kode unik 500 sampai 1999, dan masa berlaku tagihan 15 menit. Coba satu pesanan kecil sampai lunas, lalu periksa **Log webhook** di dashboard gateway: kirimannya harus dijawab 200.
 
 ## Memperbarui versi
 

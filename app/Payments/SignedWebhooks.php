@@ -6,11 +6,13 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
 
 /**
- * Callback ditandatangani HMAC-SHA256 dari body mentah dengan secret bersama,
- * dikirim di header X-Signature. Timestamp di header X-Timestamp mencegah
- * callback lama dikirim ulang.
+ * Callback QRIS Muzakie (https://qris.muzakie.cloud/docs/webhook).
  *
- * Bentuk body: {"event_id", "charge_id", "status", "total", "paid_at"}.
+ * Header: X-Event-Id (sama di setiap kirim ulang), X-Event-Type, X-Timestamp (Unix milidetik),
+ * dan X-Signature = hex(HMAC-SHA256(webhook secret, X-Timestamp + "." + body mentah)).
+ * Body: {"id", "type", "created_at", "data": {"id", "merchant_ref", "status", "amount",
+ * "unique_code", "final_amount", "paid_at", ...}}. Event: transaction.paid,
+ * transaction.expired, transaction.late_paid. Timestamp lebih dari 5 menit ditolak.
  */
 trait SignedWebhooks
 {
@@ -23,25 +25,38 @@ trait SignedWebhooks
     {
         $secret = (string) config('services.payment_gateway.webhook_secret');
         $timestamp = (string) $request->header('X-Timestamp', '');
-        $signature = (string) $request->header('X-Signature', '');
+        $signature = strtolower((string) $request->header('X-Signature', ''));
         $body = $request->getContent();
 
-        $fresh = ctype_digit($timestamp) && abs(time() - (int) $timestamp) <= 300;
+        // Gateway mengirim milidetik; detik tetap diterima supaya aman kalau formatnya berubah.
+        $sentAt = ctype_digit($timestamp) ? (int) $timestamp : 0;
+        $sentAtMs = $sentAt > 100_000_000_000 ? $sentAt : $sentAt * 1000;
+        $fresh = $sentAt > 0 && abs((int) floor(microtime(true) * 1000) - $sentAtMs) <= 5 * 60 * 1000;
         $valid = $secret !== '' && hash_equals(self::sign($body, $timestamp, $secret), $signature);
 
         if (! $fresh || ! $valid) {
             throw new InvalidSignatureException('Tanda tangan callback tidak valid atau kedaluwarsa.');
         }
 
-        $data = json_decode($body, true) ?: [];
+        $event = json_decode($body, true) ?: [];
+        $data = is_array($event['data'] ?? null) ? $event['data'] : [];
+        $type = (string) ($request->header('X-Event-Type') ?: ($event['type'] ?? ''));
+
+        $status = match ($type) {
+            'transaction.paid' => 'paid',
+            'transaction.late_paid' => 'late_paid',
+            'transaction.expired' => 'expired',
+            default => strtolower((string) ($data['status'] ?? '')),
+        };
 
         return new WebhookEvent(
-            eventId: (string) ($data['event_id'] ?? ''),
-            reference: (string) ($data['charge_id'] ?? ''),
-            status: (string) ($data['status'] ?? ''),
-            amount: (int) ($data['total'] ?? 0),
+            eventId: (string) ($request->header('X-Event-Id') ?: ($event['id'] ?? '')),
+            reference: (string) ($data['id'] ?? ''),
+            status: $status,
+            amount: (int) ($data['final_amount'] ?? 0),
             paidAt: isset($data['paid_at']) ? Carbon::parse($data['paid_at']) : null,
-            payload: $data,
+            payload: $event,
+            merchantRef: (string) ($data['merchant_ref'] ?? ''),
         );
     }
 }

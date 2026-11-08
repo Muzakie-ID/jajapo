@@ -7,6 +7,7 @@ use App\Models\Payment;
 use App\Models\PaymentCallback;
 use App\Payments\PaymentGateway;
 use App\Payments\WebhookEvent;
+use Illuminate\Support\Facades\Log;
 
 class PaymentService
 {
@@ -30,6 +31,11 @@ class PaymentService
         }
 
         $payment = Payment::query()->where('gateway_ref', $event->reference)->first();
+        // merchant_ref adalah kode pesanan Jajapo; harus cocok dengan tagihan yang ditemukan.
+        if ($payment && $event->merchantRef !== '' && $payment->order && $payment->order->code !== $event->merchantRef) {
+            Log::warning('Callback gateway: merchant_ref tidak cocok', ['ref' => $event->reference, 'merchant_ref' => $event->merchantRef]);
+            $payment = null;
+        }
 
         // ON CONFLICT DO NOTHING: callback yang sama (event_id sama) hanya dicatat sekali,
         // tanpa membatalkan transaksi yang sedang berjalan di PostgreSQL.
@@ -51,10 +57,28 @@ class PaymentService
             return 'unknown';
         }
 
-        $result = $this->applyStatus($payment, $event->status, $event->amount);
+        $result = match ($event->status) {
+            // Uang masuk setelah tagihan kedaluwarsa atau dibatalkan: tetap lewat applyStatus,
+            // yang memutuskan lunas (pesanan masih menunggu) atau bayar telat (pesanan sudah tutup).
+            'paid', 'late_paid' => $this->applyStatus($payment, 'paid', $event->amount),
+            'expired' => $this->expire($payment),
+            default => 'ignored',
+        };
         $callback->update(['processed_at' => now()]);
 
         return $result;
+    }
+
+    /** Tagihan kedaluwarsa di gateway: tutup pesanan yang masih menunggu dan kembalikan kuotanya. */
+    private function expire(Payment $payment): string
+    {
+        $order = $payment->order;
+        if ($order->status !== OrderStatus::PendingPayment) {
+            return 'ignored';
+        }
+        $this->orders->expire($order);
+
+        return 'expired';
     }
 
     /** Dipakai tombol "Cek status di gateway" saat callback belum masuk. */

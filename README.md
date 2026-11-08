@@ -103,23 +103,39 @@ Dengan driver gateway `fake`, halaman bayar punya tombol **Simulasikan bayar** s
 
 Aturan lain (batas bayar 15 menit, minimal pencairan, maksimal porsi, alamat yang dilindungi) ada di `config/jajapo.php`.
 
-## Kontrak gateway (draf)
+## Payment gateway: QRIS Muzakie
 
-`app/Payments/HttpGateway.php` masih memakai kontrak draf. Sesuaikan begitu dokumentasi API gateway sudah ada.
+`app/Payments/HttpGateway.php` memakai API [QRIS Muzakie](https://qris.muzakie.cloud/docs/api) (`PAYMENT_GATEWAY_DRIVER=http`).
 
 ```
-POST {base}/charges              {reference, amount, expires_at, callback_url}
-     -> {id, unique_code, total, qr_string, expires_at}
-GET  {base}/charges/{id}         -> {status}
-POST {base}/charges/{id}/cancel
+POST /v1/transactions            {amount, merchant_ref, expiry_min, return_url, metadata}
+     Idempotency-Key: JJP-1001   -> {id, unique_code, final_amount, qris_payload, checkout_url, expires_at}
+GET  /v1/transactions/{id}       -> {status: PENDING | PAID | EXPIRED | CANCELLED | LATE_PAID}
+POST /v1/transactions/{id}/cancel
 ```
 
-Callback dikirim ke `POST /webhooks/payment` dengan body `{event_id, charge_id, status, total, paid_at}` dan header:
+- Jajapo mengirim nominal dasar (subtotal + ongkir) dan kode pesanan sebagai `merchant_ref`. Gateway menambahkan kode unik; `final_amount` yang dibayar pembeli.
+- `Idempotency-Key` memakai kode pesanan, jadi request yang diulang tidak membuat tagihan dobel.
+- Halaman bayar menampilkan QR dari `qris_payload`, dengan tautan cadangan ke `checkout_url`.
+- 409 (kode unik penuh) diteruskan ke pembeli sebagai "coba lagi sebentar"; kuota pesanan langsung dikembalikan.
 
-- `X-Timestamp`: waktu Unix, ditolak kalau selisihnya lebih dari 5 menit.
-- `X-Signature`: `hex(hmac_sha256(timestamp + "." + body, webhook_secret))`.
+Di dashboard proyek QRIS Muzakie, atur:
 
-Hasil callback: `processed`, `duplicate`, `unknown`, `ignored`, `late` (bayar setelah kedaluwarsa, menunggu keputusan super admin), atau `mismatch` (nominal tidak cocok, masuk antrean periksa).
+| Pengaturan | Isi |
+| --- | --- |
+| URL webhook | `https://DOMAINMU/webhooks/payment` |
+| Rentang kode unik | 500 sampai 1999 |
+| Masa berlaku tagihan | 15 menit (Jajapo juga mengirim `expiry_min` sesuai pengaturan ini) |
+
+Callback diperiksa dengan `X-Signature = hex(HMAC-SHA256(webhook secret, X-Timestamp + "." + body mentah))`. `X-Timestamp` dalam milidetik dan ditolak kalau selisihnya lebih dari 5 menit. `X-Event-Id` disimpan unik di `payment_callbacks`, jadi kiriman ulang hanya diproses sekali.
+
+| Event | Yang dilakukan Jajapo |
+| --- | --- |
+| `transaction.paid` | Pesanan lunas, dana masuk saldo tertahan toko. Nominal yang tidak cocok masuk antrean periksa super admin. |
+| `transaction.expired` | Pesanan yang masih menunggu jadi kedaluwarsa, kuota kembali. |
+| `transaction.late_paid` | Uang masuk setelah kedaluwarsa atau batal: menunggu keputusan super admin (lunasi atau refund). |
+
+Hasil callback: `processed`, `duplicate`, `unknown`, `ignored`, `expired`, `late`, atau `mismatch`.
 
 ## Perintah terjadwal
 
@@ -157,6 +173,6 @@ vendor/bin/pint --test
 
 Tes memakai SQLite di memori. Untuk menjalankannya di PostgreSQL, set `DB_CONNECTION=pgsql` dan kredensial database tes di environment sebelum `php artisan test`. CI menjalankan keduanya.
 
-## Belum dibuat
+## Belum diuji di lingkungan nyata
 
-- Kontrak `HttpGateway` menunggu dokumentasi API gateway.
+- Panggilan ke API QRIS Muzakie dan callback-nya sudah diuji dengan respons tiruan sesuai dokumentasi. Uji sekali dengan API key asli di server (pesanan kecil sampai lunas) sebelum dibuka untuk umum.

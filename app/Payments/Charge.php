@@ -12,5 +12,6 @@ final readonly class Charge
         public int $total,
         public string $qrString,
         public CarbonInterface $expiresAt,
+        public ?string $checkoutUrl = null,
     ) {}
 }

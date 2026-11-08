@@ -96,6 +96,11 @@ export default function Pay({ order, canSimulate }) {
                         <span className="tabular text-[30px] font-extrabold tracking-[-0.01em]">{rupiah(order.total)}</span>
                         <span className="text-xs text-muted">Nominal sudah terisi otomatis saat QR di-scan.</span>
                     </div>
+                    {order.checkout_url && !expired && (
+                        <a href={order.checkout_url} target="_blank" rel="noopener" className="text-[13px] font-semibold text-leaf">
+                            QR tidak terbaca? Buka halaman bayar QRIS
+                        </a>
+                    )}
                 </section>
 
                 <section aria-label="Rincian pembayaran" className="flex flex-col gap-2.5 rounded-[20px] border border-line bg-white px-4 py-3.5 text-[13px]">

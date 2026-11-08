@@ -39,6 +39,7 @@ class PaymentController extends Controller
                 'place' => $order->isDelivery() ? 'antar ke '.$order->deliveryZone?->name : 'ambil di '.$order->slot?->place,
                 'expires_at' => $order->expires_at?->toIso8601String(),
                 'qr_string' => $order->payment?->qr_string,
+                'checkout_url' => $order->payment?->checkout_url,
             ],
             'canSimulate' => app()->environment('local') && app(PaymentGateway::class) instanceof FakeGateway,
         ]);

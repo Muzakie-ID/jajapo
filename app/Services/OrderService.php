@@ -15,6 +15,7 @@ use App\Models\User;
 use App\Notifications\NewPaidOrder;
 use App\Notifications\OrderOutForDelivery;
 use App\Notifications\OrderPaid;
+use App\Payments\GatewayException;
 use App\Payments\PaymentGateway;
 use App\Support\Notify;
 use Illuminate\Support\Facades\DB;
@@ -194,7 +195,11 @@ class OrderService
             report($e);
             $this->releaseQuota($order);
             $order->update(['status' => OrderStatus::Cancelled]);
-            throw ValidationException::withMessages(['items' => 'QR pembayaran belum bisa dibuat. Coba lagi sebentar.']);
+            // Kode unik penuh bisa langsung dicoba lagi; error lain disamarkan untuk pembeli.
+            $message = $e instanceof GatewayException && str_starts_with($e->getMessage(), 'Kode unik')
+                ? $e->getMessage()
+                : 'QR pembayaran belum bisa dibuat. Coba lagi sebentar.';
+            throw ValidationException::withMessages(['items' => $message]);
         }
 
         $order->update([
@@ -209,6 +214,7 @@ class OrderService
             'gateway' => $this->gateway->name(),
             'gateway_ref' => $charge->reference,
             'qr_string' => $charge->qrString,
+            'checkout_url' => $charge->checkoutUrl,
             'status' => Payment::STATUS_PENDING,
             'expires_at' => $charge->expiresAt,
         ]);

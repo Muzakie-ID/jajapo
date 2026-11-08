@@ -30,20 +30,30 @@ class PaymentWebhookTest extends TestCase
         return app(OrderService::class)->checkout($this->buyer(), $po, [['variant_id' => $this->variant($po), 'qty' => 2]], 'pickup', $po->slots->first()->id);
     }
 
-    private function sendCallback(Order $order, string $eventId, ?int $total = null, ?string $secret = null): TestResponse
+    /** Callback dengan format QRIS Muzakie: header X-Event-*, timestamp milidetik, body {id, type, data}. */
+    private function sendCallback(Order $order, string $eventId, ?int $total = null, ?string $secret = null, string $type = 'transaction.paid', ?int $timestampMs = null): TestResponse
     {
         $body = json_encode([
-            'event_id' => $eventId,
-            'charge_id' => $order->payment->gateway_ref,
-            'status' => 'paid',
-            'total' => $total ?? $order->total,
-            'paid_at' => now()->toIso8601String(),
+            'id' => $eventId,
+            'type' => $type,
+            'created_at' => now()->toIso8601String(),
+            'data' => [
+                'id' => $order->payment->gateway_ref,
+                'merchant_ref' => $order->code,
+                'status' => ['transaction.paid' => 'PAID', 'transaction.late_paid' => 'LATE_PAID', 'transaction.expired' => 'EXPIRED'][$type],
+                'amount' => $order->shopAmount(),
+                'unique_code' => $order->unique_code,
+                'final_amount' => $total ?? $order->total,
+                'paid_at' => $type === 'transaction.expired' ? null : now()->toIso8601String(),
+            ],
         ]);
-        $ts = (string) time();
+        $ts = (string) ($timestampMs ?? (int) floor(microtime(true) * 1000));
 
         return $this->call('POST', '/webhooks/payment', [], [], [], [
             'CONTENT_TYPE' => 'application/json',
             'HTTP_ACCEPT' => 'application/json',
+            'HTTP_X_EVENT_ID' => $eventId,
+            'HTTP_X_EVENT_TYPE' => $type,
             'HTTP_X_TIMESTAMP' => $ts,
             'HTTP_X_SIGNATURE' => FakeGateway::sign($body, $ts, $secret ?? 'rahasia-tes'),
         ], $body);
@@ -79,6 +89,44 @@ class PaymentWebhookTest extends TestCase
 
         $this->sendCallback($order, 'evt-1', secret: 'salah')->assertUnauthorized();
 
+        $this->assertSame(OrderStatus::PendingPayment, $order->fresh()->status);
+    }
+
+    public function test_old_callbacks_are_rejected(): void
+    {
+        $order = $this->pendingOrder();
+
+        $this->sendCallback($order, 'evt-1', timestampMs: (int) floor(microtime(true) * 1000) - 6 * 60 * 1000)->assertUnauthorized();
+        $this->assertSame(OrderStatus::PendingPayment, $order->fresh()->status);
+    }
+
+    public function test_expired_event_closes_the_order_and_returns_quota(): void
+    {
+        $order = $this->pendingOrder();
+        $product = $order->items->first()->product;
+        $this->assertSame(2, $product->fresh()->sold_count);
+
+        $this->sendCallback($order, 'evt-exp', type: 'transaction.expired')->assertJson(['result' => 'expired']);
+
+        $this->assertSame(OrderStatus::Expired, $order->fresh()->status);
+        $this->assertSame(0, $product->fresh()->sold_count);
+    }
+
+    public function test_late_paid_event_waits_for_the_super_admin(): void
+    {
+        $order = $this->pendingOrder();
+        app(OrderService::class)->expire($order);
+
+        $this->sendCallback($order, 'evt-late', type: 'transaction.late_paid')->assertJson(['result' => 'late']);
+        $this->assertSame(PaymentService::LATE, $order->payment->fresh()->status);
+    }
+
+    public function test_callback_for_another_order_code_is_not_applied(): void
+    {
+        $order = $this->pendingOrder();
+        $order->setAttribute('code', 'JJP-9999');
+
+        $this->sendCallback($order, 'evt-x')->assertJson(['result' => 'unknown']);
         $this->assertSame(OrderStatus::PendingPayment, $order->fresh()->status);
     }
 

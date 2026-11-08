@@ -22,7 +22,7 @@ Platform pre-order makanan untuk danusan kampus UGM. Baca `README.md` untuk fitu
 
 ## Struktur
 
-- `app/Payments`: antarmuka `PaymentGateway`, `FakeGateway` (lokal/tes), `HttpGateway` (draf kontrak).
+- `app/Payments`: antarmuka `PaymentGateway`, `FakeGateway` (lokal/tes), `HttpGateway` (API QRIS Muzakie, lihat README).
 - `app/Services`: `OrderService`, `PaymentService`, `PayoutService`, `Ledger`.
 - `app/Http/Controllers/{Buyer,Seller,Admin,Auth}`; `app/Support/Present.php` membentuk props untuk halaman.
 - `app/Console/Commands`: perintah terjadwal, dijadwalkan di `routes/console.php`.

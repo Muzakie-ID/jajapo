@@ -44,7 +44,7 @@ return [
     // Payment gateway milik platform. Driver "fake" untuk pengembangan, "http" untuk gateway asli.
     'payment_gateway' => [
         'driver' => env('PAYMENT_GATEWAY_DRIVER', 'fake'),
-        'base_url' => env('PAYMENT_GATEWAY_URL'),
+        'base_url' => env('PAYMENT_GATEWAY_URL', 'https://api-qris.muzakie.cloud'),
         'api_key' => env('PAYMENT_GATEWAY_KEY'),
         'webhook_secret' => env('PAYMENT_GATEWAY_WEBHOOK_SECRET'),
     ],

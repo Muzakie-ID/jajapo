@@ -34,12 +34,31 @@ const emptyVariant = (name = '') => ({ _key: key(), id: null, name, price_delta:
 const emptyProduct = () => ({ _key: key(), id: null, name: '', price: '', quota: '', sold: 0, locked: false, variants: [emptyVariant('Reguler')] });
 const emptySlot = () => ({ _key: key(), id: null, place: '', place_note: '', date: '', start: '10:00', end: '12:00', locked: false });
 const emptyZone = () => ({ _key: key(), id: null, name: '', fee: '', locked: false });
+const emptyBundle = () => ({ _key: key(), id: null, name: '', price: '', quota: '', sold: 0, locked: false, items: [{ _key: key(), ref: '', qty: 1 }, { _key: key(), ref: '', qty: 1 }] });
+
+/** Isi paket dari server menunjuk "menu ke-i:varian ke-j"; di form diganti kunci baris supaya aman saat menu diubah urutannya. */
+function bundlesFromServer(bundles, products) {
+    return (bundles ?? []).map((b) => ({
+        ...b,
+        _key: key(),
+        quota: b.quota ?? '',
+        items: b.items.map((item) => {
+            const [pi, vi] = item.ref.split(':').map(Number);
+            const p = products[pi];
+            const v = p?.variants[vi];
+            return { _key: key(), ref: p && v ? `${p._key}:${v._key}` : '', qty: item.qty };
+        }),
+    }));
+}
 
 export default function PreorderForm({ shop, preorder, suggestions }) {
     const editing = Boolean(preorder?.id);
     const stage = preorder?.stage ?? 'draft';
     const isDraft = stage === 'draft';
 
+    const [initialProducts] = useState(() =>
+        preorder?.products?.length ? preorder.products.map((p) => ({ ...p, _key: key(), variants: p.variants.map((v) => ({ ...v, _key: key() })) })) : [emptyProduct()],
+    );
     const form = useForm({
         title: preorder?.title ?? '',
         slug: preorder?.slug ?? '',
@@ -53,9 +72,8 @@ export default function PreorderForm({ shop, preorder, suggestions }) {
         delivery_start: preorder?.delivery_start ?? '10:00',
         delivery_end: preorder?.delivery_end ?? '14:00',
         zones: preorder?.zones?.length ? preorder.zones.map((z) => ({ ...z, _key: key() })) : [emptyZone()],
-        products: preorder?.products?.length
-            ? preorder.products.map((p) => ({ ...p, _key: key(), variants: p.variants.map((v) => ({ ...v, _key: key() })) }))
-            : [emptyProduct()],
+        products: initialProducts,
+        bundles: bundlesFromServer(preorder?.bundles, initialProducts),
         slots: preorder?.slots?.length ? preorder.slots.map((s) => ({ ...s, _key: key() })) : [emptySlot()],
         poster: null,
         story: null,
@@ -73,6 +91,14 @@ export default function PreorderForm({ shop, preorder, suggestions }) {
     const updateVariant = (i, j, patch) =>
         updateProduct(i, { variants: data.products[i].variants.map((v, idx) => (idx === j ? { ...v, ...patch } : v)) });
     const updateSlot = (i, patch) => setData('slots', data.slots.map((s, idx) => (idx === i ? { ...s, ...patch } : s)));
+    const updateBundle = (i, patch) => setData('bundles', data.bundles.map((b, idx) => (idx === i ? { ...b, ...patch } : b)));
+    const menuOptions = data.products.flatMap((p) =>
+        p.variants.map((v) => ({
+            ref: `${p._key}:${v._key}`,
+            label: `${p.name || 'Menu tanpa nama'}${p.variants.length > 1 || v.name !== 'Reguler' ? `, ${v.name || 'varian'}` : ''}`,
+            price: Number(p.price || 0) + Number(v.price_delta || 0),
+        })),
+    );
     const updateZone = (i, patch) => setData('zones', data.zones.map((z, idx) => (idx === i ? { ...z, ...patch } : z)));
     const zonesLocked = data.zones.some((z) => z.locked);
 
@@ -92,6 +118,15 @@ export default function PreorderForm({ shop, preorder, suggestions }) {
             ...(editing ? { _method: 'put' } : {}),
             labels: d.labels.filter(Boolean),
             products: d.products.map(({ _key, sold, locked, ...p }) => ({ ...p, variants: p.variants.map(({ _key: k, locked: l, ...v }) => v) })),
+            bundles: d.bundles.map(({ _key, sold, locked, ...b }) => ({
+                ...b,
+                items: b.items.map((item) => {
+                    const [pk, vk] = item.ref.split(':');
+                    const pi = d.products.findIndex((p) => p._key === pk);
+                    const vi = pi < 0 ? -1 : d.products[pi].variants.findIndex((v) => v._key === vk);
+                    return { ref: pi < 0 || vi < 0 ? '' : `${pi}:${vi}`, qty: item.qty };
+                }),
+            })),
             slots: d.slots.map(({ _key, locked, ...s }) => s),
             zones: d.delivery_enabled ? d.zones.map(({ _key, locked, ...z }) => ({ ...z, fee: z.fee === '' ? 0 : z.fee })) : [],
         }));
@@ -248,6 +283,33 @@ export default function PreorderForm({ shop, preorder, suggestions }) {
                                     className={inputCls}
                                 />
                             </Field>
+                        </Section>
+
+                        <Section
+                            title="Paket (opsional)"
+                            description="Gabungkan beberapa menu dengan harga paket. Kuota paket ikut memotong kuota menu isinya."
+                            error={typeof errors.bundles === 'string' ? errors.bundles : null}
+                        >
+                            {data.bundles.map((b, i) => (
+                                <BundleEditor
+                                    key={b._key}
+                                    bundle={b}
+                                    index={i}
+                                    options={menuOptions}
+                                    errors={errors}
+                                    onChange={(patch) => updateBundle(i, patch)}
+                                    onRemove={() => setData('bundles', data.bundles.filter((_, idx) => idx !== i))}
+                                />
+                            ))}
+                            <button
+                                type="button"
+                                onClick={() => setData('bundles', [...data.bundles, emptyBundle()])}
+                                disabled={data.bundles.length >= 10}
+                                className="flex h-11 items-center justify-center gap-2 rounded-xl border border-dashed border-[#BFD0BA] bg-[#F6F8F5] text-sm font-semibold text-forest disabled:opacity-50"
+                            >
+                                <Icon name="plus" size={18} strokeWidth={2.2} />
+                                Tambah paket
+                            </button>
                         </Section>
 
                         <Section
@@ -691,6 +753,101 @@ function SlotEditor({ slot, index, errors, onChange, onRemove }) {
                 <Field label="Selesai" error={e('end')}>
                     <input type="time" value={slot.end} onChange={(ev) => onChange({ end: ev.target.value })} className={`${inputCls} px-2.5`} />
                 </Field>
+            </div>
+        </div>
+    );
+}
+
+function BundleEditor({ bundle, index, options, errors, onChange, onRemove }) {
+    const e = (field) => errors[`bundles.${index}.${field}`];
+    const normal = bundle.items.reduce((sum, item) => sum + (options.find((o) => o.ref === item.ref)?.price ?? 0) * Number(item.qty || 0), 0);
+    const itemsError = typeof errors[`bundles.${index}.items`] === 'string' ? errors[`bundles.${index}.items`] : null;
+    const setItem = (j, patch) => onChange({ items: bundle.items.map((it, idx) => (idx === j ? { ...it, ...patch } : it)) });
+
+    return (
+        <div className="flex flex-col gap-3 rounded-2xl border border-line p-3.5" data-error={itemsError ? 'true' : undefined}>
+            <div className="flex items-center justify-between gap-2">
+                <span className="text-[13px] font-bold text-muted">Paket {index + 1}</span>
+                {bundle.locked ? (
+                    <span className="text-xs font-semibold text-muted">Sudah dipesan {bundle.sold} paket, isi dikunci</span>
+                ) : (
+                    <button type="button" onClick={onRemove} className="flex h-8 items-center gap-1 text-xs font-semibold text-danger">
+                        <Icon name="trash" size={15} />
+                        Hapus paket
+                    </button>
+                )}
+            </div>
+            <Field label="Nama paket" error={e('name')}>
+                <input value={bundle.name} onChange={(ev) => onChange({ name: ev.target.value })} placeholder="Paket Hemat Berdua" maxLength={60} className={inputCls} />
+            </Field>
+            <div className="grid grid-cols-2 gap-3">
+                <Field label="Harga paket" error={e('price')}>
+                    <MoneyInput value={bundle.price} onChange={(v) => onChange({ price: v })} placeholder="25000" />
+                </Field>
+                <Field label="Kuota paket (opsional)" error={e('quota')}>
+                    <input inputMode="numeric" value={bundle.quota ?? ''} onChange={(ev) => onChange({ quota: ev.target.value.replace(/\D/g, '') })} placeholder="Ikut menu" className={`tabular ${inputCls}`} />
+                </Field>
+            </div>
+            <div className="flex flex-col gap-2">
+                <span className="text-[13px] font-semibold text-body">Isi paket</span>
+                {itemsError && <span className="text-xs font-semibold text-danger">{itemsError}</span>}
+                {bundle.items.map((item, j) => (
+                    <div key={item._key} className="flex flex-col gap-1">
+                        <div className="flex items-center gap-2">
+                            <div className="min-w-0 flex-1">
+                                <select
+                                    aria-label={`Isi paket ${j + 1}`}
+                                    value={item.ref}
+                                    disabled={bundle.locked}
+                                    onChange={(ev) => setItem(j, { ref: ev.target.value })}
+                                    className={`${inputCls} disabled:bg-[#F6F8F5]`}
+                                >
+                                    <option value="">Pilih menu</option>
+                                    {options.map((o) => (
+                                        <option key={o.ref} value={o.ref}>
+                                            {o.label}
+                                        </option>
+                                    ))}
+                                </select>
+                            </div>
+                            <div className="w-[68px] shrink-0">
+                                <input
+                                    aria-label={`Jumlah isi paket ${j + 1}`}
+                                    inputMode="numeric"
+                                    value={item.qty}
+                                    disabled={bundle.locked}
+                                    onChange={(ev) => setItem(j, { qty: ev.target.value.replace(/\D/g, '').slice(0, 2) })}
+                                    className={`tabular ${inputCls} px-2 text-center disabled:bg-[#F6F8F5]`}
+                                />
+                            </div>
+                            <button
+                                type="button"
+                                aria-label={`Hapus isi paket ${j + 1}`}
+                                disabled={bundle.locked || bundle.items.length === 1}
+                                onClick={() => onChange({ items: bundle.items.filter((_, idx) => idx !== j) })}
+                                className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl text-muted hover:text-danger disabled:opacity-30"
+                            >
+                                <Icon name="x" size={18} />
+                            </button>
+                        </div>
+                        {(e(`items.${j}.ref`) || e(`items.${j}.qty`)) && <span className="text-xs font-semibold text-danger">{e(`items.${j}.ref`) || e(`items.${j}.qty`)}</span>}
+                    </div>
+                ))}
+                {!bundle.locked && (
+                    <button
+                        type="button"
+                        disabled={bundle.items.length >= 10}
+                        onClick={() => onChange({ items: [...bundle.items, { _key: key(), ref: '', qty: 1 }] })}
+                        className="flex h-10 items-center gap-1.5 self-start rounded-xl px-1 text-[13px] font-semibold text-forest disabled:opacity-50"
+                    >
+                        <Icon name="plus" size={16} strokeWidth={2.2} />
+                        Tambah isi
+                    </button>
+                )}
+                <span className="text-xs text-muted">
+                    Harga satuan {normal ? rupiah(normal) : '-'}
+                    {normal > Number(bundle.price || 0) && Number(bundle.price) > 0 && <span className="font-semibold text-leaf"> · pembeli hemat {rupiah(normal - Number(bundle.price))}</span>}
+                </span>
             </div>
         </div>
     );

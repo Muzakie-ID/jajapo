@@ -10,7 +10,18 @@ import { readCart, writeCart } from '@/lib/cart';
 export default function Preorder({ preorder, pendingOrder, savedPhone }) {
     const { auth } = usePage().props;
     const variants = useMemo(
-        () => preorder.products.flatMap((p) => p.variants.map((v) => ({ ...v, productName: p.name, multi: preorder.products.length > 1 }))),
+        () =>
+            preorder.products.flatMap((p) =>
+                p.variants.map((v) => ({
+                    ...v,
+                    name: p.is_bundle ? p.name : v.name,
+                    productName: p.name,
+                    multi: !p.is_bundle && preorder.products.filter((x) => !x.is_bundle).length > 1,
+                    isBundle: p.is_bundle,
+                    contents: p.contents,
+                    normalPrice: p.normal_price,
+                })),
+            ),
         [preorder],
     );
 
@@ -182,9 +193,22 @@ export default function Preorder({ preorder, pendingOrder, savedPhone }) {
                     <div className="overflow-hidden rounded-[20px] border border-line bg-white">
                         {variants.map((v, i) => (
                             <div key={v.id} className={`flex items-center justify-between gap-3 py-2 pl-4 pr-2 ${i ? 'border-t border-[#E6EDE3]' : ''}`}>
-                                <div className="flex flex-col gap-0.5">
-                                    <span className="text-[15px] font-semibold">{v.multi ? `${v.productName}, ${v.name}` : v.name}</span>
-                                    <span className="tabular text-[13px] text-muted">{rupiah(v.price)}</span>
+                                <div className="flex min-w-0 flex-col gap-0.5">
+                                    <span className="flex items-center gap-1.5 text-[15px] font-semibold">
+                                        {v.isBundle && <span className="rounded-full bg-amber-bg px-2 py-0.5 text-[11px] font-bold text-amber-ink">Paket</span>}
+                                        {v.multi ? `${v.productName}, ${v.name}` : v.name}
+                                    </span>
+                                    {v.isBundle && <span className="text-xs text-body">{v.contents}</span>}
+                                    <span className="tabular text-[13px] text-muted">
+                                        {rupiah(v.price)}
+                                        {v.isBundle && v.normalPrice > v.price && (
+                                            <>
+                                                {' '}
+                                                <span className="line-through">{rupiah(v.normalPrice)}</span>{' '}
+                                                <span className="font-semibold text-leaf">hemat {rupiah(v.normalPrice - v.price)}</span>
+                                            </>
+                                        )}
+                                    </span>
                                 </div>
                                 <div className="flex items-center gap-0.5">
                                     <button

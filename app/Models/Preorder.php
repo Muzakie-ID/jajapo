@@ -135,12 +135,13 @@ class Preorder extends Model
 
     public function quotaTotal(): int
     {
-        return (int) ($this->quota ?? $this->products->sum('quota'));
+        return (int) ($this->quota ?? $this->products->reject->is_bundle->sum('quota'));
     }
 
     public function soldTotal(): int
     {
-        return (int) $this->products->sum('sold_count');
+        // Paket tidak dihitung sendiri: porsinya sudah tercatat di menu isinya.
+        return (int) $this->products->reject->is_bundle->sum('sold_count');
     }
 
     public function remaining(): int

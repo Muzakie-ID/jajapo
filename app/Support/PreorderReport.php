@@ -56,7 +56,7 @@ class PreorderReport
 
         return [
             'orders' => $this->orders->count(),
-            'portions' => (int) $this->orders->sum(fn (Order $o) => $o->items->sum('qty')),
+            'portions' => (int) $this->orders->sum(fn (Order $o) => $o->portions()),
             'buyers' => $this->orders->pluck('buyer_id')->unique()->count(),
             'menu' => $menu,
             'delivery' => $delivery,
@@ -89,6 +89,18 @@ class PreorderReport
             ->values();
     }
 
+    /** Porsi yang harus dibuat per menu dan varian; paket dipecah ke isinya. */
+    public function production(): Collection
+    {
+        return $this->orders
+            ->flatMap(fn (Order $o) => $o->items)
+            ->flatMap(fn (OrderItem $i) => $i->productionLines())
+            ->groupBy('name')
+            ->map(fn (Collection $lines, string $name) => ['name' => $name, 'qty' => (int) $lines->sum('qty')])
+            ->sortByDesc('qty')
+            ->values();
+    }
+
     /** Jumlah pesanan dan porsi per titik ambil dan area antar. */
     public function byPlace(): Collection
     {
@@ -100,7 +112,7 @@ class PreorderReport
                 'place' => $s->place.($s->place_note ? ' ('.$s->place_note.')' : ''),
                 'time' => tanggal($s->starts_at).', '.$s->timeLabel(),
                 'orders' => $orders->count(),
-                'portions' => (int) $orders->sum(fn (Order $o) => $o->items->sum('qty')),
+                'portions' => (int) $orders->sum(fn (Order $o) => $o->portions()),
             ];
         });
 
@@ -112,7 +124,7 @@ class PreorderReport
                 'place' => $z->name.' (ongkir '.rupiah($z->fee).')',
                 'time' => $this->po->deliveryLabel() ?? '-',
                 'orders' => $orders->count(),
-                'portions' => (int) $orders->sum(fn (Order $o) => $o->items->sum('qty')),
+                'portions' => (int) $orders->sum(fn (Order $o) => $o->portions()),
             ];
         });
 
@@ -141,7 +153,7 @@ class PreorderReport
                 'code' => $o->code,
                 'buyer' => $o->buyer->name,
                 'phone' => $o->buyer_phone,
-                'items' => $o->itemsLabel(),
+                'items' => $o->items->map(fn (OrderItem $i) => $i->labelWithContents())->implode(', '),
                 'place' => $o->placeLabel(),
                 'address' => $o->isDelivery() ? $o->address_note : $o->slot?->place_note,
                 'status' => $o->status->label(),
@@ -160,7 +172,7 @@ class PreorderReport
             'buyer' => $o->buyer->name,
             'phone' => $o->buyer_phone,
             'items' => $o->itemsLabel(),
-            'portions' => (int) $o->items->sum('qty'),
+            'portions' => $o->portions(),
             'fulfillment' => $o->isDelivery() ? 'Antar' : 'Ambil',
             'place' => $o->isDelivery() ? $o->deliveryZone?->name : $o->slot?->place,
             'address' => $o->address_note,

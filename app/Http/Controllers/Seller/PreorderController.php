@@ -53,7 +53,7 @@ class PreorderController extends Controller
                 'paid_orders' => (int) $po->paid_orders,
                 'orders_count' => (int) $po->orders_count,
                 'revenue' => (int) $po->revenue,
-                'menu' => $po->products->pluck('name')->join(', '),
+                'menu' => $po->products->reject->is_bundle->pluck('name')->concat($po->products->filter->is_bundle->pluck('name'))->join(', '),
             ]),
         ]);
     }
@@ -61,7 +61,7 @@ class PreorderController extends Controller
     public function create(Request $request): Response
     {
         $shop = $this->shop($request);
-        $copy = $request->integer('salin') ? $shop->preorders()->with('products.variants', 'slots', 'deliveryZones')->find($request->integer('salin')) : null;
+        $copy = $request->integer('salin') ? $shop->preorders()->with('products.variants', 'products.bundleItems', 'slots', 'deliveryZones')->find($request->integer('salin')) : null;
 
         return Inertia::render('Seller/PreorderForm', [
             'shop' => DashboardController::shopPropsFor($shop),
@@ -86,7 +86,7 @@ class PreorderController extends Controller
     public function edit(Request $request, int $preorder): Response
     {
         $shop = $this->shop($request);
-        $po = $shop->preorders()->with('products.variants', 'slots', 'deliveryZones')->findOrFail($preorder);
+        $po = $shop->preorders()->with('products.variants', 'products.bundleItems', 'slots', 'deliveryZones')->findOrFail($preorder);
 
         return Inertia::render('Seller/PreorderForm', [
             'shop' => DashboardController::shopPropsFor($shop),
@@ -170,6 +170,14 @@ class PreorderController extends Controller
             'products.*.variants.*.id' => ['nullable', 'integer'],
             'products.*.variants.*.name' => ['required', 'string', 'max:40'],
             'products.*.variants.*.price_delta' => ['nullable', 'integer', 'min:-1000000', 'max:1000000'],
+            'bundles' => ['nullable', 'array', 'max:10'],
+            'bundles.*.id' => ['nullable', 'integer'],
+            'bundles.*.name' => ['required', 'string', 'max:60'],
+            'bundles.*.price' => ['required', 'integer', 'min:1000', 'max:1000000'],
+            'bundles.*.quota' => ['nullable', 'integer', 'min:1', 'max:10000'],
+            'bundles.*.items' => ['required', 'array', 'min:1', 'max:10'],
+            'bundles.*.items.*.ref' => ['required', 'string', 'regex:/^\d+:\d+$/'],
+            'bundles.*.items.*.qty' => ['required', 'integer', 'min:1', 'max:20'],
             'slots' => [Rule::requiredIf($publish && ! $request->boolean('delivery_enabled')), 'array', 'max:20'],
             'slots.*.id' => ['nullable', 'integer'],
             'slots.*.place' => ['required', 'string', 'max:80'],
@@ -196,6 +204,11 @@ class PreorderController extends Controller
             'products.*.quota.min' => 'Kuota minimal 1 porsi.',
             'products.*.variants.required' => 'Tambahkan minimal satu varian.',
             'products.*.variants.*.name.required' => 'Isi nama varian.',
+            'bundles.*.name.required' => 'Isi nama paket.',
+            'bundles.*.price.required' => 'Isi harga paket.',
+            'bundles.*.price.min' => 'Harga paket minimal Rp1.000.',
+            'bundles.*.items.required' => 'Pilih isi paket.',
+            'bundles.*.items.*.ref.required' => 'Pilih menu untuk isi paket.',
             'slots.required' => 'Tambahkan minimal satu titik ambil, atau aktifkan pengantaran.',
             'slots.*.place.required' => 'Isi nama tempat ambil.',
             'slots.*.date.required' => 'Isi tanggal ambil.',
@@ -218,6 +231,7 @@ class PreorderController extends Controller
         $orderedVariants = $ordered->pluck('variant_id')->unique();
         $usedSlots = $asCopy ? collect() : $po->orders()->whereNotNull('pickup_slot_id')->pluck('pickup_slot_id')->unique();
         $usedZones = $asCopy ? collect() : $po->orders()->whereNotNull('delivery_zone_id')->pluck('delivery_zone_id')->unique();
+        $menus = $po->products->reject->is_bundle->values();
 
         return [
             'id' => $asCopy ? null : $po->id,
@@ -242,7 +256,7 @@ class PreorderController extends Controller
             ])->values(),
             'poster_url' => $asCopy ? null : $po->posterUrl(),
             'story_url' => $asCopy ? null : $po->storyUrl(),
-            'products' => $po->products->map(fn (Product $p) => [
+            'products' => $menus->map(fn (Product $p) => [
                 'id' => $asCopy ? null : $p->id,
                 'name' => $p->name,
                 'price' => $p->price,
@@ -255,6 +269,21 @@ class PreorderController extends Controller
                     'price_delta' => $v->price_delta,
                     'locked' => $orderedVariants->contains($v->id),
                 ])->values(),
+            ])->values(),
+            // Isi paket menunjuk "menu ke-i:varian ke-j" sesuai urutan di form.
+            'bundles' => $po->products->filter->is_bundle->map(fn (Product $b) => [
+                'id' => $asCopy ? null : $b->id,
+                'name' => $b->name,
+                'price' => $b->price,
+                'quota' => $b->quota,
+                'sold' => $asCopy ? 0 : $b->sold_count,
+                'locked' => $orderedProducts->contains($b->id),
+                'items' => $b->bundleItems->map(function ($item) use ($menus) {
+                    $pi = $menus->search(fn (Product $p) => $p->id === $item->product_id);
+                    $vi = $pi === false ? false : $menus[$pi]->variants->search(fn ($v) => $v->id === $item->variant_id);
+
+                    return ['ref' => $pi === false || $vi === false ? '' : "{$pi}:{$vi}", 'qty' => $item->qty];
+                })->values(),
             ])->values(),
             'slots' => $po->slots->map(fn (PickupSlot $s) => [
                 'id' => $asCopy ? null : $s->id,

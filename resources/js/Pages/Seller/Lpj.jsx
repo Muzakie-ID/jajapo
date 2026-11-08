@@ -66,7 +66,7 @@ export default function Lpj({ report: r, preparer }) {
                         head={['Menu dan varian', 'Harga', 'Porsi', 'Total']}
                         align={['left', 'right', 'right', 'right']}
                         rows={r.variants.map((v) => [v.name, rupiah(v.price), v.qty, rupiah(v.total)])}
-                        foot={['Total', '', t.portions, rupiah(t.menu)]}
+                        foot={['Total', '', r.variants.reduce((n, v) => n + v.qty, 0), rupiah(t.menu)]}
                     />
                 </section>
 

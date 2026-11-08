@@ -17,6 +17,7 @@ Dibangun dengan Laravel 13, Inertia v3 + React 19, Tailwind CSS v4, dan PostgreS
 **Penjual (desktop dan mobile)**
 - Daftar toko: khusus email `@mail.ugm.ac.id`, alamat toko unik, rekening wajib atas nama pembuat toko.
 - PO dan menu: buat PO (draf atau langsung terbit), atur menu, varian, harga, kuota, titik ambil (tempat, patokan, jam), pengantaran (jadwal antar, area dan ongkir per area), poster, dan gambar story. Titik ambil dan area antar milik masing-masing PO, dengan saran dari yang pernah dipakai toko. Ubah, salin, tutup lebih awal, atau hapus PO yang belum punya pesanan. Menu, varian, dan slot yang sudah dipesan terkunci dari penghapusan, dan kuota tidak bisa turun di bawah porsi terjual.
+- Paket bundling: gabungkan varian menu dengan harga paket (misalnya 1 Mac n Cheese + 1 Es Teh). Paket memotong kuota tiap menu isinya, bisa diberi kuota sendiri, tampil dengan harga coret dan hematnya, dan dipecah ke menu isinya di rekap produksi. Isi paket yang sudah dipesan dikunci.
 - Tombol Bagikan ikut mengirim gambar story ke menu bagikan HP, siap dipasang di story.
 - Beranda toko: PO aktif, ringkasan, pesanan terbaru, rekap produksi, saldo. Bisa pindah toko kalau anggota beberapa toko.
 - Pengantaran: pesanan antar per area dengan alamat dan tombol WhatsApp pembeli. Mulai antar per area atau per pesanan (pembeli diberi tahu dan melihat nama kurir di tiket), lalu scan QR saat sampai, atau tandai terkirim manual.
@@ -154,5 +155,4 @@ Tes memakai SQLite di memori. Untuk menjalankannya di PostgreSQL, set `DB_CONNEC
 
 ## Belum dibuat
 
-- Paket bundling.
 - Kontrak `HttpGateway` menunggu dokumentasi API gateway.

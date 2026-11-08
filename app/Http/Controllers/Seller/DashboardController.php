@@ -78,13 +78,19 @@ class DashboardController extends Controller
                 'today' => $day->isToday(),
             ])->values();
 
+            // Rekap produksi: paket dipecah ke menu isinya supaya dapur tahu jumlah tiap menu.
+            $single = $po->products->reject->is_bundle->count() === 1;
             $rekap = OrderItem::query()
                 ->whereHas('order', fn ($q) => $q->where('preorder_id', $po->id)->whereIn('status', $soldStates))
-                ->selectRaw('name, SUM(qty) as qty')
-                ->groupBy('name')
-                ->orderByDesc('qty')
                 ->get()
-                ->map(fn ($r) => ['name' => (new OrderItem(['name' => $r->name]))->shortName(), 'qty' => (int) $r->qty]);
+                ->flatMap(fn (OrderItem $i) => $i->productionLines())
+                ->groupBy('name')
+                ->map(fn ($lines, $name) => [
+                    'name' => $single ? (new OrderItem(['name' => $name]))->shortName() : $name,
+                    'qty' => (int) collect($lines)->sum('qty'),
+                ])
+                ->sortByDesc('qty')
+                ->values();
         }
 
         $status = $request->query('status');

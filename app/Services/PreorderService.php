@@ -69,11 +69,12 @@ class PreorderService
                 Product::query()->where('preorder_id', $po->id)->lockForUpdate()->get();
             }
 
-            $this->syncProducts($po, $data['products']);
+            $menus = $this->syncProducts($po, $data['products']);
+            $this->syncBundles($po, $data['bundles'] ?? [], $menus);
             $this->syncSlots($po, $data['slots'] ?? [], $tz);
             $this->syncZones($po, $delivery ? ($data['zones'] ?? []) : []);
 
-            $sold = (int) $po->products()->sum('sold_count');
+            $sold = (int) $po->products()->where('is_bundle', false)->sum('sold_count');
             if ($po->quota !== null && $po->quota < $sold) {
                 throw ValidationException::withMessages(['quota' => "Kuota PO tidak bisa di bawah {$sold} porsi yang sudah dipesan."]);
             }
@@ -122,11 +123,18 @@ class PreorderService
         Storage::disk('public')->delete($paths);
     }
 
-    /** @param  array<int, array<string, mixed>>  $rows */
-    private function syncProducts(Preorder $po, array $rows): void
+    /**
+     * Menu biasa (bukan paket). Mengembalikan menu dan variannya sesuai urutan di form,
+     * supaya isi paket bisa menunjuk "menu ke-i, varian ke-j".
+     *
+     * @param  array<int, array<string, mixed>>  $rows
+     * @return array<int, array{product: Product, variants: array<int, ProductVariant>}>
+     */
+    private function syncProducts(Preorder $po, array $rows): array
     {
-        $existing = $po->products()->with('variants')->get()->keyBy('id');
+        $existing = $po->products()->where('is_bundle', false)->with('variants')->get()->keyBy('id');
         $keep = [];
+        $map = [];
 
         foreach (array_values($rows) as $i => $row) {
             $product = isset($row['id']) ? $existing->get((int) $row['id']) : null;
@@ -148,7 +156,7 @@ class PreorderService
             ])->save();
             $keep[] = $product->id;
 
-            $this->syncVariants($product, $row['variants'], $i);
+            $map[$i] = ['product' => $product, 'variants' => $this->syncVariants($product, $row['variants'], $i)];
         }
 
         $removed = $existing->keys()->diff($keep);
@@ -160,11 +168,86 @@ class PreorderService
             }
             Product::query()->whereIn('id', $removed)->delete();
         }
+
+        return $map;
     }
 
-    /** @param  array<int, array<string, mixed>>  $rows */
-    private function syncVariants(Product $product, array $rows, int $productIndex): void
+    /**
+     * Paket: produk is_bundle dengan satu varian "Paket" dan isi yang menunjuk varian menu.
+     * Isi paket yang sudah dipesan dikunci; harga dan kuotanya masih boleh diubah.
+     *
+     * @param  array<int, array<string, mixed>>  $rows
+     * @param  array<int, array{product: Product, variants: array<int, ProductVariant>}>  $menus
+     */
+    private function syncBundles(Preorder $po, array $rows, array $menus): void
     {
+        $existing = $po->products()->where('is_bundle', true)->with('bundleItems', 'variants')->get()->keyBy('id');
+        $keep = [];
+
+        foreach (array_values($rows) as $i => $row) {
+            $bundle = isset($row['id']) ? $existing->get((int) $row['id']) : null;
+            if (isset($row['id']) && ! $bundle) {
+                throw ValidationException::withMessages(["bundles.{$i}.id" => 'Paket ini bukan bagian dari PO ini.']);
+            }
+
+            $components = [];
+            foreach (array_values($row['items']) as $j => $item) {
+                [$pi, $vi] = array_map('intval', explode(':', $item['ref']));
+                $variant = $menus[$pi]['variants'][$vi] ?? null;
+                if (! $variant) {
+                    throw ValidationException::withMessages(["bundles.{$i}.items.{$j}.ref" => 'Pilih isi paket dari menu PO ini.']);
+                }
+                $key = $variant->id;
+                $components[$key] = ['product_id' => $variant->product_id, 'variant_id' => $variant->id, 'qty' => ($components[$key]['qty'] ?? 0) + (int) $item['qty']];
+            }
+            ksort($components);
+
+            $ordered = $bundle && OrderItem::query()->where('product_id', $bundle->id)->exists();
+            if ($ordered) {
+                $current = $bundle->bundleItems->sortBy('variant_id')->map(fn ($b) => [$b->variant_id, $b->qty])->values()->all();
+                $next = collect($components)->map(fn ($c) => [$c['variant_id'], $c['qty']])->values()->all();
+                if ($current !== $next) {
+                    throw ValidationException::withMessages(["bundles.{$i}.items" => "{$bundle->name} sudah dipesan, jadi isinya tidak bisa diubah. Buat paket baru kalau perlu."]);
+                }
+            }
+
+            $quota = filled($row['quota'] ?? null) ? (int) $row['quota'] : null;
+            if ($bundle && $quota !== null && $quota < $bundle->sold_count) {
+                throw ValidationException::withMessages(["bundles.{$i}.quota" => "Sudah dipesan {$bundle->sold_count} paket. Kuota tidak bisa lebih kecil."]);
+            }
+
+            $bundle ??= new Product(['preorder_id' => $po->id, 'is_bundle' => true]);
+            $bundle->fill(['name' => $row['name'], 'price' => (int) $row['price'], 'quota' => $quota, 'is_bundle' => true, 'sort' => 100 + $i])->save();
+            $keep[] = $bundle->id;
+
+            if ($bundle->variants()->doesntExist()) {
+                $bundle->variants()->create(['name' => 'Paket', 'price_delta' => 0, 'sort' => 0]);
+            }
+            if (! $ordered) {
+                $bundle->bundleItems()->delete();
+                foreach ($components as $c) {
+                    $bundle->bundleItems()->create($c);
+                }
+            }
+        }
+
+        $removed = $existing->keys()->diff($keep);
+        if ($removed->isNotEmpty()) {
+            $orderedId = OrderItem::query()->whereIn('product_id', $removed)->value('product_id');
+            if ($orderedId) {
+                throw ValidationException::withMessages(['bundles' => $existing->get($orderedId)->name.' sudah dipesan, jadi tidak bisa dihapus. Ubah kuotanya kalau ingin berhenti menjual.']);
+            }
+            Product::query()->whereIn('id', $removed)->delete();
+        }
+    }
+
+    /**
+     * @param  array<int, array<string, mixed>>  $rows
+     * @return array<int, ProductVariant>
+     */
+    private function syncVariants(Product $product, array $rows, int $productIndex): array
+    {
+        $byIndex = [];
         $existing = $product->exists ? $product->variants()->get()->keyBy('id') : collect();
         $keep = [];
 
@@ -182,6 +265,7 @@ class PreorderService
             $variant ??= new ProductVariant(['product_id' => $product->id]);
             $variant->fill(['name' => $row['name'], 'price_delta' => $delta, 'sort' => $j])->save();
             $keep[] = $variant->id;
+            $byIndex[$j] = $variant;
         }
 
         $removed = $existing->keys()->diff($keep);
@@ -191,6 +275,8 @@ class PreorderService
             }
             ProductVariant::query()->whereIn('id', $removed)->delete();
         }
+
+        return $byIndex;
     }
 
     /** @param  array<int, array<string, mixed>>  $rows */

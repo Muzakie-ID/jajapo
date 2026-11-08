@@ -106,7 +106,12 @@ class ReportController extends Controller
         foreach ($report->byVariant() as $v) {
             $writer->addRow(Row::fromValuesWithStyles([$v['name'], $v['price'], $v['qty'], $v['total']], [1 => $money, 3 => $money]));
         }
-        $writer->addRow(Row::fromValuesWithStyles(['Total', null, $totals['portions'], $totals['menu']], [$bold, null, $bold, $moneyBold]));
+        $writer->addRow(Row::fromValuesWithStyles(['Total', null, $report->byVariant()->sum('qty'), $totals['menu']], [$bold, null, $bold, $moneyBold]));
+        $writer->addRow(Row::fromValues([]));
+        $writer->addRow(Row::fromValuesWithStyle(['Produksi per menu (paket dipecah ke isinya)', 'Porsi'], $head));
+        foreach ($report->production() as $p) {
+            $writer->addRow(Row::fromValues([$p['name'], $p['qty']]));
+        }
         $writer->addRow(Row::fromValues([]));
         $writer->addRow(Row::fromValuesWithStyle(['Titik ambil / area antar', 'Cara', 'Pesanan', 'Porsi', 'Waktu'], $head));
         foreach ($report->byPlace() as $p) {

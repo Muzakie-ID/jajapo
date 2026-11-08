@@ -101,6 +101,12 @@ class Order extends Model
         return (int) $this->items->sum('qty');
     }
 
+    /** Porsi yang dibuat untuk pesanan ini; paket dihitung dari isinya. */
+    public function portions(): int
+    {
+        return (int) $this->items->sum(fn (OrderItem $i) => collect($i->productionLines())->sum('qty'));
+    }
+
     /** "2 Original, 1 Extra keju" */
     public function itemsLabel(): string
     {

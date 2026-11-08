@@ -72,7 +72,7 @@ class OrderService
         $variants = ProductVariant::query()
             ->whereIn('id', $items->pluck('variant_id'))
             ->whereHas('product', fn ($q) => $q->where('preorder_id', $preorder->id))
-            ->with('product')
+            ->with('product.bundleItems.product', 'product.bundleItems.variant')
             ->get()
             ->keyBy('id');
         if ($variants->count() !== $items->pluck('variant_id')->unique()->count()) {
@@ -108,10 +108,15 @@ class OrderService
                 ->get()
                 ->keyBy('id');
 
+            // Paket memakai kuota paketnya sendiri dan kuota setiap menu isinya.
             $qtyPerProduct = [];
             foreach ($items as $item) {
-                $productId = $variants[$item['variant_id']]->product_id;
-                $qtyPerProduct[$productId] = ($qtyPerProduct[$productId] ?? 0) + (int) $item['qty'];
+                $variant = $variants[$item['variant_id']];
+                $qty = (int) $item['qty'];
+                $qtyPerProduct[$variant->product_id] = ($qtyPerProduct[$variant->product_id] ?? 0) + $qty;
+                foreach ($variant->product->bundleItems as $component) {
+                    $qtyPerProduct[$component->product_id] = ($qtyPerProduct[$component->product_id] ?? 0) + $qty * $component->qty;
+                }
             }
 
             foreach ($qtyPerProduct as $productId => $qty) {
@@ -121,8 +126,10 @@ class OrderService
                     throw ValidationException::withMessages(['items' => "Kuota {$product->name} tinggal {$left} porsi."]);
                 }
             }
-            if ($preorder->quota !== null && $products->sum('sold_count') + array_sum($qtyPerProduct) > $preorder->quota) {
-                $left = max(0, $preorder->quota - $products->sum('sold_count'));
+            $menus = $products->reject->is_bundle;
+            $newPortions = array_sum(array_intersect_key($qtyPerProduct, $menus->all()));
+            if ($preorder->quota !== null && $menus->sum('sold_count') + $newPortions > $preorder->quota) {
+                $left = max(0, $preorder->quota - $menus->sum('sold_count'));
                 throw ValidationException::withMessages(['items' => "Kuota PO tinggal {$left} porsi."]);
             }
 
@@ -158,12 +165,19 @@ class OrderService
 
             foreach ($items as $item) {
                 $variant = $variants[$item['variant_id']];
+                $bundle = $variant->product->is_bundle;
                 $order->items()->create([
                     'product_id' => $variant->product_id,
                     'variant_id' => $variant->id,
-                    'name' => $variant->product->name.', '.$variant->name,
+                    'name' => $bundle ? $variant->product->name : $variant->product->name.', '.$variant->name,
                     'qty' => (int) $item['qty'],
                     'unit_price' => $variant->price(),
+                    'components' => $bundle ? $variant->product->bundleItems->map(fn ($c) => [
+                        'product_id' => $c->product_id,
+                        'variant_id' => $c->variant_id,
+                        'name' => $c->product->name.($c->variant ? ', '.$c->variant->name : ''),
+                        'qty' => $c->qty,
+                    ])->values()->all() : null,
                 ]);
             }
 
@@ -355,18 +369,22 @@ class OrderService
     private function releaseQuota(Order $order): void
     {
         foreach ($order->items()->get() as $item) {
-            Product::query()->whereKey($item->product_id)->where('sold_count', '>=', $item->qty)->decrement('sold_count', $item->qty);
+            foreach ($item->quotaUsage() as $productId => $qty) {
+                Product::query()->whereKey($productId)->where('sold_count', '>=', $qty)->decrement('sold_count', $qty);
+            }
         }
     }
 
     private function reserveQuota(Order $order): void
     {
         foreach ($order->items()->get() as $item) {
-            $product = Product::query()->lockForUpdate()->findOrFail($item->product_id);
-            if ($product->quota !== null && $product->sold_count + $item->qty > $product->quota) {
-                throw ValidationException::withMessages(['order' => "Kuota {$product->name} sudah habis. Refund pembeli."]);
+            foreach ($item->quotaUsage() as $productId => $qty) {
+                $product = Product::query()->lockForUpdate()->findOrFail($productId);
+                if ($product->quota !== null && $product->sold_count + $qty > $product->quota) {
+                    throw ValidationException::withMessages(['order' => "Kuota {$product->name} sudah habis. Refund pembeli."]);
+                }
+                $product->increment('sold_count', $qty);
             }
-            $product->increment('sold_count', $item->qty);
         }
     }
 }

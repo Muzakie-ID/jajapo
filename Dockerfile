@@ -43,6 +43,7 @@ RUN mkdir -p bootstrap/cache \
     storage/app/private storage/app/public \
     storage/framework/cache/data storage/framework/sessions storage/framework/views \
     storage/logs \
+    && ln -s /var/www/html/storage/app/public /var/www/html/public/storage \
     && chown -R www-data:www-data storage bootstrap/cache \
     && chmod -R 775 storage bootstrap/cache \
     && composer dump-autoload --optimize --no-dev --no-scripts \

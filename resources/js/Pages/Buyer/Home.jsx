@@ -7,6 +7,7 @@ import { PlateTile } from '@/Components/Plate';
 import { rupiah } from '@/lib/format';
 import { closesIn } from '@/lib/time';
 import { readCart } from '@/lib/cart';
+import ScrollFade from '@/Components/ScrollFade';
 
 const CATEGORIES = [
     { value: '', label: 'Semua' },
@@ -128,7 +129,7 @@ export default function Home({ points, filters, closingSoon, preorders, pendingO
                 </button>
             </form>
 
-            <div className="-mr-5 mt-[18px] flex gap-2 overflow-x-auto pr-5 [scrollbar-width:none]">
+            <ScrollFade className="mt-[18px] gap-2">
                 {CATEGORIES.map((c) => {
                     const on = (filters.kategori || '') === c.value;
                     return (
@@ -146,7 +147,7 @@ export default function Home({ points, filters, closingSoon, preorders, pendingO
                         </button>
                     );
                 })}
-            </div>
+            </ScrollFade>
 
             {closingSoon.length > 0 && (
                 <section className="mt-[18px] flex flex-col gap-3">
@@ -156,7 +157,7 @@ export default function Home({ points, filters, closingSoon, preorders, pendingO
                             Lihat semua
                         </a>
                     </div>
-                    <div className="-mr-5 flex gap-3 overflow-x-auto pr-5 [scrollbar-width:none]">
+                    <ScrollFade className="gap-3">
                         {closingSoon.map((p) => (
                             <Link
                                 key={p.id}
@@ -179,7 +180,7 @@ export default function Home({ points, filters, closingSoon, preorders, pendingO
                                 </div>
                             </Link>
                         ))}
-                    </div>
+                    </ScrollFade>
                 </section>
             )}
 

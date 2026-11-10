@@ -3,6 +3,7 @@ import { useEffect, useMemo, useState } from 'react';
 import BuyerLayout, { CircleButton, TopBar } from '@/Layouts/BuyerLayout';
 import Icon from '@/Components/Icon';
 import Plate from '@/Components/Plate';
+import ScrollFade from '@/Components/ScrollFade';
 import { rupiah } from '@/lib/format';
 import { closesIn } from '@/lib/time';
 import { readCart, writeCart } from '@/lib/cart';
@@ -268,7 +269,7 @@ export default function Preorder({ preorder, pendingOrder, savedPhone }) {
                     )}
 
                     {!isDelivery ? (
-                        <div role="radiogroup" aria-label="Titik dan waktu ambil" className="-mr-5 flex gap-2.5 overflow-x-auto pr-5 [scrollbar-width:none]">
+                        <ScrollFade role="radiogroup" aria-label="Titik dan waktu ambil" className="gap-2.5">
                             {preorder.slots.map((s) => (
                                 <SlotCard
                                     key={s.id}
@@ -279,7 +280,7 @@ export default function Preorder({ preorder, pendingOrder, savedPhone }) {
                                     text={`${s.date_label}, ${s.time_label}`}
                                 />
                             ))}
-                        </div>
+                        </ScrollFade>
                     ) : (
                         <div className="flex flex-col gap-2.5">
                             {preorder.delivery.schedule && (

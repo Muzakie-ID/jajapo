@@ -34,7 +34,12 @@ Dibangun dengan Laravel 13, Inertia v3 + React 19, Tailwind CSS v4, dan PostgreS
 - Pembayaran yang perlu perhatian: bayar telat, nominal tidak cocok. Cek status ke gateway, tandai lunas manual, refund.
 - Ganti rekening toko: setujui atau tolak dengan alasan.
 - Komplain dan refund: putuskan komplain yang ditolak penjual atau tidak ditanggapi 24 jam, lalu tandai refund yang sudah ditransfer.
-- Rekonsiliasi saldo gateway dengan buku besar.
+- Cari satu kotak: kode pesanan, nama atau email pembeli, nomor WhatsApp, nama toko.
+- Halaman Toko, Pembayaran, dan Pencairan dengan daftar lengkap, filter status, dan riwayat yang sudah diproses.
+- Halaman toko: saldo, omzet, PO, pesanan, anggota, rekening, pencairan, dan jejak tindakannya. Toko bermasalah bisa dibekukan dengan alasan, lalu diaktifkan kembali.
+- Jejak tindakan: siapa melakukan apa, dengan filter per jenis dan pencarian pelaku.
+- Pengaturan platform: batas waktu bayar, minimal pencairan, dan maksimal porsi per pesanan.
+- Rekonsiliasi buku besar dengan pembayaran lunas per tanggal, riwayat 14 hari, daftar callback gateway beserta tanda tangan yang ditolak, dan ekspor pendapatan platform ke Excel.
 
 **Uang**
 - Gateway membuat kode unik Rp500 sampai Rp1.999. Jajapo mengirim nominal dasar (subtotal + ongkir), kode unik menjadi pendapatan platform.

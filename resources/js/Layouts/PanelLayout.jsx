@@ -24,7 +24,7 @@ const ADMIN_NAV = [
     { key: 'payments', label: 'Pembayaran', icon: 'card', href: '/admin/pembayaran' },
     { key: 'payouts', label: 'Pencairan', icon: 'wallet', href: '/admin/pencairan' },
     { key: 'complaints', label: 'Komplain dan refund', icon: 'flag', href: '/admin/komplain' },
-    { key: 'recon', label: 'Rekonsiliasi', icon: 'scale', href: '/admin#rekonsiliasi' },
+    { key: 'recon', label: 'Rekonsiliasi', icon: 'scale', href: '/admin/rekonsiliasi' },
     { key: 'notifications', label: 'Notifikasi', icon: 'bell', href: '/notifikasi?dari=%2Fadmin' },
     { key: 'log', label: 'Jejak tindakan', icon: 'list', href: '/admin/log' },
     { key: 'settings', label: 'Pengaturan', icon: 'sliders', href: '/admin/pengaturan' },
@@ -250,7 +250,7 @@ function MoreSheet({ dark, shop, badges, onClose }) {
                         </Link>
                     )}
                     {dark && (
-                        <Link href="/admin#rekonsiliasi" onClick={onClose} className="flex min-h-12 items-center gap-3 text-sm font-semibold text-ink no-underline">
+                        <Link href="/admin/rekonsiliasi" onClick={onClose} className="flex min-h-12 items-center gap-3 text-sm font-semibold text-ink no-underline">
                             <Icon name="scale" size={20} className="text-leaf" />
                             Rekonsiliasi
                         </Link>

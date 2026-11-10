@@ -1,4 +1,4 @@
-import { router, useForm } from '@inertiajs/react';
+import { Link, router, useForm } from '@inertiajs/react';
 import { useState } from 'react';
 import PanelLayout, { PanelCard } from '@/Layouts/PanelLayout';
 import Icon from '@/Components/Icon';
@@ -231,7 +231,9 @@ export default function Overview({ range, dateLabel, kpis, gateway, queue, atten
                         <ReconCell label="Pembayaran lunas tercatat" value={rupiah(recon.payments)} />
                         <ReconCell label="Selisih" value={rupiah(diff)} />
                     </dl>
-                    <p className="m-0 text-xs text-muted">Bandingkan juga dengan laporan settlement di dashboard payment gateway sebelum menutup hari.</p>
+                    <Link href="/admin/rekonsiliasi" className="text-[13px] font-semibold text-leaf no-underline">
+                        Buka rekonsiliasi: pilih tanggal, riwayat 14 hari, callback gateway, dan unduh laporan pendapatan
+                    </Link>
                 </PanelCard>
             </div>
 

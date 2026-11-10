@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\AuditLog;
 use App\Models\Shop;
 use App\Notifications\ShopReviewed;
+use App\Notifications\ShopSuspended;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -35,5 +36,36 @@ class ShopController extends Controller
         $shop->creator->notify(new ShopReviewed($shop));
 
         return back()->with('success', "Pendaftaran {$shop->name} ditolak.");
+    }
+
+    /** Bekukan toko aktif: panel penjual dan halaman tokonya ditutup, pesanan lama tetap jalan. */
+    public function suspend(Request $request, Shop $shop): RedirectResponse
+    {
+        abort_unless($shop->status === Shop::STATUS_ACTIVE, 422);
+        $data = $request->validate(
+            ['reason' => ['required', 'string', 'max:200']],
+            ['reason.required' => 'Isi alasan pembekuan.'],
+        );
+
+        $shop->update([
+            'status' => Shop::STATUS_SUSPENDED,
+            'suspended_at' => now(),
+            'suspend_reason' => $data['reason'],
+        ]);
+        AuditLog::record($request->user(), 'shop.suspended', $shop, ['reason' => $data['reason']]);
+        $shop->creator->notify(new ShopSuspended($shop->fresh()));
+
+        return back()->with('success', "{$shop->name} dibekukan. PO-nya tidak lagi tampil untuk pembeli.");
+    }
+
+    public function reactivate(Request $request, Shop $shop): RedirectResponse
+    {
+        abort_unless($shop->status === Shop::STATUS_SUSPENDED, 422);
+
+        $shop->update(['status' => Shop::STATUS_ACTIVE, 'suspended_at' => null, 'suspend_reason' => null]);
+        AuditLog::record($request->user(), 'shop.reactivated', $shop);
+        $shop->creator->notify(new ShopSuspended($shop->fresh()));
+
+        return back()->with('success', "{$shop->name} aktif kembali.");
     }
 }

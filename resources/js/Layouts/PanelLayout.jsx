@@ -19,6 +19,7 @@ const SELLER_NAV = [
 
 const ADMIN_NAV = [
     { key: 'overview', label: 'Ringkasan', icon: 'grid', href: '/admin' },
+    { key: 'search', label: 'Cari', icon: 'search', href: '/admin/cari' },
     { key: 'shops', label: 'Toko', icon: 'store', href: '/admin#toko' },
     { key: 'payments', label: 'Pembayaran', icon: 'card', href: '/admin#pembayaran' },
     { key: 'payouts', label: 'Pencairan', icon: 'wallet', href: '/admin#pencairan' },

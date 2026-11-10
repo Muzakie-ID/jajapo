@@ -86,10 +86,14 @@ Route::middleware('auth')->group(function () {
     // Super admin
     Route::prefix('admin')->middleware('super-admin')->group(function () {
         Route::get('/', Admin\OverviewController::class);
+        Route::get('/cari', Admin\SearchController::class);
         Route::post('/pencairan/{payout}/transfer', [Admin\PayoutController::class, 'transfer']);
         Route::post('/pencairan/{payout}/tolak', [Admin\PayoutController::class, 'reject']);
+        Route::get('/toko/{shop}', Admin\ShopDetailController::class);
         Route::post('/toko/{shop:id}/setujui', [Admin\ShopController::class, 'approve']);
         Route::post('/toko/{shop:id}/tolak', [Admin\ShopController::class, 'reject']);
+        Route::post('/toko/{shop:id}/bekukan', [Admin\ShopController::class, 'suspend']);
+        Route::post('/toko/{shop:id}/aktifkan', [Admin\ShopController::class, 'reactivate']);
         Route::post('/pesanan/{order}/cek-status', [Admin\PaymentController::class, 'checkStatus']);
         Route::post('/pesanan/{order}/lunasi', [Admin\PaymentController::class, 'markPaid']);
         Route::post('/pesanan/{order}/refund', [Admin\PaymentController::class, 'refund']);

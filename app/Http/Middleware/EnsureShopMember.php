@@ -19,12 +19,13 @@ class EnsureShopMember
         $shops = $user->shops()->where('shops.status', Shop::STATUS_ACTIVE)->get();
 
         if ($shops->isEmpty()) {
-            $pending = $user->shops()->exists();
+            $suspended = $user->shops()->where('shops.status', Shop::STATUS_SUSPENDED)->first();
 
-            return redirect('/seller/daftar')->with(
-                'error',
-                $pending ? 'Toko kamu masih menunggu persetujuan super admin.' : 'Daftarkan toko dulu untuk membuka panel penjual.',
-            );
+            return redirect('/seller/daftar')->with('error', match (true) {
+                (bool) $suspended => "{$suspended->name} sedang dibekukan pengelola Jajapo. Alasan: ".($suspended->suspend_reason ?: 'tidak disebutkan').'.',
+                $user->shops()->exists() => 'Toko kamu masih menunggu persetujuan super admin.',
+                default => 'Daftarkan toko dulu untuk membuka panel penjual.',
+            });
         }
 
         $currentId = (int) $request->session()->get('current_shop_id');

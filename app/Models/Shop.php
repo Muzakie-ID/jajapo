@@ -26,7 +26,7 @@ class Shop extends Model
 
     protected function casts(): array
     {
-        return ['approved_at' => 'datetime'];
+        return ['approved_at' => 'datetime', 'suspended_at' => 'datetime'];
     }
 
     public function getRouteKeyName(): string

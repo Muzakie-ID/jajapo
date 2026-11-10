@@ -7,6 +7,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Order;
 use App\Models\OrderItem;
 use App\Models\Preorder;
+use App\Models\Product;
 use App\Models\Shop;
 use App\Services\Ledger;
 use App\Support\Present;
@@ -51,9 +52,21 @@ class DashboardController extends Controller
                 'waiting_ready' => $paid->where('status', OrderStatus::Paid)->count(),
             ];
 
+            // Menu yang masih punya pesanan menunggu disiapkan, supaya bisa ditandai per menu.
+            $waiting = $po->orders()->with('items')->where('status', OrderStatus::Paid->value)->get();
+            $menus = $po->products->reject->is_bundle->map(fn (Product $p) => [
+                'id' => $p->id,
+                'name' => $p->name,
+                'waiting' => $waiting->filter(
+                    fn (Order $o) => $o->items->contains(fn (OrderItem $i) => array_key_exists($p->id, $i->quotaUsage()))
+                )->count(),
+            ])->values();
+
             $active = [
                 'id' => $po->id,
                 'title' => $po->title,
+                'waiting' => $waiting->count(),
+                'menus' => $menus,
                 'story_url' => $po->storyUrl(),
                 'url' => $po->url(),
                 'seed' => $po->id,

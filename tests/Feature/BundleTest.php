@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Enums\OrderStatus;
 use App\Models\Preorder;
 use App\Models\Product;
 use App\Services\OrderService;
@@ -132,6 +133,35 @@ class BundleTest extends TestCase
         $bundle = $po->products()->where('is_bundle', true)->firstOrFail();
         $this->assertSame(14000, $bundle->price);
         $this->assertCount(2, $bundle->bundleItems);
+    }
+
+    public function test_marking_a_menu_ready_also_covers_bundles_that_contain_it(): void
+    {
+        [$seller, $shop, $po] = $this->setUpBundle();
+        $orders = app(OrderService::class);
+        $slot = $po->slots->first()->id;
+
+        $mac = $orders->checkout($this->buyer(), $po, [['variant_id' => $this->variantOf($po, 'Mac n Cheese'), 'qty' => 1]], 'pickup', $slot);
+        $teh = $orders->checkout($this->buyer(), $po, [['variant_id' => $this->variantOf($po, 'Es Teh'), 'qty' => 1]], 'pickup', $slot);
+        $paket = $orders->checkout($this->buyer(), $po, [['variant_id' => $this->variantOf($po, 'Paket Hemat'), 'qty' => 1]], 'pickup', $slot);
+        foreach ([$mac, $teh, $paket] as $o) {
+            $orders->markPaid($o);
+        }
+
+        // Mac n Cheese matang: pesanan Mac n Cheese dan paket yang memuatnya ikut siap, Es Teh belum.
+        $macId = $po->products->firstWhere('name', 'Mac n Cheese')->id;
+        $this->actingAs($seller)->post('/seller/pesanan/siap', ['preorder_id' => $po->id, 'product_id' => $macId])
+            ->assertSessionHas('success');
+
+        $this->assertSame(OrderStatus::Ready, $mac->fresh()->status);
+        $this->assertSame(OrderStatus::Ready, $paket->fresh()->status);
+        $this->assertSame(OrderStatus::Paid, $teh->fresh()->status);
+
+        // Satu tombol menyiapkan sisanya.
+        $this->actingAs($seller)->post('/seller/pesanan/siap', ['preorder_id' => $po->id, 'all' => true])
+            ->assertSessionHas('success');
+        $this->assertSame(OrderStatus::Ready, $teh->fresh()->status);
+        $this->assertSame(0, $shop->orders()->where('status', OrderStatus::Paid->value)->count());
     }
 
     private function withIds(Preorder $po, array $form): array

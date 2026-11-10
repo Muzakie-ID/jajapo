@@ -72,6 +72,37 @@ export default function Dashboard({ shop, active, kpis, perDay, rekap, orders, s
                                         </span>
                                     </div>
                                 )}
+                                {active.waiting > 0 && (
+                                    <div className="flex flex-col gap-2 rounded-xl border border-[#E3DCC4] bg-[#FDF8EC] p-3">
+                                        <span className="flex items-center justify-between gap-2">
+                                            <span className="text-[13px] font-semibold">{active.waiting} pesanan menunggu disiapkan</span>
+                                            <button
+                                                type="button"
+                                                onClick={() => markReady({ all: true })}
+                                                className="flex h-9 items-center gap-1.5 rounded-xl bg-forest px-3 text-xs font-semibold text-white"
+                                            >
+                                                <Icon name="check" size={15} strokeWidth={2.4} />
+                                                Siapkan semua
+                                            </button>
+                                        </span>
+                                        {active.menus.filter((m) => m.waiting > 0).length > 1 && (
+                                            <span className="flex flex-wrap gap-1.5">
+                                                {active.menus
+                                                    .filter((m) => m.waiting > 0)
+                                                    .map((m) => (
+                                                        <button
+                                                            key={m.id}
+                                                            type="button"
+                                                            onClick={() => markReady({ product_id: m.id })}
+                                                            className="flex h-8 items-center rounded-full border border-[#DCE3D9] bg-white px-3 text-xs font-semibold"
+                                                        >
+                                                            {m.name} ({m.waiting})
+                                                        </button>
+                                                    ))}
+                                            </span>
+                                        )}
+                                    </div>
+                                )}
                                 <div className="flex flex-col gap-2.5">
                                     {active.slots.map((s) => (
                                         <div key={s.place + s.time} className="flex items-center justify-between gap-3 rounded-xl bg-[#F6F8F5] px-3 py-2.5">

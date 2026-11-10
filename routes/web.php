@@ -102,6 +102,9 @@ Route::middleware('auth')->group(function () {
         Route::post('/pesanan/{order}/refund', [Admin\PaymentController::class, 'refund']);
         Route::post('/rekening/{account}/setujui', [Admin\BankAccountController::class, 'approve']);
         Route::post('/rekening/{account}/tolak', [Admin\BankAccountController::class, 'reject']);
+        Route::get('/log', Admin\AuditLogController::class);
+        Route::get('/pengaturan', [Admin\SettingsController::class, 'show']);
+        Route::post('/pengaturan', [Admin\SettingsController::class, 'update']);
         Route::get('/komplain', [Admin\ComplaintController::class, 'index']);
         Route::post('/komplain/{complaint}/putuskan', [Admin\ComplaintController::class, 'decide']);
         Route::post('/refund/{refund}/selesai', [Admin\ComplaintController::class, 'transferred']);

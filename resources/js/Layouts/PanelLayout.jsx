@@ -26,6 +26,8 @@ const ADMIN_NAV = [
     { key: 'complaints', label: 'Komplain dan refund', icon: 'flag', href: '/admin/komplain' },
     { key: 'recon', label: 'Rekonsiliasi', icon: 'scale', href: '/admin#rekonsiliasi' },
     { key: 'notifications', label: 'Notifikasi', icon: 'bell', href: '/notifikasi?dari=%2Fadmin' },
+    { key: 'log', label: 'Jejak tindakan', icon: 'list', href: '/admin/log' },
+    { key: 'settings', label: 'Pengaturan', icon: 'sliders', href: '/admin/pengaturan' },
 ];
 
 function Badge({ value, dark }) {

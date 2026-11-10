@@ -97,7 +97,7 @@ export default function Pay({ order, canSimulate }) {
                         <span className="text-xs text-muted">Nominal sudah terisi otomatis saat QR di-scan.</span>
                     </div>
                     {order.checkout_url && !expired && (
-                        <a href={order.checkout_url} target="_blank" rel="noopener" className="text-[13px] font-semibold text-leaf">
+                        <a href={order.checkout_url} target="_blank" rel="noreferrer" className="text-[13px] font-semibold text-leaf">
                             QR tidak terbaca? Buka halaman bayar QRIS
                         </a>
                     )}

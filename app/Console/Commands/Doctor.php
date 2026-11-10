@@ -24,7 +24,8 @@ class Doctor extends Command
     {
         $prod = app()->environment('production');
 
-        $this->check('APP_ENV production', $prod, 'Sekarang '.app()->environment().'.', critical: false);
+        // Wajib: di luar production, halaman login menampilkan tombol masuk cepat tanpa Google.
+        $this->check('APP_ENV production', $prod, 'Sekarang '.app()->environment().'. Selama bukan production, halaman /login menampilkan masuk cepat tanpa kata sandi.');
         $this->check('APP_DEBUG mati', ! config('app.debug'), 'Matikan APP_DEBUG supaya detail error tidak terlihat pengunjung.');
         $this->check('APP_URL memakai HTTPS', str_starts_with((string) config('app.url'), 'https://'), 'PWA, web push, dan login Google butuh HTTPS.');
         $this->check('APP_KEY terisi', filled(config('app.key')), 'Jalankan php artisan key:generate.');

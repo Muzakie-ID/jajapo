@@ -73,6 +73,9 @@ class AuthTest extends TestCase
         $user = $this->buyer();
         $this->app['env'] = 'production';
 
+        // Tombol masuk cepat tidak boleh muncul sama sekali, bukan hanya rutenya yang ditutup.
+        $this->get('/login')->assertOk()->assertInertia(fn ($p) => $p->has('demoUsers', 0));
+
         $this->withoutMiddleware()
             ->post("/dev/login/{$user->id}")->assertNotFound();
 

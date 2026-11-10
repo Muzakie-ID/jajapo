@@ -16,7 +16,7 @@ export default function Shop({ shop, open, past }) {
                     <h1 className="m-0 text-xl font-bold">{shop.name}</h1>
                     <span className="text-[13px] text-muted">jajapo.app/{shop.slug}</span>
                     {shop.instagram && (
-                        <a href={`https://instagram.com/${shop.instagram}`} target="_blank" rel="noopener" className="text-[13px] font-semibold no-underline">
+                        <a href={`https://instagram.com/${shop.instagram}`} target="_blank" rel="noreferrer" className="text-[13px] font-semibold no-underline">
                             @{shop.instagram}
                         </a>
                     )}

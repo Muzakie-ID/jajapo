@@ -98,7 +98,7 @@ export default function Ticket({ order }) {
                         <a
                             href={order.whatsapp_href}
                             target="_blank"
-                            rel="noopener"
+                            rel="noreferrer"
                             className="flex h-[50px] items-center justify-center gap-2 rounded-2xl border border-line bg-white text-sm font-bold text-ink no-underline hover:text-ink"
                         >
                             <Icon name="message" size={20} className="text-leaf" />

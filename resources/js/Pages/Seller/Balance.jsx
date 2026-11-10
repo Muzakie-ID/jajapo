@@ -138,7 +138,7 @@ export default function Balance({ shop, available, held, heldComplaints, minPayo
                             <span className="flex flex-col items-end gap-1">
                                 <StatusPill status={p.status} />
                                 {p.proof_url ? (
-                                    <a href={p.proof_url} target="_blank" rel="noopener" className="text-[12.5px] font-semibold no-underline">
+                                    <a href={p.proof_url} target="_blank" rel="noreferrer" className="text-[12.5px] font-semibold no-underline">
                                         Lihat bukti
                                     </a>
                                 ) : p.status === 'requested' ? (

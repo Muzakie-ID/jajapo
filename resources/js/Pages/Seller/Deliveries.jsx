@@ -115,7 +115,7 @@ export default function Deliveries({ shop, preorders, selected, zones }) {
                                                     <a
                                                         href={o.whatsapp_href}
                                                         target="_blank"
-                                                        rel="noopener"
+                                                        rel="noreferrer"
                                                         className="flex h-10 flex-1 items-center justify-center gap-1.5 rounded-xl border border-[#DCE3D9] bg-white text-[13px] font-semibold text-ink no-underline"
                                                     >
                                                         <Icon name="message" size={16} className="text-leaf" />

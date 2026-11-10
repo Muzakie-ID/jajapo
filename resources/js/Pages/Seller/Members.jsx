@@ -162,7 +162,7 @@ function Invite({ invitation: i, shop, roleLabel }) {
                 <a
                     href={`https://wa.me/?text=${encodeURIComponent(text)}`}
                     target="_blank"
-                    rel="noopener"
+                    rel="noreferrer"
                     className="flex h-10 flex-1 items-center justify-center gap-1.5 rounded-xl bg-forest text-[13px] font-semibold text-white no-underline hover:text-white"
                 >
                     <Icon name="message" size={16} />

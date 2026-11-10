@@ -36,7 +36,7 @@ export default function ComplaintDetails({ c, showShop = false }) {
             </div>
             <p className="m-0 whitespace-pre-line rounded-xl bg-[#F6F8F5] px-3 py-2.5 text-[13px] leading-[1.5] text-body">{c.description}</p>
             {c.photo_url && (
-                <a href={c.photo_url} target="_blank" rel="noopener" className="self-start">
+                <a href={c.photo_url} target="_blank" rel="noreferrer" className="self-start">
                     <img src={c.photo_url} alt={`Foto bukti komplain ${c.code}`} className="h-28 w-28 rounded-xl object-cover" />
                 </a>
             )}

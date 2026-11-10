@@ -56,7 +56,7 @@ export default function Lpj({ report: r, preparer }) {
                         </tbody>
                     </table>
                     <p className="m-0 text-xs text-muted">
-                        Posisi dana: {rupiah(t.available)} sudah di saldo tersedia toko, {rupiah(t.held)} masih tertahan sampai pesanan diambil, H+1, atau komplain selesai. Kode unik pembayaran adalah biaya platform dan tidak termasuk pendapatan toko.
+                        Posisi dana: {rupiah(t.available)} sudah di saldo tersedia toko, {rupiah(t.held)} ditahan karena komplain yang belum diputuskan. Kode unik pembayaran adalah biaya platform dan tidak termasuk pendapatan toko.
                     </p>
                 </section>
 

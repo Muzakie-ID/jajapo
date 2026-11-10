@@ -215,6 +215,56 @@ class SellerPreorderTest extends TestCase
         Storage::disk('public')->assertMissing($po->story_image_path);
     }
 
+    public function test_each_menu_has_its_own_photo_that_can_be_replaced_and_removed(): void
+    {
+        Storage::fake('public');
+        $seller = $this->seller();
+        $shop = $this->shopFor($seller);
+
+        $form = $this->payload();
+        $form['products'][0]['photo'] = UploadedFile::fake()->image('risol.jpg', 600, 600);
+        $this->actingAs($seller)->post('/seller/po', $form)->assertSessionHasNoErrors();
+
+        $po = $shop->preorders()->firstOrFail();
+        $menu = $po->products()->firstOrFail();
+        $first = $menu->photo_path;
+        $this->assertNotNull($first);
+        Storage::disk('public')->assertExists($first);
+
+        $edit = $this->payload();
+        $edit['products'][0]['id'] = $menu->id;
+        $edit['products'][0]['variants'][0]['id'] = $menu->variants[0]->id;
+        $edit['products'][0]['variants'][1]['id'] = $menu->variants[1]->id;
+        $edit['slots'][0]['id'] = $po->slots->first()->id;
+
+        // Foto baru menggantikan yang lama, dan berkas lama dibuang.
+        $this->actingAs($seller)->put("/seller/po/{$po->id}", [
+            ...$edit,
+            'products' => [[...$edit['products'][0], 'photo' => UploadedFile::fake()->image('risol-baru.jpg', 600, 600)]],
+        ])->assertSessionHasNoErrors();
+
+        $second = $menu->fresh()->photo_path;
+        $this->assertNotSame($first, $second);
+        Storage::disk('public')->assertMissing($first);
+        Storage::disk('public')->assertExists($second);
+
+        // Tanpa mengirim foto, yang tersimpan tetap dipakai.
+        $this->actingAs($seller)->put("/seller/po/{$po->id}", $edit)->assertSessionHasNoErrors();
+        $this->assertSame($second, $menu->fresh()->photo_path);
+
+        $this->actingAs($seller)->put("/seller/po/{$po->id}", [
+            ...$edit,
+            'products' => [[...$edit['products'][0], 'remove_photo' => true]],
+        ])->assertSessionHasNoErrors();
+        $this->assertNull($menu->fresh()->photo_path);
+        Storage::disk('public')->assertMissing($second);
+
+        $this->actingAs($seller)->post('/seller/po', [
+            ...$this->payload(['slug' => 'lain']),
+            'products' => [[...$this->payload()['products'][0], 'photo' => UploadedFile::fake()->create('menu.pdf', 10)]],
+        ])->assertSessionHasErrors('products.0.photo');
+    }
+
     public function test_every_preorder_has_its_own_pickup_places_and_delivery_areas(): void
     {
         $seller = $this->seller();

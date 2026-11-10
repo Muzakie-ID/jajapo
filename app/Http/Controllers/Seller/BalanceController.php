@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Seller;
 
 use App\Http\Controllers\Controller;
+use App\Models\Complaint;
 use App\Models\LedgerEntry;
 use App\Models\Payout;
 use App\Models\Setting;
@@ -23,13 +24,13 @@ class BalanceController extends Controller
         $account = $shop->bankAccount;
         $balances = $ledger->balances($shop);
 
-        $heldOrders = $shop->orders()->whereNotNull('paid_at')->whereNull('released_at')->count();
+        $heldComplaints = $shop->complaints()->whereIn('status', Complaint::ACTIVE)->where('hold_amount', '>', 0)->count();
 
         return Inertia::render('Seller/Balance', [
             'shop' => DashboardController::shopPropsFor($shop),
             'available' => $balances['available'],
             'held' => $balances['held'],
-            'heldOrders' => $heldOrders,
+            'heldComplaints' => $heldComplaints,
             'minPayout' => Setting::int('min_payout'),
             'account' => $account ? [
                 'label' => $account->label(),

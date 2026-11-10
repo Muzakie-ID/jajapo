@@ -26,7 +26,7 @@ export default function Dashboard({ shop, active, kpis, perDay, rekap, orders, s
     const kpiTiles = kpis
         ? [
               { label: 'Pesanan lunas', value: kpis.paid_count, sub: `${kpis.paid_today} masuk hari ini`, accent: true },
-              { label: 'Pendapatan', value: rupiah(kpis.revenue), sub: 'Masuk saldo tertahan' },
+              { label: 'Pendapatan', value: rupiah(kpis.revenue), sub: 'Masuk saldo tersedia' },
               { label: 'Belum diambil', value: kpis.waiting_pickup, sub: active ? `Ambil ${active.pickup_label}` : '' },
               { label: 'Kedaluwarsa', value: kpis.expired, sub: 'Kuotanya sudah dikembalikan' },
           ]
@@ -314,7 +314,7 @@ export default function Dashboard({ shop, active, kpis, perDay, rekap, orders, s
                                     <dd className="tabular m-0 text-xl font-bold">{rupiah(balance.available)}</dd>
                                 </div>
                                 <div className="flex flex-col gap-1">
-                                    <dt className="text-[12.5px] text-[#BFD3BF]">Tertahan</dt>
+                                    <dt className="text-[12.5px] text-[#BFD3BF]">Ditahan komplain</dt>
                                     <dd className="tabular m-0 text-xl font-bold">{rupiah(balance.held)}</dd>
                                 </div>
                             </dl>

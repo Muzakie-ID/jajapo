@@ -88,7 +88,7 @@ sudo certbot --nginx -d DOMAINMU
 
 ## 5. Worker antrean dan scheduler
 
-Notifikasi, email, dan web push dikirim lewat antrean. Pesanan kedaluwarsa, pencairan otomatis H+1, dan pengingat jadwal ambil berjalan lewat scheduler.
+Notifikasi, email, dan web push dikirim lewat antrean. Pesanan kedaluwarsa, penandaan pesanan tidak diambil, dan pengingat jadwal ambil berjalan lewat scheduler.
 
 ```sh
 sudo cp deploy/jajapo-queue.service /etc/systemd/system/

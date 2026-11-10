@@ -70,7 +70,9 @@ class DeliveryTest extends TestCase
 
         $this->actingAs($courier)->post("/seller/antar/{$b->code}/terkirim")->assertSessionHas('success');
         $this->assertSame(OrderStatus::Delivered, $b->fresh()->status);
-        $this->assertSame(2 * (12000 + 3000), app(Ledger::class)->balances($shop)['available']);
+
+        // Dana keempat pesanan lunas sudah di saldo tersedia sejak dibayar, tanpa menunggu diantar.
+        $this->assertSame(2 * (12000 + 3000) + (12000 + 4000) + 12000, app(Ledger::class)->balances($shop)['available']);
     }
 
     public function test_couriers_cannot_touch_another_shops_deliveries(): void

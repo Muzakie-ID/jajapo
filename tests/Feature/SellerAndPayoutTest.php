@@ -26,12 +26,15 @@ class SellerAndPayoutTest extends TestCase
         return $order->fresh();
     }
 
-    public function test_scanning_a_ticket_moves_money_from_held_to_available(): void
+    public function test_paid_orders_credit_the_shop_right_away_and_scanning_only_marks_the_pickup(): void
     {
         $seller = $this->seller();
         $shop = $this->shopFor($seller);
         $this->openPreorder($shop);
         $order = $this->paidOrder($shop);
+
+        // Dana sudah bisa dicairkan sebelum tiket dipindai.
+        $this->assertSame(['held' => 0, 'available' => 24000], app(Ledger::class)->balances($shop));
 
         $this->actingAs($seller)->postJson('/seller/scan', ['token' => $order->ticket_token])
             ->assertOk()

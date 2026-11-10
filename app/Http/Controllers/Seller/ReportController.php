@@ -85,7 +85,7 @@ class ReportController extends Controller
             Row::fromValuesWithStyles(['Pendapatan bersih toko', $totals['net']], [$bold, $moneyBold]),
             Row::fromValues([]),
             Row::fromValuesWithStyles(['Sudah di saldo tersedia', $totals['available']], [null, $money]),
-            Row::fromValuesWithStyles(['Masih tertahan', $totals['held']], [null, $money]),
+            Row::fromValuesWithStyles(['Ditahan komplain', $totals['held']], [null, $money]),
             Row::fromValues(['Diambil atau terkirim', $totals['picked_up']]),
             Row::fromValues(['Belum diambil', $totals['waiting']]),
             Row::fromValues(['Tidak diambil', $totals['not_picked_up']]),

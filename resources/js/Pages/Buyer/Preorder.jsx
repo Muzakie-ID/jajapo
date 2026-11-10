@@ -19,6 +19,7 @@ export default function Preorder({ preorder, pendingOrder, savedPhone }) {
                     productName: p.name,
                     multi: !p.is_bundle && preorder.products.filter((x) => !x.is_bundle).length > 1,
                     isBundle: p.is_bundle,
+                    photoUrl: p.photo_url,
                     contents: p.contents,
                     normalPrice: p.normal_price,
                 })),
@@ -194,7 +195,14 @@ export default function Preorder({ preorder, pendingOrder, savedPhone }) {
                     <div className="overflow-hidden rounded-[20px] border border-line bg-white">
                         {variants.map((v, i) => (
                             <div key={v.id} className={`flex items-center justify-between gap-3 py-2 pl-4 pr-2 ${i ? 'border-t border-[#E6EDE3]' : ''}`}>
-                                <div className="flex min-w-0 flex-col gap-0.5">
+                                {v.photoUrl && (
+                                    <img
+                                        src={v.photoUrl}
+                                        alt=""
+                                        className="h-12 w-12 shrink-0 rounded-[14px] border border-line object-cover"
+                                    />
+                                )}
+                                <div className="flex min-w-0 flex-1 flex-col gap-0.5">
                                     <span className="flex items-center gap-1.5 text-[15px] font-semibold">
                                         {v.isBundle && <span className="rounded-full bg-amber-bg px-2 py-0.5 text-[11px] font-bold text-amber-ink">Paket</span>}
                                         {v.multi ? `${v.productName}, ${v.name}` : v.name}

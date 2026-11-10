@@ -7,7 +7,7 @@ Dibangun dengan Laravel 13, Inertia v3 + React 19, Tailwind CSS v4, dan PostgreS
 ## Fitur yang sudah ada
 
 **Pengunjung (PWA)**
-- Beranda dengan PO yang sedang buka, daftar toko, halaman toko, dan halaman PO (varian, lalu pilih ambil sendiri di titik ambil PO itu atau diantar ke area yang dilayani PO itu).
+- Beranda dengan PO yang sedang buka, daftar toko, halaman toko, dan halaman PO (foto dan varian tiap menu, lalu pilih ambil sendiri di titik ambil PO itu atau diantar ke area yang dilayani PO itu).
 - Checkout dengan kunci kuota, maksimal 10 porsi per pesanan, satu pesanan menunggu bayar per PO.
 - Halaman bayar QRIS dengan hitung mundur 15 menit, cek status otomatis, simpan QR, dan batal.
 - Tiket QR untuk pengambilan, riwayat pesanan, dan akun.
@@ -16,7 +16,7 @@ Dibangun dengan Laravel 13, Inertia v3 + React 19, Tailwind CSS v4, dan PostgreS
 
 **Penjual (desktop dan mobile)**
 - Daftar toko: khusus email `@mail.ugm.ac.id`, alamat toko unik, rekening wajib atas nama pembuat toko.
-- PO dan menu: buat PO (draf atau langsung terbit), atur menu, varian, harga, kuota, titik ambil (tempat, patokan, jam), pengantaran (jadwal antar, area dan ongkir per area), poster, dan gambar story. Titik ambil dan area antar milik masing-masing PO, dengan saran dari yang pernah dipakai toko. Ubah, salin, tutup lebih awal, atau hapus PO yang belum punya pesanan. Menu, varian, dan slot yang sudah dipesan terkunci dari penghapusan, dan kuota tidak bisa turun di bawah porsi terjual.
+- PO dan menu: buat PO (draf atau langsung terbit), atur menu, varian, harga, kuota, foto per menu, titik ambil (tempat, patokan, jam), pengantaran (jadwal antar, area dan ongkir per area), poster, dan gambar story. Titik ambil dan area antar milik masing-masing PO, dengan saran dari yang pernah dipakai toko. Ubah, salin, tutup lebih awal, atau hapus PO yang belum punya pesanan. Menu, varian, dan slot yang sudah dipesan terkunci dari penghapusan, dan kuota tidak bisa turun di bawah porsi terjual.
 - Paket bundling: gabungkan varian menu dengan harga paket (misalnya 1 Mac n Cheese + 1 Es Teh). Paket memotong kuota tiap menu isinya, bisa diberi kuota sendiri, tampil dengan harga coret dan hematnya, dan dipecah ke menu isinya di rekap produksi. Isi paket yang sudah dipesan dikunci.
 - Tombol Bagikan ikut mengirim gambar story ke menu bagikan HP, siap dipasang di story.
 - Beranda toko: PO aktif, ringkasan, pesanan terbaru, rekap produksi, saldo. Bisa pindah toko kalau anggota beberapa toko.
@@ -26,7 +26,7 @@ Dibangun dengan Laravel 13, Inertia v3 + React 19, Tailwind CSS v4, dan PostgreS
 - Komplain: setujui refund penuh atau sebagian, atau tolak dengan alasan (lalu super admin memutuskan). Nominal yang diminta ditahan dari saldo selama komplain berjalan, dan refund dipotong dari bagian toko.
 - Anggota toko: admin toko membuat tautan undangan untuk email UGM (berlaku 7 hari, dibagikan lewat WhatsApp atau salin), mengubah peran admin atau anggota, dan mengeluarkan anggota. Anggota bisa mengelola PO, scan, dan komplain; pengaturan, rekening, anggota, dan pencairan khusus admin toko.
 - Pengaturan toko (khusus admin toko): nama, logo, Instagram, WhatsApp. Ganti rekening harus atas nama pembuat toko dan menunggu persetujuan super admin; pencairan tetap ke rekening lama sampai disetujui.
-- Saldo tertahan dan tersedia, pengajuan pencairan (minimal Rp50.000), riwayat, dan buku besar.
+- Saldo tersedia (dana pesanan lunas masuk langsung), nominal yang ditahan komplain, pengajuan pencairan (minimal Rp50.000), riwayat, dan buku besar.
 
 **Super admin (desktop dan mobile)**
 - Ringkasan hari ini / 7 hari / 30 hari, antrean pencairan (transfer dengan bukti atau tolak), toko menunggu persetujuan.
@@ -39,7 +39,7 @@ Dibangun dengan Laravel 13, Inertia v3 + React 19, Tailwind CSS v4, dan PostgreS
 - Gateway membuat kode unik Rp500 sampai Rp1.999. Jajapo mengirim nominal dasar (subtotal + ongkir), kode unik menjadi pendapatan platform.
 - Tidak ada potongan untuk toko. Biaya transfer pencairan ditanggung platform.
 - Buku besar dengan bucket `held`, `available`, `platform_revenue`, `gateway_clearing`. Saldo selalu dihitung dari buku besar.
-- Uang toko tertahan sampai tiket dipindai. Pesanan yang tidak diambil dicairkan otomatis H+1 setelah slot berakhir.
+- Dana pesanan lunas langsung masuk saldo tersedia toko, jadi tidak ada masa tunggu. Yang ditahan hanya nominal komplain yang sedang berjalan.
 - Callback gateway ditandatangani HMAC dan diproses sekali per `event_id`.
 
 ## Memasang di server
@@ -70,7 +70,7 @@ Isi data contoh lalu jalankan:
 php artisan migrate --seed
 php artisan storage:link   # untuk poster dan gambar story
 composer dev               # server, queue, log, dan Vite sekaligus
-php artisan schedule:work  # di terminal lain: kedaluwarsa pesanan dan pencairan otomatis
+php artisan schedule:work  # di terminal lain: kedaluwarsa pesanan dan pengingat jadwal
 ```
 
 Buka http://localhost:8000.
@@ -131,7 +131,7 @@ Callback diperiksa dengan `X-Signature = hex(HMAC-SHA256(webhook secret, X-Times
 
 | Event | Yang dilakukan Jajapo |
 | --- | --- |
-| `transaction.paid` | Pesanan lunas, dana masuk saldo tertahan toko. Nominal yang tidak cocok masuk antrean periksa super admin. |
+| `transaction.paid` | Pesanan lunas, dana masuk saldo tersedia toko. Nominal yang tidak cocok masuk antrean periksa super admin. |
 | `transaction.expired` | Pesanan yang masih menunggu jadi kedaluwarsa, kuota kembali. |
 | `transaction.late_paid` | Uang masuk setelah kedaluwarsa atau batal: menunggu keputusan super admin (lunasi atau refund). |
 
@@ -142,7 +142,7 @@ Hasil callback: `processed`, `duplicate`, `unknown`, `ignored`, `expired`, `late
 | Perintah | Jadwal | Fungsi |
 | --- | --- | --- |
 | `jajapo:expire-orders` | tiap menit | Pesanan lewat batas bayar jadi kedaluwarsa, kuota kembali |
-| `jajapo:release-held` | tiap jam | Pesanan tidak diambil ditandai, dananya cair H+1 kalau tidak ada komplain |
+| `jajapo:mark-not-picked-up` | tiap jam | Pesanan yang slot ambilnya sudah berakhir ditandai tidak diambil |
 | `jajapo:remind-pickups` | tiap 15 menit | Pengingat ke pembeli 2 jam sebelum slot ambil atau jadwal antar |
 
 Di server, pasang cron `* * * * * php artisan schedule:run` dan jalankan worker antrean `php artisan queue:work` (notifikasi dan email dikirim lewat antrean).

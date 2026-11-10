@@ -117,7 +117,7 @@ class PreorderService
             throw ValidationException::withMessages(['preorder' => 'PO yang sudah punya pesanan tidak bisa dihapus. Tutup saja PO-nya.']);
         }
 
-        $paths = array_filter([$po->poster_path, $po->story_image_path]);
+        $paths = array_filter([$po->poster_path, $po->story_image_path, ...$po->products()->pluck('photo_path')->all()]);
         AuditLog::record($actor, 'preorder.deleted', $po, ['title' => $po->title]);
         $po->delete();
         Storage::disk('public')->delete($paths);
@@ -154,6 +154,7 @@ class PreorderService
                 'quota' => $quota,
                 'sort' => $i,
             ])->save();
+            $this->storeProductPhoto($product, $row['photo'] ?? null, (bool) ($row['remove_photo'] ?? false));
             $keep[] = $product->id;
 
             $map[$i] = ['product' => $product, 'variants' => $this->syncVariants($product, $row['variants'], $i)];
@@ -166,10 +167,29 @@ class PreorderService
                 $name = $existing->get($orderedId)->name;
                 throw ValidationException::withMessages(['products' => "{$name} sudah dipesan, jadi tidak bisa dihapus. Ubah kuotanya kalau ingin berhenti menjual."]);
             }
+            $photos = $existing->only($removed)->pluck('photo_path')->filter()->all();
             Product::query()->whereIn('id', $removed)->delete();
+            Storage::disk('public')->delete($photos);
         }
 
         return $map;
+    }
+
+    private function storeProductPhoto(Product $product, mixed $file, bool $remove): void
+    {
+        $old = $product->photo_path;
+
+        if ($file instanceof UploadedFile) {
+            $product->update(['photo_path' => $file->store("preorders/{$product->preorder_id}/menu", 'public')]);
+        } elseif ($remove) {
+            $product->update(['photo_path' => null]);
+        } else {
+            return;
+        }
+
+        if ($old) {
+            Storage::disk('public')->delete($old);
+        }
     }
 
     /**

@@ -59,7 +59,7 @@ class PaymentWebhookTest extends TestCase
         ], $body);
     }
 
-    public function test_signed_callback_marks_the_order_paid_and_holds_the_shop_money(): void
+    public function test_signed_callback_marks_the_order_paid_and_credits_the_shop_balance(): void
     {
         $order = $this->pendingOrder();
 
@@ -67,7 +67,9 @@ class PaymentWebhookTest extends TestCase
 
         $order->refresh();
         $this->assertSame(OrderStatus::Paid, $order->status);
-        $this->assertSame(24000, (int) LedgerEntry::where('bucket', LedgerEntry::HELD)->sum('amount'));
+        $this->assertNotNull($order->released_at);
+        $this->assertSame(24000, (int) LedgerEntry::where('bucket', LedgerEntry::AVAILABLE)->sum('amount'));
+        $this->assertSame(0, (int) LedgerEntry::where('bucket', LedgerEntry::HELD)->sum('amount'));
         $this->assertSame($order->unique_code, (int) LedgerEntry::where('bucket', LedgerEntry::PLATFORM_REVENUE)->sum('amount'));
         $this->assertSame($order->total, (int) LedgerEntry::where('bucket', LedgerEntry::GATEWAY_CLEARING)->sum('amount'));
     }
@@ -80,7 +82,7 @@ class PaymentWebhookTest extends TestCase
         $this->sendCallback($order, 'evt-1')->assertJson(['result' => 'duplicate']);
         $this->sendCallback($order, 'evt-2')->assertJson(['result' => 'duplicate']);
 
-        $this->assertSame(24000, (int) LedgerEntry::where('bucket', LedgerEntry::HELD)->sum('amount'));
+        $this->assertSame(24000, (int) LedgerEntry::where('bucket', LedgerEntry::AVAILABLE)->sum('amount'));
     }
 
     public function test_callbacks_with_a_bad_signature_are_rejected(): void

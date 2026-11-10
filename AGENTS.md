@@ -12,6 +12,7 @@ Platform pre-order makanan untuk danusan kampus UGM. Baca `README.md` untuk fitu
 ## Aturan yang tidak boleh dilanggar
 
 - Uang dalam rupiah, disimpan sebagai integer. Saldo toko selalu dihitung dari `ledger_entries` lewat `App\Services\Ledger`; jangan menyimpan saldo di kolom lain.
+- Dana pesanan lunas langsung masuk bucket `available`. Bucket `held` hanya untuk nominal komplain yang sedang berjalan, tidak untuk menunggu pengambilan.
 - Semua perubahan status bayar lewat `OrderService` dan `PaymentService`. Callback gateway harus idempoten (`payment_callbacks.gateway_event_id` unik, `insertOrIgnore`).
 - Kuota dikunci dengan `lockForUpdate` saat checkout. Pesanan menunggu bayar ikut menghitung kuota.
 - Data penjual selalu diambil lewat toko aktif (`$request->attributes->get('shop')` dari middleware `shop-member`), misalnya `$shop->orders()`. Jangan query `Order::` langsung di panel penjual.

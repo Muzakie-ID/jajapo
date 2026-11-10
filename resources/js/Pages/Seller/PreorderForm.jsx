@@ -31,7 +31,7 @@ function slugify(value) {
 }
 
 const emptyVariant = (name = '') => ({ _key: key(), id: null, name, price_delta: 0, locked: false });
-const emptyProduct = () => ({ _key: key(), id: null, name: '', price: '', quota: '', sold: 0, locked: false, variants: [emptyVariant('Reguler')] });
+const emptyProduct = () => ({ _key: key(), id: null, name: '', price: '', quota: '', sold: 0, locked: false, photo: null, photo_url: null, remove_photo: false, variants: [emptyVariant('Reguler')] });
 const emptySlot = () => ({ _key: key(), id: null, place: '', place_note: '', date: '', start: '10:00', end: '12:00', locked: false });
 const emptyZone = () => ({ _key: key(), id: null, name: '', fee: '', locked: false });
 const emptyBundle = () => ({ _key: key(), id: null, name: '', price: '', quota: '', sold: 0, locked: false, items: [{ _key: key(), ref: '', qty: 1 }, { _key: key(), ref: '', qty: 1 }] });
@@ -57,7 +57,9 @@ export default function PreorderForm({ shop, preorder, suggestions }) {
     const isDraft = stage === 'draft';
 
     const [initialProducts] = useState(() =>
-        preorder?.products?.length ? preorder.products.map((p) => ({ ...p, _key: key(), variants: p.variants.map((v) => ({ ...v, _key: key() })) })) : [emptyProduct()],
+        preorder?.products?.length
+            ? preorder.products.map((p) => ({ ...p, _key: key(), photo: null, remove_photo: false, variants: p.variants.map((v) => ({ ...v, _key: key() })) }))
+            : [emptyProduct()],
     );
     const form = useForm({
         title: preorder?.title ?? '',
@@ -117,7 +119,7 @@ export default function PreorderForm({ shop, preorder, suggestions }) {
             publish,
             ...(editing ? { _method: 'put' } : {}),
             labels: d.labels.filter(Boolean),
-            products: d.products.map(({ _key, sold, locked, ...p }) => ({ ...p, variants: p.variants.map(({ _key: k, locked: l, ...v }) => v) })),
+            products: d.products.map(({ _key, sold, locked, photo_url, ...p }) => ({ ...p, variants: p.variants.map(({ _key: k, locked: l, ...v }) => v) })),
             bundles: d.bundles.map(({ _key, sold, locked, ...b }) => ({
                 ...b,
                 items: b.items.map((item) => {
@@ -640,16 +642,32 @@ function ProductEditor({ product, index, errors, canRemove, onChange, onVariant,
                     )
                 )}
             </div>
-            <Field label="Nama menu" error={e('name')}>
-                <input value={product.name} onChange={(ev) => onChange({ name: ev.target.value })} placeholder="Mac n Cheese Panggang" maxLength={60} className={inputCls} />
-            </Field>
-            <div className="grid grid-cols-2 gap-3">
-                <Field label="Harga dasar" error={e('price')}>
-                    <MoneyInput value={product.price} onChange={(v) => onChange({ price: v })} placeholder="12000" />
-                </Field>
-                <Field label="Kuota porsi" error={e('quota')} hint={product.sold > 0 ? `Minimal ${product.sold}` : null}>
-                    <input inputMode="numeric" value={product.quota ?? ''} onChange={(ev) => onChange({ quota: ev.target.value.replace(/\D/g, '') })} placeholder="60" className={`tabular ${inputCls}`} />
-                </Field>
+            <div className="flex gap-3">
+                <div className="w-[88px] shrink-0">
+                    <ImageInput
+                        label="Foto"
+                        hint="Maks. 4 MB"
+                        ratio="aspect-square"
+                        current={product.remove_photo ? null : product.photo_url}
+                        file={product.photo}
+                        error={e('photo')}
+                        onPick={(file) => onChange({ photo: file, remove_photo: false })}
+                        onRemove={() => onChange({ photo: null, remove_photo: Boolean(product.photo_url) })}
+                    />
+                </div>
+                <div className="flex min-w-0 flex-1 flex-col gap-3">
+                    <Field label="Nama menu" error={e('name')}>
+                        <input value={product.name} onChange={(ev) => onChange({ name: ev.target.value })} placeholder="Mac n Cheese Panggang" maxLength={60} className={inputCls} />
+                    </Field>
+                    <div className="grid grid-cols-2 gap-3">
+                        <Field label="Harga dasar" error={e('price')}>
+                            <MoneyInput value={product.price} onChange={(v) => onChange({ price: v })} placeholder="12000" />
+                        </Field>
+                        <Field label="Kuota porsi" error={e('quota')} hint={product.sold > 0 ? `Minimal ${product.sold}` : null}>
+                            <input inputMode="numeric" value={product.quota ?? ''} onChange={(ev) => onChange({ quota: ev.target.value.replace(/\D/g, '') })} placeholder="60" className={`tabular ${inputCls}`} />
+                        </Field>
+                    </div>
+                </div>
             </div>
 
             <div className="flex flex-col gap-2">

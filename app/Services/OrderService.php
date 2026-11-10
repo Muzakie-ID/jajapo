@@ -242,7 +242,7 @@ class OrderService
                 $this->reserveQuota($order);
             }
 
-            $order->update(['status' => OrderStatus::Paid, 'paid_at' => now()]);
+            $order->update(['status' => OrderStatus::Paid, 'paid_at' => now(), 'released_at' => now()]);
             $order->payment?->update([
                 'status' => Payment::STATUS_PAID,
                 'method' => $method,
@@ -252,7 +252,7 @@ class OrderService
 
             $shop = $order->shop;
             $this->ledger->record(LedgerEntry::GATEWAY_CLEARING, $order->total, 'order_paid', "Pembayaran {$order->code} masuk", order: $order);
-            $this->ledger->record(LedgerEntry::HELD, $order->shopAmount(), 'order_paid', "Pesanan {$order->code} lunas", $shop, $order);
+            $this->ledger->record(LedgerEntry::AVAILABLE, $order->shopAmount(), 'order_paid', "Pesanan {$order->code} lunas", $shop, $order);
             if ($order->unique_code > 0) {
                 $this->ledger->record(LedgerEntry::PLATFORM_REVENUE, $order->unique_code, 'unique_code', "Kode unik {$order->code}", order: $order);
             }
@@ -290,7 +290,7 @@ class OrderService
         return $started;
     }
 
-    /** Scan tiket: pesanan diambil, dana pindah dari tertahan ke tersedia. */
+    /** Scan tiket: pesanan ditandai diambil. Dana toko sudah masuk saldo tersedia sejak lunas. */
     public function markPickedUp(Order $order, User $actor): void
     {
         DB::transaction(function () use ($order, $actor) {
@@ -304,20 +304,7 @@ class OrderService
                 'picked_up_at' => now(),
                 'picked_up_by' => $actor->id,
             ]);
-            $this->release($order, $order->isDelivery() ? 'terkirim' : 'diambil');
         });
-    }
-
-    /** Memindahkan dana pesanan dari saldo tertahan ke saldo tersedia, sekali saja. */
-    public function release(Order $order, string $reason): void
-    {
-        if ($order->released_at) {
-            return;
-        }
-        $amount = $order->shopAmount();
-        $this->ledger->record(LedgerEntry::HELD, -$amount, 'order_released', "Pesanan {$order->code} {$reason}", $order->shop, $order);
-        $this->ledger->record(LedgerEntry::AVAILABLE, $amount, 'order_released', "Pesanan {$order->code} {$reason}", $order->shop, $order);
-        $order->update(['released_at' => now()]);
     }
 
     public function expire(Order $order): void

@@ -78,11 +78,10 @@ class ComplaintService
                 'status' => Complaint::STATUS_OPEN,
             ]);
 
-            if ($order->released_at) {
-                $this->ledger->record(LedgerEntry::AVAILABLE, -$data['amount'], 'complaint_hold', "Ditahan karena komplain {$order->code}", $order->shop, $order);
-                $this->ledger->record(LedgerEntry::HELD, $data['amount'], 'complaint_hold', "Ditahan karena komplain {$order->code}", $order->shop, $order);
-                $complaint->update(['hold_amount' => $data['amount']]);
-            }
+            // Nominal yang diminta ditahan dari saldo tersedia selama komplain berjalan.
+            $this->ledger->record(LedgerEntry::AVAILABLE, -$data['amount'], 'complaint_hold', "Ditahan karena komplain {$order->code}", $order->shop, $order);
+            $this->ledger->record(LedgerEntry::HELD, $data['amount'], 'complaint_hold', "Ditahan karena komplain {$order->code}", $order->shop, $order);
+            $complaint->update(['hold_amount' => $data['amount']]);
 
             AuditLog::record($buyer, 'complaint.opened', $complaint, ['order' => $order->code, 'amount' => $data['amount']]);
             Notify::shop($order->shop, new NewComplaint($complaint));
@@ -137,12 +136,11 @@ class ComplaintService
                 throw ValidationException::withMessages(['amount' => 'Refund maksimal '.rupiah($max).'.']);
             }
 
-            // Lepas dana yang ditahan, lalu pastikan bagian toko pesanan ini sudah di saldo tersedia.
+            // Dana yang ditahan selama komplain kembali ke saldo tersedia.
             if ($complaint->hold_amount > 0) {
                 $this->ledger->record(LedgerEntry::HELD, -$complaint->hold_amount, 'complaint_release', "Komplain {$order->code} selesai", $order->shop, $order);
                 $this->ledger->record(LedgerEntry::AVAILABLE, $complaint->hold_amount, 'complaint_release', "Komplain {$order->code} selesai", $order->shop, $order);
             }
-            $this->orders->release($order, 'setelah komplain diputuskan');
 
             if ($amount > 0) {
                 $this->ledger->record(LedgerEntry::AVAILABLE, -$amount, 'complaint_refund', "Refund komplain {$order->code}", $order->shop, $order);

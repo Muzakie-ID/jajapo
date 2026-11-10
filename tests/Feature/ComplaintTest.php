@@ -2,7 +2,6 @@
 
 namespace Tests\Feature;
 
-use App\Console\Commands\ReleaseHeldFunds;
 use App\Enums\OrderStatus;
 use App\Models\Complaint;
 use App\Models\LedgerEntry;
@@ -108,17 +107,15 @@ class ComplaintTest extends TestCase
             ->where('order.complaint.refund_status', 'done'));
     }
 
-    public function test_open_complaint_blocks_auto_release_and_super_admin_decides_when_the_seller_refuses(): void
+    public function test_open_complaint_holds_the_amount_and_super_admin_decides_when_the_seller_refuses(): void
     {
         $order = $this->paidOrder();
+        $this->assertSame(['held' => 0, 'available' => 24000], $this->balances());
+
         $this->complain($order, ['amount' => 24000])->assertSessionHasNoErrors();
         $complaint = Complaint::firstOrFail();
-        $this->assertSame(0, $complaint->hold_amount);
+        $this->assertSame(24000, $complaint->hold_amount);
         $this->assertSame(['held' => 24000, 'available' => 0], $this->balances());
-
-        $this->travel(5)->days();
-        $this->artisan(ReleaseHeldFunds::class)->assertSuccessful();
-        $this->assertNull($order->fresh()->released_at);
 
         $this->actingAs($this->seller)->post("/seller/komplain/{$complaint->id}/tolak", ['response' => 'Pembeli tidak datang ke titik ambil.'])->assertSessionHasNoErrors();
         $this->assertSame(Complaint::STATUS_DISPUTED, $complaint->fresh()->status);

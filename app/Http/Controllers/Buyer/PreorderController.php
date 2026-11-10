@@ -48,6 +48,7 @@ class PreorderController extends Controller
                     'id' => $p->id,
                     'name' => $p->name,
                     'is_bundle' => (bool) $p->is_bundle,
+                    'photo_url' => $p->photoUrl(),
                     'contents' => $p->is_bundle ? $p->contentsLabel() : null,
                     'normal_price' => $p->is_bundle ? $p->normalPrice() : null,
                     'variants' => $p->variants->map(fn ($v) => [

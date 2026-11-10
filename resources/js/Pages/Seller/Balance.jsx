@@ -4,7 +4,7 @@ import Icon from '@/Components/Icon';
 import StatusPill from '@/Components/StatusPill';
 import { rupiah } from '@/lib/format';
 
-export default function Balance({ shop, available, held, heldOrders, minPayout, account, payouts, ledger }) {
+export default function Balance({ shop, available, held, heldComplaints, minPayout, account, payouts, ledger }) {
     const form = useForm({ amount: available >= minPayout ? String(available) : '' });
     const canRequest = available >= minPayout && account?.verified;
 
@@ -30,7 +30,7 @@ export default function Balance({ shop, available, held, heldOrders, minPayout, 
                     <div className="flex flex-col gap-1">
                         <h1 className="m-0 text-[17px] font-bold lg:text-[28px] lg:tracking-[-0.02em]">Saldo dan pencairan</h1>
                         <p className="m-0 hidden max-w-[640px] text-sm text-muted lg:block">
-                            Uang dari pesanan lunas masuk ke saldo tertahan, lalu pindah ke saldo tersedia setelah pesanan diambil.
+                            Uang dari pesanan lunas langsung masuk ke saldo tersedia dan bisa dicairkan kapan saja.
                         </p>
                     </div>
                     <span className="w-11 lg:hidden" />
@@ -73,11 +73,13 @@ export default function Balance({ shop, available, held, heldOrders, minPayout, 
 
                     <PanelCard className="flex flex-col gap-2 p-4 lg:flex-1 lg:p-5">
                         <div className="flex items-baseline justify-between gap-2 lg:flex-col lg:items-start">
-                            <h2 className="m-0 text-[13px] font-semibold text-muted lg:text-sm">Saldo tertahan</h2>
+                            <h2 className="m-0 text-[13px] font-semibold text-muted lg:text-sm">Ditahan komplain</h2>
                             <span className="tabular text-xl font-bold lg:text-[30px] lg:tracking-[-0.02em]">{rupiah(held)}</span>
                         </div>
                         <p className="m-0 text-[12.5px] leading-normal text-body lg:text-[13px]">
-                            Dari {heldOrders} pesanan. Pindah ke saldo tersedia setelah pesanan diambil, atau otomatis H+1 setelah tanggal ambil kalau tidak ada komplain.
+                            {heldComplaints > 0
+                                ? `Dari ${heldComplaints} komplain yang sedang berjalan. Kembali ke saldo tersedia setelah komplain diputuskan.`
+                                : 'Tidak ada dana yang ditahan. Nominal komplain yang masuk ditahan dari saldo tersedia sampai komplain diputuskan.'}
                         </p>
                     </PanelCard>
 

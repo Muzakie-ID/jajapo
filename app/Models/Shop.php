@@ -64,6 +64,11 @@ class Shop extends Model
         return $this->hasMany(Payout::class);
     }
 
+    public function complaints(): HasMany
+    {
+        return $this->hasMany(Complaint::class);
+    }
+
     public function ledgerEntries(): HasMany
     {
         return $this->hasMany(LedgerEntry::class);

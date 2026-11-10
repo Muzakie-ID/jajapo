@@ -30,8 +30,11 @@ class AdminShopTest extends TestCase
         $this->actingAs($admin)->get('/admin/cari?q=081234567890')->assertOk()
             ->assertInertia(fn ($p) => $p->where('orders.0.code', $order->code));
 
-        $this->actingAs($admin)->get('/admin/cari?q=Danus')->assertOk()
+        // Huruf besar-kecil tidak boleh berpengaruh, termasuk di PostgreSQL.
+        $this->actingAs($admin)->get('/admin/cari?q=DANUS')->assertOk()
             ->assertInertia(fn ($p) => $p->where('shops.0.slug', $shop->slug)->where('shops.0.status', 'active'));
+        $this->actingAs($admin)->get('/admin/cari?q='.strtolower($order->code))->assertOk()
+            ->assertInertia(fn ($p) => $p->where('orders.0.code', $order->code));
 
         $this->actingAs($admin)->get('/admin/cari?q='.$buyer->email)->assertOk()
             ->assertInertia(fn ($p) => $p->where('people.0.email', $buyer->email)->where('people.0.orders', 1));

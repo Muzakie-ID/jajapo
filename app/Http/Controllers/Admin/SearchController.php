@@ -16,8 +16,9 @@ class SearchController extends Controller
     public function __invoke(Request $request): Response
     {
         $q = trim((string) $request->query('q'));
-        $like = '%'.str_replace(['%', '_'], ['\%', '\_'], $q).'%';
-        $digits = preg_replace('/\D/', '', $q);
+        // LIKE di PostgreSQL peka huruf besar-kecil, jadi kedua sisi diturunkan dulu.
+        $term = '%'.mb_strtolower(str_replace(['%', '_'], ['\%', '\_'], $q)).'%';
+        $digits = (string) preg_replace('/\D/', '', $q);
 
         $orders = collect();
         $shops = collect();
@@ -26,10 +27,12 @@ class SearchController extends Controller
         if (mb_strlen($q) >= 2) {
             $orders = Order::query()
                 ->with('buyer', 'shop', 'items', 'slot', 'deliveryZone')
-                ->where(function ($w) use ($like, $digits) {
-                    $w->where('code', 'like', $like)
-                        ->orWhereHas('buyer', fn ($b) => $b->where('name', 'like', $like)->orWhere('email', 'like', $like));
-                    if (mb_strlen((string) $digits) >= 6) {
+                ->where(function ($w) use ($term, $digits) {
+                    $w->whereRaw('lower(orders.code) like ?', [$term])
+                        ->orWhereHas('buyer', fn ($b) => $b
+                            ->whereRaw('lower(users.name) like ?', [$term])
+                            ->orWhereRaw('lower(users.email) like ?', [$term]));
+                    if (mb_strlen($digits) >= 6) {
                         $w->orWhere('buyer_phone', 'like', '%'.$digits.'%');
                     }
                 })
@@ -47,7 +50,8 @@ class SearchController extends Controller
                 ]);
 
             $shops = Shop::query()
-                ->where(fn ($w) => $w->where('name', 'like', $like)->orWhere('slug', 'like', $like))
+                ->whereRaw('lower(name) like ?', [$term])
+                ->orWhereRaw('lower(slug) like ?', [$term])
                 ->orderBy('name')->limit(20)->get()
                 ->map(fn (Shop $s) => [
                     'slug' => $s->slug,
@@ -57,7 +61,8 @@ class SearchController extends Controller
                 ]);
 
             $people = User::query()
-                ->where(fn ($w) => $w->where('name', 'like', $like)->orWhere('email', 'like', $like))
+                ->whereRaw('lower(name) like ?', [$term])
+                ->orWhereRaw('lower(email) like ?', [$term])
                 ->orderBy('name')->limit(20)->get()
                 ->map(fn (User $u) => [
                     'name' => $u->name,

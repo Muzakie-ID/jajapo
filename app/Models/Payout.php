@@ -31,6 +31,11 @@ class Payout extends Model
         return $this->belongsTo(BankAccount::class);
     }
 
+    public function processedBy(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'processed_by');
+    }
+
     public function proofUrl(): ?string
     {
         return $this->proof_path ? Storage::disk('public')->url($this->proof_path) : null;

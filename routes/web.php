@@ -87,8 +87,11 @@ Route::middleware('auth')->group(function () {
     Route::prefix('admin')->middleware('super-admin')->group(function () {
         Route::get('/', Admin\OverviewController::class);
         Route::get('/cari', Admin\SearchController::class);
+        Route::get('/pencairan', [Admin\PayoutController::class, 'index']);
         Route::post('/pencairan/{payout}/transfer', [Admin\PayoutController::class, 'transfer']);
         Route::post('/pencairan/{payout}/tolak', [Admin\PayoutController::class, 'reject']);
+        Route::get('/pembayaran', [Admin\PaymentController::class, 'index']);
+        Route::get('/toko', [Admin\ShopController::class, 'index']);
         Route::get('/toko/{shop}', Admin\ShopDetailController::class);
         Route::post('/toko/{shop:id}/setujui', [Admin\ShopController::class, 'approve']);
         Route::post('/toko/{shop:id}/tolak', [Admin\ShopController::class, 'reject']);

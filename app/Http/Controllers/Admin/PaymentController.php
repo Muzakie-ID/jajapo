@@ -11,10 +11,52 @@ use App\Services\OrderService;
 use App\Services\PaymentService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Inertia\Inertia;
+use Inertia\Response;
 use Throwable;
 
 class PaymentController extends Controller
 {
+    /** Semua pembayaran dengan riwayatnya, bukan hanya yang perlu dicek. */
+    public function index(Request $request): Response
+    {
+        $filters = [
+            'perlu-dicek' => fn ($q) => $q->whereIn('status', [PaymentService::LATE, PaymentService::REVIEW]),
+            'lunas' => fn ($q) => $q->where('status', Payment::STATUS_PAID),
+            'menunggu' => fn ($q) => $q->where('status', Payment::STATUS_PENDING),
+            'gagal' => fn ($q) => $q->whereIn('status', [Payment::STATUS_EXPIRED, Payment::STATUS_CANCELLED]),
+        ];
+        $filter = array_key_exists((string) $request->query('status'), $filters) ? $request->query('status') : null;
+
+        $payments = Payment::query()
+            ->with('order.shop', 'order.buyer')
+            ->when($filter, $filters[$filter] ?? null)
+            ->latest('id')
+            ->paginate(25)
+            ->withQueryString()
+            ->through(fn (Payment $p) => [
+                'id' => $p->id,
+                'code' => $p->order->code,
+                'status' => $p->status,
+                'amount' => $p->amount,
+                'method' => $p->method,
+                'shop' => $p->order->shop->name,
+                'shop_slug' => $p->order->shop->slug,
+                'buyer' => $p->order->buyer->name,
+                'gateway_ref' => $p->gateway_ref,
+                'date' => tanggal($p->created_at, withTime: true, withYear: true),
+                'paid' => $p->paid_at ? tanggal($p->paid_at, withTime: true, withYear: true) : null,
+            ]);
+
+        return Inertia::render('Admin/Payments', [
+            'payments' => $payments,
+            'status' => $filter,
+            'counts' => [
+                'attention' => Payment::query()->whereIn('status', [PaymentService::LATE, PaymentService::REVIEW])->count(),
+            ],
+        ]);
+    }
+
     public function checkStatus(Order $order, PaymentService $payments): RedirectResponse
     {
         try {

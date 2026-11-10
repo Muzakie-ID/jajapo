@@ -20,9 +20,9 @@ const SELLER_NAV = [
 const ADMIN_NAV = [
     { key: 'overview', label: 'Ringkasan', icon: 'grid', href: '/admin' },
     { key: 'search', label: 'Cari', icon: 'search', href: '/admin/cari' },
-    { key: 'shops', label: 'Toko', icon: 'store', href: '/admin#toko' },
-    { key: 'payments', label: 'Pembayaran', icon: 'card', href: '/admin#pembayaran' },
-    { key: 'payouts', label: 'Pencairan', icon: 'wallet', href: '/admin#pencairan' },
+    { key: 'shops', label: 'Toko', icon: 'store', href: '/admin/toko' },
+    { key: 'payments', label: 'Pembayaran', icon: 'card', href: '/admin/pembayaran' },
+    { key: 'payouts', label: 'Pencairan', icon: 'wallet', href: '/admin/pencairan' },
     { key: 'complaints', label: 'Komplain dan refund', icon: 'flag', href: '/admin/komplain' },
     { key: 'recon', label: 'Rekonsiliasi', icon: 'scale', href: '/admin#rekonsiliasi' },
     { key: 'notifications', label: 'Notifikasi', icon: 'bell', href: '/notifikasi?dari=%2Fadmin' },
@@ -162,9 +162,9 @@ function MobileNav({ variant, active, badges, onMore }) {
     const items = dark
         ? [
               { key: 'overview', label: 'Ringkasan', icon: 'grid', href: '/admin' },
-              { key: 'payouts', label: 'Pencairan', icon: 'wallet', href: '/admin#pencairan' },
-              { key: 'payments', label: 'Pembayaran', icon: 'card', href: '/admin#pembayaran' },
-              { key: 'shops', label: 'Toko', icon: 'store', href: '/admin#toko' },
+              { key: 'payouts', label: 'Pencairan', icon: 'wallet', href: '/admin/pencairan' },
+              { key: 'payments', label: 'Pembayaran', icon: 'card', href: '/admin/pembayaran' },
+              { key: 'shops', label: 'Toko', icon: 'store', href: '/admin/toko' },
           ]
         : [
               { key: 'home', label: 'Beranda', icon: 'home', href: '/seller' },

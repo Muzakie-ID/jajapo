@@ -10,9 +10,50 @@ use App\Notifications\ShopSuspended;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Inertia\Inertia;
+use Inertia\Response;
 
 class ShopController extends Controller
 {
+    /** Semua toko, tidak hanya yang menunggu persetujuan. */
+    public function index(Request $request): Response
+    {
+        $statuses = [Shop::STATUS_PENDING, Shop::STATUS_ACTIVE, Shop::STATUS_SUSPENDED, Shop::STATUS_REJECTED];
+        $status = in_array($request->query('status'), $statuses, true) ? $request->query('status') : null;
+        $term = '%'.mb_strtolower(trim((string) $request->query('q'))).'%';
+
+        $shops = Shop::query()
+            ->with('creator')
+            ->withCount(['preorders', 'orders'])
+            ->when($status, fn ($q) => $q->where('status', $status))
+            ->when($request->query('q'), fn ($q) => $q->where(
+                fn ($w) => $w->whereRaw('lower(name) like ?', [$term])->orWhereRaw('lower(slug) like ?', [$term])
+            ))
+            ->orderByRaw("case when status = 'pending' then 0 else 1 end")
+            ->latest('id')
+            ->paginate(25)
+            ->withQueryString()
+            ->through(fn (Shop $s) => [
+                'id' => $s->id,
+                'slug' => $s->slug,
+                'name' => $s->name,
+                'initials' => $s->initials(),
+                'status' => $s->status,
+                'owner' => $s->creator->name,
+                'email' => $s->creator->email,
+                'preorders' => $s->preorders_count,
+                'orders' => $s->orders_count,
+                'date' => tanggal($s->created_at, withYear: true),
+            ]);
+
+        return Inertia::render('Admin/Shops', [
+            'shops' => $shops,
+            'status' => $status,
+            'q' => (string) $request->query('q'),
+            'counts' => Shop::query()->selectRaw('status, count(*) as total')->groupBy('status')->pluck('total', 'status'),
+        ]);
+    }
+
     public function approve(Request $request, Shop $shop): RedirectResponse
     {
         abort_unless($shop->status === Shop::STATUS_PENDING, 422);

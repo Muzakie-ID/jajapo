@@ -80,7 +80,7 @@ class DeliveryController extends Controller
         $po = $shop->preorders()->findOrFail($data['preorder_id']);
 
         $query = $shop->orders()->where('preorder_id', $po->id)->where('fulfillment', 'delivery')
-            ->whereIn('status', [OrderStatus::Paid->value, OrderStatus::Preparing->value, OrderStatus::Ready->value]);
+            ->whereIn('status', [OrderStatus::Paid->value, OrderStatus::Ready->value]);
         if (! empty($data['code'])) {
             $query->where('code', $data['code']);
         } elseif (! empty($data['zone_id'])) {

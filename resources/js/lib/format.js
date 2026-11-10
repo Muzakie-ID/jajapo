@@ -6,9 +6,8 @@ export function rupiah(value) {
 
 export const STATUS_STYLE = {
     pending_payment: { label: 'Menunggu bayar', cls: 'bg-[#FFF1D6] text-amber-ink' },
-    paid: { label: 'Lunas', cls: 'bg-[#DCEFD6] text-[#1F5A2D]' },
+    paid: { label: 'Menunggu disiapkan', cls: 'bg-[#FFF1D6] text-amber-ink' },
     ready: { label: 'Siap diambil', cls: 'bg-[#DCEFD6] text-[#1F5A2D]' },
-    preparing: { label: 'Disiapkan', cls: 'bg-[#DCEFD6] text-[#1F5A2D]' },
     out_for_delivery: { label: 'Sedang diantar', cls: 'bg-[#E3EBF5] text-[#23426B]' },
     picked_up: { label: 'Diambil', cls: 'bg-[#E3EBF5] text-[#23426B]' },
     delivered: { label: 'Terkirim', cls: 'bg-[#E3EBF5] text-[#23426B]' },

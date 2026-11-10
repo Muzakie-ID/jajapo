@@ -9,18 +9,21 @@ const DONE = ['picked_up', 'delivered'];
 
 export default function Ticket({ order }) {
     const done = DONE.includes(order.status);
-    const paid = ['paid', 'preparing', 'ready', 'out_for_delivery', 'not_picked_up', ...DONE].includes(order.status);
+    const paid = ['paid', 'ready', 'out_for_delivery', 'not_picked_up', ...DONE].includes(order.status);
     const onTheWay = order.status === 'out_for_delivery';
+    const ready = ['ready', 'out_for_delivery', 'not_picked_up', ...DONE].includes(order.status);
     const steps = order.is_delivery
         ? [
               { label: 'Dibayar', on: paid },
-              { label: 'Siap diantar', on: paid, current: paid && !done && !onTheWay },
+              { label: 'Disiapkan', on: paid, current: paid && !ready },
+              { label: 'Siap diantar', on: ready, current: ready && !done && !onTheWay },
               { label: 'Diantar', on: onTheWay || done, current: onTheWay },
               { label: 'Terkirim', on: done },
           ]
         : [
               { label: 'Dibayar', on: paid },
-              { label: 'Siap diambil', on: paid, current: paid && !done },
+              { label: 'Disiapkan', on: paid, current: paid && !ready },
+              { label: 'Siap diambil', on: ready, current: ready && !done },
               { label: 'Diambil', on: done },
           ];
 
@@ -30,10 +33,10 @@ export default function Ticket({ order }) {
 
             <div className="flex flex-col gap-4">
                 <div className="flex flex-wrap items-center gap-2.5">
-                    {order.status === 'paid' ? (
+                    {order.status === 'ready' ? (
                         <span className="inline-flex items-center gap-[5px] rounded-full bg-[#DCEFD6] py-1.5 pl-[9px] pr-3 text-[13px] font-bold text-[#1F5A2D]">
                             <Icon name="check" size={15} strokeWidth={2.4} />
-                            Lunas
+                            {order.is_delivery ? 'Siap diantar' : 'Siap diambil'}
                         </span>
                     ) : (
                         <StatusPill status={order.status} />
@@ -43,7 +46,9 @@ export default function Ticket({ order }) {
                             ? 'Pesanan sudah kamu terima'
                             : onTheWay
                               ? `${order.courier || 'Kurir'} sedang mengantar sejak ${order.out_label}`
-                              : `${order.is_delivery ? 'Diantar' : 'Siap diambil'} ${order.ready_label}`}
+                              : ready
+                                ? `${order.is_delivery ? 'Diantar' : 'Bisa diambil'} ${order.ready_label}`
+                                : `Penjual sedang menyiapkan pesananmu. ${order.is_delivery ? 'Diantar' : 'Diambil'} ${order.ready_label}`}
                     </span>
                 </div>
 

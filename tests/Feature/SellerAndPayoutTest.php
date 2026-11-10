@@ -5,9 +5,11 @@ namespace Tests\Feature;
 use App\Enums\OrderStatus;
 use App\Models\Order;
 use App\Models\Payout;
+use App\Notifications\OrderReady;
 use App\Services\Ledger;
 use App\Services\OrderService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Notification;
 use Tests\Concerns\BuildsShops;
 use Tests\TestCase;
 
@@ -24,6 +26,54 @@ class SellerAndPayoutTest extends TestCase
         $orders->markPaid($order);
 
         return $order->fresh();
+    }
+
+    public function test_seller_marks_waiting_orders_ready_per_order_and_per_pickup_place(): void
+    {
+        Notification::fake();
+        $seller = $this->seller();
+        $shop = $this->shopFor($seller);
+        $po = $this->openPreorder($shop);
+        $a = $this->paidOrder($shop);
+        $b = $this->paidOrder($shop);
+
+        // Setelah bayar, pesanan menunggu disiapkan dulu.
+        $this->assertSame(OrderStatus::Paid, $a->fresh()->status);
+
+        $this->actingAs($seller)->post('/seller/pesanan/siap', ['preorder_id' => $po->id, 'code' => $a->code])
+            ->assertSessionHas('success');
+        $this->assertSame(OrderStatus::Ready, $a->fresh()->status);
+        $this->assertNotNull($a->fresh()->ready_at);
+        $this->assertSame(OrderStatus::Paid, $b->fresh()->status);
+        Notification::assertSentTo($a->buyer, OrderReady::class, fn ($n) => str_contains($n->body(), $a->code));
+        Notification::assertNotSentTo($b->buyer, OrderReady::class);
+
+        // Sekali tandai, tidak bisa diulang.
+        $this->actingAs($seller)->post('/seller/pesanan/siap', ['preorder_id' => $po->id, 'code' => $a->code])
+            ->assertSessionHas('error');
+
+        // Satu tombol menyiapkan semua pesanan di satu titik ambil.
+        $this->actingAs($seller)->post('/seller/pesanan/siap', ['preorder_id' => $po->id, 'slot_id' => $po->slots->first()->id])
+            ->assertSessionHas('success');
+        $this->assertSame(OrderStatus::Ready, $b->fresh()->status);
+
+        // Pesanan siap tetap bisa dipindai seperti biasa.
+        $this->actingAs($seller)->postJson('/seller/scan', ['token' => $a->ticket_token])->assertOk();
+        $this->assertSame(OrderStatus::PickedUp, $a->fresh()->status);
+    }
+
+    public function test_sellers_cannot_mark_another_shops_orders_ready(): void
+    {
+        $other = $this->shopFor($this->seller('Yoga Prasetyo'), 'psdm-teknik');
+        $po = $this->openPreorder($other, slug: 'risol');
+        $order = $this->paidOrder($other);
+
+        $seller = $this->seller();
+        $this->shopFor($seller);
+
+        $this->actingAs($seller)->post('/seller/pesanan/siap', ['preorder_id' => $po->id, 'code' => $order->code])
+            ->assertNotFound();
+        $this->assertSame(OrderStatus::Paid, $order->fresh()->status);
     }
 
     public function test_paid_orders_credit_the_shop_right_away_and_scanning_only_marks_the_pickup(): void

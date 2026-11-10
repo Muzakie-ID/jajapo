@@ -18,6 +18,7 @@ class Order extends Model
             'status' => OrderStatus::class,
             'expires_at' => 'datetime',
             'paid_at' => 'datetime',
+            'ready_at' => 'datetime',
             'out_for_delivery_at' => 'datetime',
             'reminded_at' => 'datetime',
             'picked_up_at' => 'datetime',

@@ -9,7 +9,8 @@ import { closesIn } from '@/lib/time';
 
 const FILTERS = [
     { value: '', label: 'Semua' },
-    { value: 'paid', label: 'Lunas' },
+    { value: 'paid', label: 'Menunggu disiapkan' },
+    { value: 'ready', label: 'Siap diambil' },
     { value: 'pending_payment', label: 'Menunggu bayar' },
     { value: 'picked_up', label: 'Diambil' },
     { value: 'cancelled', label: 'Dibatalkan' },
@@ -23,11 +24,14 @@ export default function Dashboard({ shop, active, kpis, perDay, rekap, orders, s
 
     const share = () => active && sharePreorder({ title: active.title, shopName: shop.name, url: active.url, storyUrl: active.story_url });
 
+    const markReady = (target) =>
+        router.post('/seller/pesanan/siap', { preorder_id: active.id, ...target }, { preserveScroll: true });
+
     const kpiTiles = kpis
         ? [
               { label: 'Pesanan lunas', value: kpis.paid_count, sub: `${kpis.paid_today} masuk hari ini`, accent: true },
               { label: 'Pendapatan', value: rupiah(kpis.revenue), sub: 'Masuk saldo tersedia' },
-              { label: 'Belum diambil', value: kpis.waiting_pickup, sub: active ? `Ambil ${active.pickup_label}` : '' },
+              { label: 'Belum diambil', value: kpis.waiting_pickup, sub: `${kpis.waiting_ready} menunggu disiapkan` },
               { label: 'Kedaluwarsa', value: kpis.expired, sub: 'Kuotanya sudah dikembalikan' },
           ]
         : [];
@@ -75,7 +79,19 @@ export default function Dashboard({ shop, active, kpis, perDay, rekap, orders, s
                                                 <span className="text-[13.5px] font-semibold">{s.place}</span>
                                                 <span className="text-xs text-muted">{s.time}</span>
                                             </span>
-                                            <span className="tabular text-[13.5px] font-bold">{s.count} pesanan</span>
+                                            <span className="flex items-center gap-2.5">
+                                                {s.waiting > 0 && (
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => markReady({ slot_id: s.id })}
+                                                        className="flex h-9 items-center gap-1.5 rounded-xl bg-forest px-3 text-xs font-semibold text-white"
+                                                    >
+                                                        <Icon name="check" size={15} strokeWidth={2.4} />
+                                                        Siapkan {s.waiting}
+                                                    </button>
+                                                )}
+                                                <span className="tabular text-[13.5px] font-bold">{s.count} pesanan</span>
+                                            </span>
                                         </div>
                                     ))}
                                 </div>
@@ -245,8 +261,17 @@ export default function Dashboard({ shop, active, kpis, perDay, rekap, orders, s
                                             <span className="text-body">{o.item}</span>
                                             <span className="text-body">{o.slot}</span>
                                             <span className="tabular text-right font-semibold">{rupiah(o.amount)}</span>
-                                            <span>
+                                            <span className="flex items-center gap-2">
                                                 <StatusPill status={o.status} />
+                                                {o.status === 'paid' && !o.is_delivery && (
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => router.post('/seller/pesanan/siap', { preorder_id: o.preorder_id, code: o.code }, { preserveScroll: true })}
+                                                        className="text-xs font-semibold text-leaf"
+                                                    >
+                                                        Siapkan
+                                                    </button>
+                                                )}
                                             </span>
                                         </div>
                                     ))}
@@ -266,6 +291,16 @@ export default function Dashboard({ shop, active, kpis, perDay, rekap, orders, s
                                             <span className="text-[12.5px] text-muted">{o.slot}</span>
                                             <span className="tabular text-sm font-bold">{rupiah(o.amount)}</span>
                                         </span>
+                                        {o.status === 'paid' && !o.is_delivery && (
+                                            <button
+                                                type="button"
+                                                onClick={() => router.post('/seller/pesanan/siap', { preorder_id: o.preorder_id, code: o.code }, { preserveScroll: true })}
+                                                className="mt-1 flex h-10 items-center justify-center gap-1.5 rounded-xl bg-forest text-[13px] font-semibold text-white"
+                                            >
+                                                <Icon name="check" size={16} strokeWidth={2.4} />
+                                                Tandai siap diambil
+                                            </button>
+                                        )}
                                     </div>
                                 ))}
                             </div>

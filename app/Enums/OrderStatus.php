@@ -6,7 +6,6 @@ enum OrderStatus: string
 {
     case PendingPayment = 'pending_payment';
     case Paid = 'paid';
-    case Preparing = 'preparing';
     case Ready = 'ready';
     case OutForDelivery = 'out_for_delivery';
     case PickedUp = 'picked_up';
@@ -23,7 +22,7 @@ enum OrderStatus: string
      */
     public static function paidStates(): array
     {
-        return [self::Paid->value, self::Preparing->value, self::Ready->value, self::OutForDelivery->value];
+        return [self::Paid->value, self::Ready->value, self::OutForDelivery->value];
     }
 
     /**
@@ -46,8 +45,7 @@ enum OrderStatus: string
     {
         return match ($this) {
             self::PendingPayment => 'Menunggu bayar',
-            self::Paid => 'Lunas',
-            self::Preparing => 'Disiapkan',
+            self::Paid => 'Menunggu disiapkan',
             self::Ready => 'Siap diambil',
             self::OutForDelivery => 'Diantar',
             self::PickedUp => 'Diambil',

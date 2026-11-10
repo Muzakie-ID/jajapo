@@ -10,7 +10,7 @@ Dibangun dengan Laravel 13, Inertia v3 + React 19, Tailwind CSS v4, dan PostgreS
 - Beranda dengan PO yang sedang buka, daftar toko, halaman toko, dan halaman PO (foto dan varian tiap menu, lalu pilih ambil sendiri di titik ambil PO itu atau diantar ke area yang dilayani PO itu).
 - Checkout dengan kunci kuota, maksimal 10 porsi per pesanan, satu pesanan menunggu bayar per PO.
 - Halaman bayar QRIS dengan hitung mundur 15 menit, cek status otomatis, simpan QR, dan batal.
-- Tiket QR untuk pengambilan, riwayat pesanan, dan akun.
+- Tiket QR untuk pengambilan, dengan perjalanan pesanan: Dibayar, Disiapkan, Siap diambil, lalu Diambil. Riwayat pesanan dan akun.
 - Komplain dari tiket sampai H+1 setelah jadwal ambil atau antar: alasan, cerita, foto bukti, nominal refund, dan rekening tujuan. Status komplain dan refund tampil di tiket.
 - Login Google (Socialite). Bisa dipasang ke layar utama HP (manifest + service worker).
 
@@ -21,6 +21,7 @@ Dibangun dengan Laravel 13, Inertia v3 + React 19, Tailwind CSS v4, dan PostgreS
 - Tombol Bagikan ikut mengirim gambar story ke menu bagikan HP, siap dipasang di story.
 - Beranda toko: PO aktif, ringkasan, pesanan terbaru, rekap produksi, saldo. Bisa pindah toko kalau anggota beberapa toko.
 - Pengantaran: pesanan antar per area dengan alamat dan tombol WhatsApp pembeli. Mulai antar per area atau per pesanan (pembeli diberi tahu dan melihat nama kurir di tiket), lalu scan QR saat sampai, atau tandai terkirim manual.
+- Pesanan lunas masuk sebagai Menunggu disiapkan. Tombol Siapkan menandainya siap diambil, per pesanan atau sekaligus untuk satu titik ambil, dan pembeli langsung diberi tahu.
 - Scan tiket dengan kamera, cari manual, dan cadangan tiket di HP saat sinyal hilang (antrean dikirim saat online lagi).
 - Laporan per PO: unduh Excel (Ringkasan, Pesanan, Rekap produksi, Daftar ambil dengan kolom paraf) dan halaman LPJ yang bisa dicetak atau disimpan PDF, lengkap dengan kolom tanda tangan ketua dan bendahara.
 - Komplain: setujui refund penuh atau sebagian, atau tolak dengan alasan (lalu super admin memutuskan). Nominal yang diminta ditahan dari saldo selama komplain berjalan, dan refund dipotong dari bagian toko.
@@ -153,7 +154,7 @@ Setiap kejadian penting tersimpan di lonceng aplikasi (`/notifikasi`), dikirim k
 
 | Kejadian | Penerima | Email |
 | --- | --- | --- |
-| Pembayaran diterima, pengingat 2 jam sebelum ambil/antar, pesanan sedang diantar | Pembeli | pembayaran saja |
+| Pembayaran diterima, pesanan siap diambil atau diantar, pengingat 2 jam sebelum ambil/antar, pesanan sedang diantar | Pembeli | pembayaran saja |
 | Komplain diputuskan, refund ditransfer | Pembeli | ya |
 | Pesanan baru lunas | Anggota toko | tidak (hanya lonceng) |
 | Komplain baru, komplain diputuskan super admin | Anggota toko | ya |

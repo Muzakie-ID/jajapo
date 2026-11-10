@@ -52,6 +52,8 @@ class Present
             'slot' => $order->isDelivery() ? $order->placeLabel().': '.$order->address_note : $order->slot?->place.', '.jam($order->slot?->starts_at),
             'amount' => $order->shopAmount(),
             'status' => $order->status->value,
+            'preorder_id' => $order->preorder_id,
+            'is_delivery' => $order->isDelivery(),
         ];
     }
 

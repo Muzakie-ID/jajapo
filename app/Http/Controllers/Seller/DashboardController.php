@@ -48,6 +48,7 @@ class DashboardController extends Controller
                 'quota' => $po->quotaTotal(),
                 'expired' => $po->orders()->where('status', OrderStatus::Expired)->count(),
                 'waiting_pickup' => $paid->filter(fn ($o) => in_array($o->status->value, OrderStatus::paidStates(), true))->count(),
+                'waiting_ready' => $paid->where('status', OrderStatus::Paid)->count(),
             ];
 
             $active = [
@@ -60,13 +61,17 @@ class DashboardController extends Controller
                 'closes_at' => $po->closes_at->toIso8601String(),
                 'pickup_label' => ($s = $po->slots->first()) ? tanggal($s->starts_at) : ($po->delivery_starts_at ? tanggal($po->delivery_starts_at) : '-'),
                 'slots' => $po->slots->map(fn ($s) => [
+                    'id' => $s->id,
                     'place' => $s->place,
                     'time' => tanggal($s->starts_at).', '.$s->timeLabel(),
                     'count' => $paid->where('pickup_slot_id', $s->id)->count(),
+                    'waiting' => $paid->where('pickup_slot_id', $s->id)->where('status', OrderStatus::Paid)->count(),
                 ])->concat($po->delivery_enabled ? $po->deliveryZones->map(fn ($z) => [
+                    'id' => null,
                     'place' => 'Antar ke '.$z->name,
                     'time' => ($po->deliveryLabel() ?? 'Jadwal antar belum diisi').', ongkir '.rupiah($z->fee),
                     'count' => $paid->where('delivery_zone_id', $z->id)->count(),
+                    'waiting' => 0,
                 ]) : [])->values(),
             ];
 

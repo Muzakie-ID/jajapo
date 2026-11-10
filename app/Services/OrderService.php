@@ -15,6 +15,7 @@ use App\Models\User;
 use App\Notifications\NewPaidOrder;
 use App\Notifications\OrderOutForDelivery;
 use App\Notifications\OrderPaid;
+use App\Notifications\OrderReady;
 use App\Payments\GatewayException;
 use App\Payments\PaymentGateway;
 use App\Support\Notify;
@@ -269,6 +270,29 @@ class OrderService
     }
 
     /**
+     * Penjual menandai pesanan selesai disiapkan: pembeli boleh mengambil, atau kurir boleh mengantar.
+     * Mengembalikan false kalau pesanan tidak lagi menunggu disiapkan.
+     */
+    public function markReady(Order $order): bool
+    {
+        $marked = DB::transaction(function () use ($order) {
+            $order = Order::query()->lockForUpdate()->findOrFail($order->id);
+            if ($order->status !== OrderStatus::Paid) {
+                return false;
+            }
+            $order->update(['status' => OrderStatus::Ready, 'ready_at' => now()]);
+
+            return true;
+        });
+
+        if ($marked) {
+            $order->refresh()->buyer->notify(new OrderReady($order));
+        }
+
+        return $marked;
+    }
+
+    /**
      * Kurir panitia mulai mengantar. Hanya untuk pesanan antar yang sudah lunas.
      * Mengembalikan false kalau pesanan tidak bisa diubah (misalnya sudah terkirim).
      */
@@ -276,7 +300,7 @@ class OrderService
     {
         $started = DB::transaction(function () use ($order, $courier) {
             $order = Order::query()->lockForUpdate()->findOrFail($order->id);
-            $ready = [OrderStatus::Paid, OrderStatus::Preparing, OrderStatus::Ready];
+            $ready = [OrderStatus::Paid, OrderStatus::Ready];
             if (! $order->isDelivery() || ! in_array($order->status, $ready, true)) {
                 return false;
             }

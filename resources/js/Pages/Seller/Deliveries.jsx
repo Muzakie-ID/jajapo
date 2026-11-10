@@ -4,7 +4,7 @@ import Icon from '@/Components/Icon';
 import StatusPill from '@/Components/StatusPill';
 import { rupiah } from '@/lib/format';
 
-const READY = ['paid', 'preparing', 'ready'];
+const READY = ['paid', 'ready'];
 
 export default function Deliveries({ shop, preorders, selected, zones }) {
     const start = (payload, message) => {

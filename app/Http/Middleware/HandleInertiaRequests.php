@@ -4,6 +4,7 @@ namespace App\Http\Middleware;
 
 use App\Enums\OrderStatus;
 use App\Models\Complaint;
+use App\Models\Feedback;
 use App\Models\Refund;
 use Illuminate\Http\Request;
 use Inertia\Middleware;
@@ -78,7 +79,10 @@ class HandleInertiaRequests extends Middleware
                     ->orWhere(fn ($o) => $o->where('status', Complaint::STATUS_OPEN)->where('created_at', '<=', now()->subDay())))
                 ->count();
 
-            return ['complaints' => ($decide + Refund::query()->where('status', Refund::STATUS_OPEN)->count()) ?: null];
+            return [
+                'complaints' => ($decide + Refund::query()->where('status', Refund::STATUS_OPEN)->count()) ?: null,
+                'feedback' => Feedback::query()->where('status', Feedback::STATUS_NEW)->count() ?: null,
+            ];
         }
 
         return [];

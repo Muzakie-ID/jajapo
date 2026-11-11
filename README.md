@@ -13,6 +13,7 @@ Dibangun dengan Laravel 13, Inertia v3 + React 19, Tailwind CSS v4, dan PostgreS
 - Tiket QR untuk pengambilan, dengan perjalanan pesanan: Dibayar, Disiapkan, Siap diambil, lalu Diambil. Riwayat pesanan dan akun.
 - Komplain dari tiket sampai H+1 setelah jadwal ambil atau antar: alasan, cerita, foto bukti, nominal refund, dan rekening tujuan. Status komplain dan refund tampil di tiket.
 - Login Google (Socialite). Bisa dipasang ke layar utama HP (manifest + service worker).
+- Kirim masukan dari halaman Akun (pembeli) atau menu penjual: lapor error, saran fitur, atau lainnya, dengan screenshot opsional. Halaman asal dan jenis perangkat ikut tercatat.
 
 **Penjual (desktop dan mobile)**
 - Daftar toko: khusus email `@mail.ugm.ac.id`, alamat toko unik, rekening wajib atas nama pembuat toko.
@@ -39,6 +40,7 @@ Dibangun dengan Laravel 13, Inertia v3 + React 19, Tailwind CSS v4, dan PostgreS
 - Halaman toko: saldo, omzet, PO, pesanan, anggota, rekening, pencairan, dan jejak tindakannya. Toko bermasalah bisa dibekukan dengan alasan, lalu diaktifkan kembali.
 - Jejak tindakan: siapa melakukan apa, dengan filter per jenis dan pencarian pelaku.
 - Pengaturan platform: batas waktu bayar, minimal pencairan, dan maksimal porsi per pesanan.
+- Masukan pengguna: daftar laporan bug dan saran dengan pengirim, toko, halaman asal, perangkat, dan screenshot. Filter per status dan jenis, tandai ditangani atau selesai, dan beri catatan internal. Jumlah masukan baru tampil di menu.
 - Rekonsiliasi buku besar dengan pembayaran lunas per tanggal, riwayat 14 hari, daftar callback gateway beserta tanda tangan yang ditolak, dan ekspor pendapatan platform ke Excel.
 
 **Uang**
@@ -165,7 +167,7 @@ Setiap kejadian penting tersimpan di lonceng aplikasi (`/notifikasi`), dikirim k
 | Komplain baru, komplain diputuskan super admin | Anggota toko | ya |
 | Pencairan ditransfer/ditolak, rekening disetujui/ditolak | Admin toko | ya |
 | Toko disetujui/ditolak | Pembuat toko | ya |
-| Toko baru, pencairan, komplain ditolak penjual, refund perlu ditransfer, ganti rekening | Super admin | ya |
+| Toko baru, pencairan, komplain ditolak penjual, refund perlu ditransfer, ganti rekening, masukan pengguna baru | Super admin | ya |
 | Undangan anggota | Email yang diundang | ya |
 
 Web push butuh kunci VAPID (`php artisan webpush:vapid`) dan HTTPS di produksi. Di iPhone, pembeli perlu memasang Jajapo ke layar utama dulu. Email memakai pengaturan `MAIL_*`.

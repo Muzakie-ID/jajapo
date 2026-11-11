@@ -15,6 +15,7 @@ const SELLER_NAV = [
     { key: 'members', label: 'Anggota', icon: 'users', href: '/seller/anggota', adminOnly: true },
     { key: 'settings', label: 'Pengaturan toko', icon: 'sliders', href: '/seller/pengaturan', adminOnly: true },
     { key: 'notifications', label: 'Notifikasi', icon: 'bell', href: '/notifikasi?dari=%2Fseller' },
+    { key: 'feedback', label: 'Kirim masukan', icon: 'message', href: '/masukan?dari=%2Fseller' },
 ];
 
 const ADMIN_NAV = [
@@ -25,6 +26,7 @@ const ADMIN_NAV = [
     { key: 'payouts', label: 'Pencairan', icon: 'wallet', href: '/admin/pencairan' },
     { key: 'complaints', label: 'Komplain dan refund', icon: 'flag', href: '/admin/komplain' },
     { key: 'recon', label: 'Rekonsiliasi', icon: 'scale', href: '/admin/rekonsiliasi' },
+    { key: 'feedback', label: 'Masukan pengguna', icon: 'message', href: '/admin/masukan' },
     { key: 'notifications', label: 'Notifikasi', icon: 'bell', href: '/notifikasi?dari=%2Fadmin' },
     { key: 'log', label: 'Jejak tindakan', icon: 'list', href: '/admin/log' },
     { key: 'settings', label: 'Pengaturan', icon: 'sliders', href: '/admin/pengaturan' },
@@ -218,9 +220,9 @@ function MobileNav({ variant, active, badges, onMore }) {
             >
                 <span className="relative flex">
                     <Icon name="menu" size={22} />
-                    {badges.complaints || badges.notifications ? (
+                    {badges.complaints || badges.notifications || badges.feedback ? (
                         <span className={`absolute -right-3 -top-1.5 min-w-[18px] rounded-full px-[5px] py-px text-center text-[10.5px] font-bold ${dark ? 'bg-[#FFE2A8] text-[#5C3A00]' : 'bg-danger text-white'}`}>
-                            {(badges.complaints || 0) + (badges.notifications || 0)}
+                            {(badges.complaints || 0) + (badges.notifications || 0) + (badges.feedback || 0)}
                         </span>
                     ) : null}
                 </span>
@@ -253,6 +255,19 @@ function MoreSheet({ dark, shop, badges, onClose }) {
                         <Link href="/admin/rekonsiliasi" onClick={onClose} className="flex min-h-12 items-center gap-3 text-sm font-semibold text-ink no-underline">
                             <Icon name="scale" size={20} className="text-leaf" />
                             Rekonsiliasi
+                        </Link>
+                    )}
+                    {dark && (
+                        <Link href="/admin/masukan" onClick={onClose} className="flex min-h-12 items-center gap-3 text-sm font-semibold text-ink no-underline">
+                            <Icon name="message" size={20} className="text-leaf" />
+                            Masukan pengguna
+                            <Badge value={badges.feedback} />
+                        </Link>
+                    )}
+                    {!dark && (
+                        <Link href="/masukan?dari=%2Fseller" onClick={onClose} className="flex min-h-12 items-center gap-3 text-sm font-semibold text-ink no-underline">
+                            <Icon name="message" size={20} className="text-leaf" />
+                            Kirim masukan
                         </Link>
                     )}
                     {!dark && (

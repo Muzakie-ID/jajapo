@@ -3,6 +3,7 @@
 use App\Http\Controllers\Admin;
 use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\Buyer;
+use App\Http\Controllers\FeedbackController;
 use App\Http\Controllers\InvitationController;
 use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\PaymentWebhookController;
@@ -35,6 +36,8 @@ Route::middleware('auth')->group(function () {
     Route::post('/pesanan/{order}/komplain', [Buyer\ComplaintController::class, 'store'])->middleware('throttle:10,1');
     Route::get('/akun', [Buyer\AccountController::class, 'show']);
     Route::put('/akun', [Buyer\AccountController::class, 'update']);
+    Route::get('/masukan', [FeedbackController::class, 'create']);
+    Route::post('/masukan', [FeedbackController::class, 'store'])->middleware('throttle:5,1');
 
     // Penjual
     Route::get('/notifikasi', [NotificationController::class, 'index']);
@@ -110,6 +113,8 @@ Route::middleware('auth')->group(function () {
         Route::get('/komplain', [Admin\ComplaintController::class, 'index']);
         Route::post('/komplain/{complaint}/putuskan', [Admin\ComplaintController::class, 'decide']);
         Route::post('/refund/{refund}/selesai', [Admin\ComplaintController::class, 'transferred']);
+        Route::get('/masukan', [Admin\FeedbackController::class, 'index']);
+        Route::post('/masukan/{feedback}/status', [Admin\FeedbackController::class, 'update'])->whereNumber('feedback');
     });
 });
 

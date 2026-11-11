@@ -52,6 +52,7 @@ export default function Account({ phone, canRegisterShop }) {
                 {activeShops.length === 0 && canRegisterShop && <MenuLink href="/seller/daftar" icon="store" label="Daftar jadi penjual" />}
                 <MenuLink href="/pesanan" icon="receipt" label="Pesanan saya" />
                 <MenuLink href="/notifikasi" icon="bell" label={user.unread ? `Notifikasi (${user.unread} baru)` : 'Notifikasi'} />
+                <MenuLink href="/masukan?dari=%2Fakun" icon="message" label="Kirim masukan atau lapor bug" />
                 <button
                     type="button"
                     onClick={() => router.post('/logout')}

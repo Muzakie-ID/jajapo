@@ -1,6 +1,6 @@
 # Jajapo: panduan pengembangan
 
-Platform pre-order makanan untuk danusan kampus UGM. Baca `README.md` untuk fitur, cara menjalankan, dan kontrak gateway.
+Platform pre-order makanan untuk mahasiswa UGM, perorangan maupun kepanitiaan. Baca `README.md` untuk fitur, cara menjalankan, dan kontrak gateway.
 
 ## Stack
 

@@ -15,7 +15,7 @@ use Illuminate\Validation\ValidationException;
 use Inertia\Inertia;
 use Inertia\Response;
 
-/** Halaman kurir panitia: pesanan antar per area, mulai antar, dan tandai terkirim. */
+/** Halaman kurir: pesanan antar per area, mulai antar, dan tandai terkirim. */
 class DeliveryController extends Controller
 {
     public function index(Request $request): Response

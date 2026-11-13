@@ -1,6 +1,6 @@
 # Jajapo
 
-Platform pre-order makanan untuk danusan kepanitiaan dan organisasi kampus UGM. Pembeli memesan dan membayar lewat QRIS, lalu menukar tiket QR saat mengambil pesanan. Penjual mengelola PO, memindai tiket, dan mencairkan saldo. Super admin memeriksa toko baru, pembayaran, dan pencairan.
+Platform pre-order makanan untuk mahasiswa UGM: jualan sendiri, jualan bareng teman, danusan kepanitiaan, atau organisasi. Toko didaftarkan atas nama pribadi dengan email UGM, tidak perlu mengatasnamakan lembaga. Pembeli memesan dan membayar lewat QRIS, lalu menukar tiket QR saat mengambil pesanan. Penjual mengelola PO, memindai tiket, dan mencairkan saldo. Super admin memeriksa toko baru, pembayaran, dan pencairan.
 
 Dibangun dengan Laravel 13, Inertia v3 + React 19, Tailwind CSS v4, dan PostgreSQL.
 
@@ -16,7 +16,7 @@ Dibangun dengan Laravel 13, Inertia v3 + React 19, Tailwind CSS v4, dan PostgreS
 - Kirim masukan dari halaman Akun (pembeli) atau menu penjual: lapor error, saran fitur, atau lainnya, dengan screenshot opsional. Halaman asal dan jenis perangkat ikut tercatat.
 
 **Penjual (desktop dan mobile)**
-- Daftar toko: khusus email `@mail.ugm.ac.id`, alamat toko unik, rekening wajib atas nama pembuat toko.
+- Daftar toko: terbuka untuk siapa saja ber-email `@mail.ugm.ac.id`, perorangan maupun kepanitiaan. Alamat toko unik, rekening wajib atas nama pembuat toko.
 - PO dan menu: buat PO (draf atau langsung terbit), atur menu, varian, harga, kuota, foto per menu, titik ambil (tempat, patokan, jam), pengantaran (jadwal antar, area dan ongkir per area), poster, dan gambar story. Titik ambil dan area antar milik masing-masing PO, dengan saran dari yang pernah dipakai toko. Ubah, salin, tutup lebih awal, atau hapus PO yang belum punya pesanan. Menu, varian, dan slot yang sudah dipesan terkunci dari penghapusan, dan kuota tidak bisa turun di bawah porsi terjual.
 - Paket bundling: gabungkan varian menu dengan harga paket (misalnya 1 Mac n Cheese + 1 Es Teh). Paket memotong kuota tiap menu isinya, bisa diberi kuota sendiri, tampil dengan harga coret dan hematnya, dan dipecah ke menu isinya di rekap produksi. Isi paket yang sudah dipesan dikunci.
 - Tombol Bagikan ikut mengirim gambar story ke menu bagikan HP, siap dipasang di story.

@@ -69,7 +69,7 @@ export default function Complaint({ order, reasons }) {
                             rows={4}
                             value={data.description}
                             onChange={(e) => setData('description', e.target.value)}
-                            placeholder="Contoh: datang jam 10.30 di titik ambil, panitia tidak ada sampai jam 12.00."
+                            placeholder="Contoh: datang jam 10.30 di titik ambil, penjual tidak ada sampai jam 12.00."
                             maxLength={1000}
                             className="rounded-[14px] border border-line bg-white px-3.5 py-3 text-sm outline-none"
                         />

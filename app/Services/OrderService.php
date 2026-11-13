@@ -293,7 +293,7 @@ class OrderService
     }
 
     /**
-     * Kurir panitia mulai mengantar. Hanya untuk pesanan antar yang sudah lunas.
+     * Kurir mulai mengantar. Hanya untuk pesanan antar yang sudah lunas.
      * Mengembalikan false kalau pesanan tidak bisa diubah (misalnya sudah terkirim).
      */
     public function startDelivery(Order $order, User $courier): bool

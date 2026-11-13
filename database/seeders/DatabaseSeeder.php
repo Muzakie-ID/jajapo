@@ -63,7 +63,7 @@ class DatabaseSeeder extends Seeder
             'closes_at' => now()->addHours(4)->addMinutes(12), 'delivery_enabled' => true,
             'delivery_starts_at' => $pickupDay->copy()->setTime(10, 0)->utc(), 'delivery_ends_at' => $pickupDay->copy()->setTime(14, 0)->utc(),
         ], [['Mac n Cheese Panggang', 12000, 60, [['Original', 0], ['Extra keju', 3000], ['Smoked beef', 5000]]], ['Es Teh Manis', 5000, 60, [['Reguler', 0]]]],
-            [['Lobi KPTU FTP', 'Meja panitia depan musala', $pickupDay->copy()->setTime(10, 0), 2], ['Taman Code DTK', 'Bangku bawah pohon ketapang', $pickupDay->copy()->setTime(13, 0), 2]],
+            [['Lobi KPTU FTP', 'Meja depan musala', $pickupDay->copy()->setTime(10, 0), 2], ['Taman Code DTK', 'Bangku bawah pohon ketapang', $pickupDay->copy()->setTime(13, 0), 2]],
             [['FTP', 0], ['FEB', 3000], ['Fakultas Teknik', 3000], ['FMIPA', 4000]]);
 
         // Paket hemat: 1 Mac n Cheese Original + 1 Es Teh dengan harga paket.

@@ -126,7 +126,7 @@ function Respond({ c }) {
                     rows={3}
                     value={reject.data.response}
                     onChange={(e) => reject.setData('response', e.target.value)}
-                    placeholder="Contoh: pesanan sudah diambil jam 10.15, tiket di-scan oleh panitia."
+                    placeholder="Contoh: pesanan sudah diambil jam 10.15, tiket di-scan jam itu juga."
                     className="rounded-xl border border-line bg-white px-3 py-2.5 text-sm outline-none"
                 />
                 {reject.errors.response && <span className="text-xs font-semibold text-danger">{reject.errors.response}</span>}

@@ -38,7 +38,7 @@ class SellerPreorderTest extends TestCase
             ]],
             'slots' => [[
                 'place' => 'Lobi KPTU FTP',
-                'place_note' => 'Meja panitia depan musala',
+                'place_note' => 'Meja depan musala',
                 'date' => now($tz)->addDays(2)->format('Y-m-d'),
                 'start' => '10:00',
                 'end' => '12:00',
@@ -286,7 +286,7 @@ class SellerPreorderTest extends TestCase
 
         [$risol, $kopi] = $shop->preorders()->with('slots', 'deliveryZones')->orderBy('id')->get()->all();
         $this->assertSame(['Lobi KPTU FTP'], $risol->slots->pluck('place')->all());
-        $this->assertSame('Meja panitia depan musala', $risol->slots->first()->place_note);
+        $this->assertSame('Meja depan musala', $risol->slots->first()->place_note);
         $this->assertSame([['FEB', 3000], ['Kos sekitar Pogung', 5000]], $risol->deliveryZones->map(fn ($z) => [$z->name, $z->fee])->all());
         $this->assertSame('10:00', $risol->delivery_starts_at->setTimezone('Asia/Jakarta')->format('H:i'));
         $this->assertSame(['Kantin Teknik'], $kopi->slots->pluck('place')->all());

@@ -756,7 +756,7 @@ function SlotEditor({ slot, index, errors, onChange, onRemove }) {
                 <input
                     value={slot.place_note ?? ''}
                     onChange={(ev) => onChange({ place_note: ev.target.value })}
-                    placeholder="Contoh: meja panitia depan musala"
+                    placeholder="Contoh: meja depan musala"
                     maxLength={160}
                     className={inputCls}
                 />

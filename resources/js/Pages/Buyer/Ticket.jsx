@@ -71,8 +71,8 @@ export default function Ticket({ order }) {
                             {done
                                 ? 'Tiket ini sudah dipakai.'
                                 : order.is_delivery
-                                  ? 'Tunjukkan QR ini ke kurir panitia saat pesanan sampai.'
-                                  : 'Tunjukkan QR ini ke panitia saat mengambil pesanan.'}
+                                  ? 'Tunjukkan QR ini ke kurir saat pesanan sampai.'
+                                  : 'Tunjukkan QR ini ke penjual saat mengambil pesanan.'}
                         </span>
                         <div className="my-1 w-full border-t-2 border-dashed border-line" />
                         <dl className="m-0 grid w-full grid-cols-2 gap-x-4 gap-y-3">

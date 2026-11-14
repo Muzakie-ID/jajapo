@@ -1,11 +1,13 @@
 import { Link, usePage } from '@inertiajs/react';
 import BuyerLayout, { TopBar } from '@/Layouts/BuyerLayout';
 import { PlateTile } from '@/Components/Plate';
+import Icon from '@/Components/Icon';
 import { rupiah } from '@/lib/format';
 import { closesIn } from '@/lib/time';
 
 export default function Shop({ shop, open, past }) {
-    const { appHost } = usePage().props;
+    const { appHost, auth } = usePage().props;
+    const ownShop = auth.user?.shops?.some((s) => s.slug === shop.slug);
     return (
         <BuyerLayout title={shop.name} active="shops">
             <TopBar back="/toko" />
@@ -23,6 +25,18 @@ export default function Shop({ shop, open, past }) {
                     )}
                 </div>
             </section>
+            {!ownShop && (
+                <Link
+                    href="/obrolan/mulai"
+                    method="post"
+                    as="button"
+                    data={{ toko: shop.slug }}
+                    className="mt-3 flex h-12 w-full items-center justify-center gap-2 rounded-2xl border border-line bg-white text-sm font-bold text-ink"
+                >
+                    <Icon name="chat" size={20} className="text-leaf" />
+                    Chat penjual
+                </Link>
+            )}
 
             <h2 className="mb-3 mt-5 text-[17px] font-bold">PO yang sedang buka</h2>
             {open.length === 0 && <p className="m-0 text-sm text-muted">Belum ada PO yang buka. Cek lagi nanti.</p>}

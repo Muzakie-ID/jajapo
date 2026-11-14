@@ -64,7 +64,7 @@ export default function Register({ allowed, domain, email, pendingShop, blocked,
                         <Field label="Instagram (opsional)" error={form.errors.instagram}>
                             <input value={form.data.instagram} onChange={(e) => form.setData('instagram', e.target.value)} placeholder="@danusdiesftp" className={inputCls} />
                         </Field>
-                        <Field label="Nomor WhatsApp toko" error={form.errors.whatsapp} hint="Dipakai tombol Hubungi penjual">
+                        <Field label="Nomor WhatsApp toko" error={form.errors.whatsapp} hint="Tidak ditampilkan ke pembeli. Pembeli menghubungi tokomu lewat Obrolan.">
                             <input type="tel" value={form.data.whatsapp} onChange={(e) => form.setData('whatsapp', e.target.value)} placeholder="08xxxxxxxxxx" className={inputCls} required />
                         </Field>
                     </Section>

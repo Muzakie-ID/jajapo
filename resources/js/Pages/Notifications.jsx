@@ -4,7 +4,7 @@ import BuyerLayout, { TopBar } from '@/Layouts/BuyerLayout';
 import Icon from '@/Components/Icon';
 import { postJson } from '@/lib/http';
 
-const KIND_ICON = { order: 'receipt', complaint: 'flag', money: 'wallet', shop: 'store', reminder: 'clock', feedback: 'message' };
+const KIND_ICON = { order: 'receipt', complaint: 'flag', money: 'wallet', shop: 'store', reminder: 'clock', feedback: 'message', chat: 'chat' };
 
 export default function Notifications({ items, push, back }) {
     const unread = items.filter((n) => !n.read).length;

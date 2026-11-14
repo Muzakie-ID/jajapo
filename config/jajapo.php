@@ -18,6 +18,6 @@ return [
     // Kata pertama rute aplikasi. Slug toko tidak boleh memakai kata ini.
     'reserved_slugs' => [
         'admin', 'akun', 'api', 'auth', 'bayar', 'build', 'checkout', 'dev', 'icons', 'login',
-        'logout', 'manifest', 'masukan', 'notifikasi', 'pesanan', 'seller', 'storage', 'sw', 'toko', 'undangan', 'up', 'webhooks',
+        'logout', 'manifest', 'masukan', 'notifikasi', 'obrolan', 'pesanan', 'seller', 'storage', 'sw', 'toko', 'undangan', 'up', 'webhooks',
     ],
 ];

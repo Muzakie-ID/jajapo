@@ -45,7 +45,6 @@ class ShopController extends Controller
                 'initials' => $shop->initials(),
                 'logo_url' => $shop->logoUrl(),
                 'instagram' => $shop->instagram,
-                'whatsapp' => $shop->whatsapp,
             ],
             'open' => $preorders->filter->isOpen()->map(fn ($p) => Present::preorderCard($p))->values(),
             'past' => $preorders->reject->isOpen()->take(10)->map(fn (Preorder $p) => [

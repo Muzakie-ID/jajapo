@@ -13,6 +13,7 @@ Dibangun dengan Laravel 13, Inertia v3 + React 19, Tailwind CSS v4, dan PostgreS
 - Tiket QR untuk pengambilan, dengan perjalanan pesanan: Dibayar, Disiapkan, Siap diambil, lalu Diambil. Riwayat pesanan dan akun.
 - Komplain dari tiket sampai H+1 setelah jadwal ambil atau antar: alasan, cerita, foto bukti, nominal refund, dan rekening tujuan. Status komplain dan refund tampil di tiket.
 - Login Google (Socialite). Bisa dipasang ke layar utama HP (manifest + service worker).
+- Obrolan dengan penjual dari halaman toko atau tiket (kartu pesanan ikut dilampirkan), dengan teks dan foto. Nomor WhatsApp toko tidak dikirim ke pembeli. Daftar obrolan punya tab Pembeli, dan tab Penjual untuk akun yang juga anggota toko, dengan filter belum dibaca.
 - Kirim masukan dari halaman Akun (pembeli) atau menu penjual: lapor error, saran fitur, atau lainnya, dengan screenshot opsional. Halaman asal dan jenis perangkat ikut tercatat.
 
 **Penjual (desktop dan mobile)**
@@ -22,6 +23,7 @@ Dibangun dengan Laravel 13, Inertia v3 + React 19, Tailwind CSS v4, dan PostgreS
 - Paket bundling: gabungkan varian menu dengan harga paket (misalnya 1 Mac n Cheese + 1 Es Teh). Paket memotong kuota tiap menu isinya, bisa diberi kuota sendiri, tampil dengan harga coret dan hematnya, dan dipecah ke menu isinya di rekap produksi. Isi paket yang sudah dipesan dikunci.
 - Tombol Bagikan ikut mengirim gambar story ke menu bagikan HP, siap dipasang di story.
 - Beranda toko: PO aktif, ringkasan, pesanan terbaru, rekap produksi, saldo. Bisa pindah toko kalau anggota beberapa toko.
+- Obrolan dengan pembeli: semua anggota toko membaca dan membalas atas nama toko (pembeli melihat nama toko, anggota melihat siapa yang membalas). Penjual bisa memulai obrolan dari rincian pesanan, hanya dengan pembeli tokonya sendiri. Pesan baru muncul sendiri selama halaman obrolan terbuka, dan dikirim sebagai web push ke HP. Super admin tidak bisa membaca obrolan, dan foto obrolan disimpan privat di `storage/app/private`, hanya bisa dibuka peserta percakapan.
 - Halaman Rekap produksi: porsi per menu yang harus dibuat (paket dipecah ke isinya) dengan jumlah yang belum disiapkan, siap, dan sudah diserahkan, serta menu dan porsi per titik ambil dan area antar. Tiap titik ambil punya tombol tandai semua siap. Pesanan yang di-refund penuh tidak dihitung karena tidak perlu dibuat; Excel dan LPJ tetap menghitungnya untuk laporan uang.
 - Halaman Pesanan: semua pesanan dengan filter status (beserta jumlahnya), PO, ambil atau antar, titik ambil atau area, dan pencarian kode, nama, atau nomor WhatsApp. Rincian per pesanan memuat isi pesanan dan isi paket, uang yang masuk ke saldo, tempat dan jadwal, catatan, kontak pembeli, riwayat waktu beserta siapa yang menyerahkan, dan komplain. Dari sana pesanan bisa ditandai siap atau sudah diambil tanpa scan. Notifikasi pesanan baru langsung membuka rincian ini, dan pindah toko sendiri kalau pesanannya milik toko lain si penjual.
 - Pengantaran: pesanan antar per area dengan alamat dan tombol WhatsApp pembeli. Mulai antar per area atau per pesanan (pembeli diberi tahu dan melihat nama kurir di tiket), lalu scan QR saat sampai, atau tandai terkirim manual.
@@ -168,6 +170,7 @@ Setiap kejadian penting tersimpan di lonceng aplikasi (`/notifikasi`), dikirim k
 | Pembayaran diterima, pesanan siap diambil atau diantar, pengingat 2 jam sebelum ambil/antar, pesanan sedang diantar | Pembeli | pembayaran saja |
 | Komplain diputuskan, refund ditransfer | Pembeli | ya |
 | Pesanan baru lunas | Anggota toko | admin toko saja (anggota lain hanya lonceng) |
+| Pesan obrolan baru | Pembeli atau anggota toko (kecuali pengirim) | tidak (hanya web push, tidak masuk lonceng) |
 | Komplain baru, komplain diputuskan super admin | Anggota toko | ya |
 | Pencairan ditransfer/ditolak, rekening disetujui/ditolak | Admin toko | ya |
 | Toko disetujui/ditolak | Pembuat toko | ya |

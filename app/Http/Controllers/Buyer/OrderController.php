@@ -52,8 +52,6 @@ class OrderController extends Controller
         $pickupDate = $order->isDelivery() ? $order->preorder->delivery_starts_at : $slot?->starts_at;
         $pickupDate = $pickupDate ? Carbon::parse($pickupDate) : null;
 
-        $waText = "Halo {$order->shop->name}, saya mau tanya pesanan {$order->code} ({$order->itemsLabel()}).";
-
         return Inertia::render('Buyer/Ticket', [
             'order' => [
                 'code' => $order->code,
@@ -73,9 +71,7 @@ class OrderController extends Controller
                 'complaint_until' => $deadline ? tanggal($deadline, withTime: true) : '',
                 'can_complain' => $complaints->canComplain($order),
                 'complaint' => $complaint ? Present::complaint($complaint, withRefundTo: true) : null,
-                'whatsapp_href' => $order->shop->whatsapp
-                    ? 'https://wa.me/'.preg_replace('/^0/', '62', $order->shop->whatsapp).'?text='.rawurlencode($waText)
-                    : null,
+                'shop_slug' => $order->shop->slug,
                 'is_delivery' => $order->isDelivery(),
                 'courier' => $order->courier?->name,
                 'out_label' => $order->out_for_delivery_at ? jam($order->out_for_delivery_at) : null,

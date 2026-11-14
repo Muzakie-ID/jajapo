@@ -58,6 +58,15 @@ export default function Order({ shop, order: o }) {
                             {o.is_delivery ? 'Tandai terkirim' : 'Tandai sudah diambil'}
                         </button>
                     )}
+                    <Link
+                        href={`/seller/pesanan/${o.code}/obrolan`}
+                        method="post"
+                        as="button"
+                        className="flex h-11 items-center gap-2 rounded-xl border border-panel-line bg-white px-4 text-sm font-semibold text-ink"
+                    >
+                        <Icon name="chat" size={18} className="text-leaf" />
+                        Chat pembeli
+                    </Link>
                     {o.whatsapp_href && (
                         <a href={o.whatsapp_href} target="_blank" rel="noreferrer" className="flex h-11 items-center gap-2 rounded-xl border border-panel-line bg-white px-4 text-sm font-semibold text-ink no-underline hover:text-ink">
                             <Icon name="message" size={18} className="text-leaf" />

@@ -96,7 +96,7 @@ function ProfileCard({ profile }) {
                 <Field label="Instagram (opsional)" error={form.errors.instagram}>
                     <input value={form.data.instagram} onChange={(e) => form.setData('instagram', e.target.value)} placeholder="@danusdiesftp" className={inputCls} />
                 </Field>
-                <Field label="Nomor WhatsApp toko" error={form.errors.whatsapp} hint="Dipakai tombol Hubungi penjual di tiket pembeli.">
+                <Field label="Nomor WhatsApp toko" error={form.errors.whatsapp} hint="Tidak ditampilkan ke pembeli. Pembeli menghubungi tokomu lewat Obrolan.">
                     <input type="tel" value={form.data.whatsapp} onChange={(e) => form.setData('whatsapp', e.target.value)} className={inputCls} />
                 </Field>
                 <button type="submit" disabled={form.processing} className="h-12 rounded-xl bg-forest text-sm font-bold text-white disabled:opacity-50">

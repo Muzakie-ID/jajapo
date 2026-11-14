@@ -3,7 +3,7 @@ import BuyerLayout from '@/Layouts/BuyerLayout';
 import Icon from '@/Components/Icon';
 
 export default function Account({ phone, canRegisterShop }) {
-    const { auth } = usePage().props;
+    const { auth, chatUnread } = usePage().props;
     const user = auth.user;
     const form = useForm({ phone: phone || '' });
     const activeShops = user.shops.filter((s) => s.status === 'active');
@@ -51,6 +51,7 @@ export default function Account({ phone, canRegisterShop }) {
                 {user.is_super_admin && <MenuLink href="/admin" icon="grid" label="Buka panel super admin" />}
                 {activeShops.length === 0 && canRegisterShop && <MenuLink href="/seller/daftar" icon="store" label="Daftar jadi penjual" />}
                 <MenuLink href="/pesanan" icon="receipt" label="Pesanan saya" />
+                <MenuLink href="/obrolan?dari=%2Fakun" icon="chat" label="Obrolan" badge={(chatUnread?.buyer || 0) + (chatUnread?.seller || 0)} />
                 <MenuLink href="/notifikasi" icon="bell" label={user.unread ? `Notifikasi (${user.unread} baru)` : 'Notifikasi'} />
                 <MenuLink href="/masukan?dari=%2Fakun" icon="message" label="Kirim masukan atau lapor bug" />
                 <button
@@ -66,11 +67,12 @@ export default function Account({ phone, canRegisterShop }) {
     );
 }
 
-function MenuLink({ href, icon, label }) {
+function MenuLink({ href, icon, label, badge }) {
     return (
         <Link href={href} className="flex min-h-14 items-center gap-3 border-t border-[#E6EDE3] px-4 text-sm font-semibold text-ink no-underline first:border-t-0 hover:text-ink">
             <Icon name={icon} size={20} className="text-leaf" />
             <span className="flex-1">{label}</span>
+            {badge > 0 && <span className="tabular min-w-[20px] rounded-full bg-danger px-1.5 py-px text-center text-[11px] font-bold text-white">{badge}</span>}
             <Icon name="chevronRight" size={18} strokeWidth={2} className="text-muted" />
         </Link>
     );

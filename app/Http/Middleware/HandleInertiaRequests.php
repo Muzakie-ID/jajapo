@@ -4,8 +4,10 @@ namespace App\Http\Middleware;
 
 use App\Enums\OrderStatus;
 use App\Models\Complaint;
+use App\Models\Conversation;
 use App\Models\Feedback;
 use App\Models\Refund;
+use App\Models\Shop;
 use Illuminate\Http\Request;
 use Inertia\Middleware;
 
@@ -55,6 +57,7 @@ class HandleInertiaRequests extends Middleware
             'appHost' => preg_replace('#^https?://#', '', rtrim((string) config('app.url'), '/')),
             'ticketHref' => fn () => $this->ticketHref($request),
             'panelBadges' => fn () => $this->panelBadges($request),
+            'chatUnread' => fn () => $this->chatUnread($request),
         ];
     }
 
@@ -88,5 +91,20 @@ class HandleInertiaRequests extends Middleware
         }
 
         return [];
+    }
+
+    /** Jumlah percakapan yang punya pesan belum dibaca, sebagai pembeli dan sebagai anggota toko. */
+    private function chatUnread(Request $request): array
+    {
+        $user = $request->user();
+        if (! $user) {
+            return ['buyer' => 0, 'seller' => 0];
+        }
+        $shopIds = $user->shops()->where('shops.status', Shop::STATUS_ACTIVE)->pluck('shops.id');
+
+        return [
+            'buyer' => Conversation::query()->where('buyer_id', $user->id)->unreadFor(Conversation::BUYER)->count(),
+            'seller' => $shopIds->isEmpty() ? 0 : Conversation::query()->whereIn('shop_id', $shopIds)->unreadFor(Conversation::SHOP)->count(),
+        ];
     }
 }

@@ -94,17 +94,16 @@ export default function Ticket({ order }) {
                 </ol>
 
                 <div className="flex flex-col gap-2.5">
-                    {order.whatsapp_href && (
-                        <a
-                            href={order.whatsapp_href}
-                            target="_blank"
-                            rel="noreferrer"
-                            className="flex h-[50px] items-center justify-center gap-2 rounded-2xl border border-line bg-white text-sm font-bold text-ink no-underline hover:text-ink"
-                        >
-                            <Icon name="message" size={20} className="text-leaf" />
-                            Hubungi penjual lewat WhatsApp
-                        </a>
-                    )}
+                    <Link
+                        href="/obrolan/mulai"
+                        method="post"
+                        as="button"
+                        data={{ toko: order.shop_slug, pesanan: order.code }}
+                        className="flex h-[50px] items-center justify-center gap-2 rounded-2xl border border-line bg-white text-sm font-bold text-ink"
+                    >
+                        <Icon name="chat" size={20} className="text-leaf" />
+                        Chat penjual
+                    </Link>
                     {order.complaint ? (
                         <ComplaintCard complaint={order.complaint} />
                     ) : (

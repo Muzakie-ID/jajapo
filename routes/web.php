@@ -3,6 +3,7 @@
 use App\Http\Controllers\Admin;
 use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\Buyer;
+use App\Http\Controllers\ChatController;
 use App\Http\Controllers\FeedbackController;
 use App\Http\Controllers\InvitationController;
 use App\Http\Controllers\NotificationController;
@@ -37,6 +38,12 @@ Route::middleware('auth')->group(function () {
     Route::get('/akun', [Buyer\AccountController::class, 'show']);
     Route::put('/akun', [Buyer\AccountController::class, 'update']);
     Route::get('/masukan', [FeedbackController::class, 'create']);
+    Route::get('/obrolan', [ChatController::class, 'index']);
+    Route::post('/obrolan/mulai', [ChatController::class, 'start'])->middleware('throttle:30,1');
+    Route::get('/obrolan/foto/{message}', [ChatController::class, 'photo'])->whereNumber('message');
+    Route::get('/obrolan/{conversation}', [ChatController::class, 'show'])->whereNumber('conversation');
+    Route::get('/obrolan/{conversation}/pesan', [ChatController::class, 'poll'])->whereNumber('conversation')->middleware('throttle:120,1');
+    Route::post('/obrolan/{conversation}/pesan', [ChatController::class, 'send'])->whereNumber('conversation')->middleware('throttle:30,1');
     Route::post('/masukan', [FeedbackController::class, 'store'])->middleware('throttle:5,1');
 
     // Penjual
@@ -83,6 +90,7 @@ Route::middleware('auth')->group(function () {
         Route::get('/rekap', [Seller\ProductionController::class, 'index']);
         Route::get('/pesanan/{code}', [Seller\OrderController::class, 'show']);
         Route::post('/pesanan/{code}/diserahkan', [Seller\OrderController::class, 'handOver']);
+        Route::post('/pesanan/{code}/obrolan', [ChatController::class, 'startFromOrder']);
         Route::get('/antar', [Seller\DeliveryController::class, 'index']);
         Route::post('/antar/mulai', [Seller\DeliveryController::class, 'start']);
         Route::post('/antar/{code}/terkirim', [Seller\DeliveryController::class, 'delivered']);

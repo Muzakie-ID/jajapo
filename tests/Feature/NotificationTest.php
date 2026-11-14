@@ -4,6 +4,7 @@ namespace Tests\Feature;
 
 use App\Console\Commands\RemindPickups;
 use App\Models\Order;
+use App\Models\Refund;
 use App\Models\User;
 use App\Notifications\AdminAlert;
 use App\Notifications\ComplaintUpdated;
@@ -12,6 +13,7 @@ use App\Notifications\NewPaidOrder;
 use App\Notifications\OrderPaid;
 use App\Notifications\PayoutUpdated;
 use App\Notifications\PickupReminder;
+use App\Notifications\RefundTransferred;
 use App\Notifications\ShopInvited;
 use App\Services\ComplaintService;
 use App\Services\OrderService;
@@ -122,6 +124,51 @@ class NotificationTest extends TestCase
                 && str_contains($html, $order->scheduleLabel())
                 && str_contains($html, 'Lihat tiket');
         });
+    }
+
+    public function test_complaint_refund_and_payout_emails_show_their_details(): void
+    {
+        Notification::fake();
+        $seller = $this->seller();
+        $shop = $this->shopFor($seller);
+        $admin = $this->admin();
+        $buyer = $this->buyer();
+        $order = $this->paidOrder($seller, $buyer);
+        $html = fn ($n, $user) => (string) $n->toMail($user)->render();
+
+        $complaints = app(ComplaintService::class);
+        $complaint = $complaints->open($order->load('preorder.slots', 'shop'), $buyer, ['reason' => 'missing_item', 'description' => 'Kurang satu kotak.', 'amount' => 12000, 'refund_to' => 'BCA 123456 a.n. Nadia']);
+        Notification::assertSentTo($seller, NewComplaint::class, fn (NewComplaint $n) => str_contains($m = $html($n, $seller), 'Refund yang diminta')
+            && str_contains($m, rupiah(12000))
+            && str_contains($m, 'Kurang satu kotak.')
+            && str_contains($m, 'Tanggapi komplain'));
+
+        $complaints->resolve($complaint, $admin, 6000, 'Setengah kotak kurang.', asAdmin: true);
+        Notification::assertSentTo($buyer, ComplaintUpdated::class, fn (ComplaintUpdated $n) => str_contains($m = $html($n, $buyer), 'Refund disetujui')
+            && str_contains($m, rupiah(6000))
+            && str_contains($m, 'BCA 123456 a.n. Nadia')
+            && str_contains($m, 'Setengah kotak kurang.'));
+        Notification::assertSentTo($seller, ComplaintUpdated::class, fn (ComplaintUpdated $n) => str_contains($m = $html($n, $seller), 'Dipotong dari saldo toko')
+            && str_contains($m, "Refund {$order->code} disetujui")
+            && str_contains($m, 'Lihat komplain'));
+
+        $complaints->markRefundTransferred(Refund::query()->where('complaint_id', $complaint->id)->sole(), $admin);
+        Notification::assertSentTo($buyer, RefundTransferred::class, fn (RefundTransferred $n) => str_contains($m = $html($n, $buyer), 'Refund sudah ditransfer')
+            && str_contains($m, rupiah(6000))
+            && str_contains($m, $shop->name));
+
+        foreach (range(1, 6) as $i) {
+            $this->paidOrder($seller);
+        }
+        $payouts = app(PayoutService::class);
+        $payouts->markTransferred($payouts->request($shop, 50000, $seller), $admin);
+        Notification::assertSentTo($seller, PayoutUpdated::class, fn (PayoutUpdated $n) => str_contains($m = $html($n, $seller), 'Jumlah ditransfer')
+            && str_contains($m, rupiah(50000))
+            && str_contains($m, e($shop->bankAccount->label())));
+
+        $payouts->reject($payouts->request($shop, 50000, $seller), $admin, 'Rekening sedang diperiksa.');
+        Notification::assertSentTo($seller, PayoutUpdated::class, fn (PayoutUpdated $n) => str_contains($m = $html($n, $seller), 'Kembali ke saldo tersedia')
+            && str_contains($m, 'Rekening sedang diperiksa.'));
     }
 
     public function test_push_is_only_used_for_users_with_a_subscription(): void

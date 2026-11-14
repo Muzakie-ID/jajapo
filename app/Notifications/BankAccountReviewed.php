@@ -34,4 +34,39 @@ class BankAccountReviewed extends JajapoNotification
     {
         return '/seller/pengaturan';
     }
+
+    protected function mailHero(): array
+    {
+        $this->account->loadMissing('shop');
+
+        return [
+            'eyebrow' => 'Rekening pencairan · '.$this->account->shop->name,
+            'title' => $this->account->verified_at ? 'Rekening baru disetujui' : 'Ganti rekening ditolak',
+        ];
+    }
+
+    protected function mailIntro(): string
+    {
+        return $this->account->verified_at
+            ? 'Mulai sekarang, pencairan saldo tokomu dikirim ke rekening ini.'
+            : 'Pencairan tetap dikirim ke rekening lama. Kamu bisa mengajukan rekening lain dari Pengaturan toko.';
+    }
+
+    protected function mailDetails(): array
+    {
+        $a = $this->account;
+        $reviewedAt = $a->verified_at ?? $a->rejected_at;
+
+        return array_filter([
+            'Rekening' => $a->label(),
+            'Atas nama' => $a->account_name,
+            'Alasan' => $a->verified_at ? null : $a->review_note,
+            $a->verified_at ? 'Disetujui' : 'Ditolak' => $reviewedAt ? tanggal($reviewedAt, withTime: true) : null,
+        ], fn ($v) => filled($v));
+    }
+
+    protected function mailAction(): string
+    {
+        return $this->account->verified_at ? 'Lihat saldo' : 'Buka pengaturan';
+    }
 }

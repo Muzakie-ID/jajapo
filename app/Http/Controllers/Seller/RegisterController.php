@@ -73,7 +73,21 @@ class RegisterController extends Controller
             ]);
         });
 
-        Notify::superAdmins(new AdminAlert("Toko baru: {$data['name']}", "{$user->name} ({$user->email}) mendaftarkan toko. Periksa email UGM dan rekeningnya.", '/admin#toko'));
+        Notify::superAdmins(new AdminAlert(
+            "Toko baru: {$data['name']}",
+            "{$user->name} ({$user->email}) mendaftarkan toko. Periksa email UGM dan rekeningnya.",
+            '/admin#toko',
+            details: [
+                'Toko' => $data['name'],
+                'Alamat toko' => preg_replace('#^https?://#', '', url($data['slug'])),
+                'Pendaftar' => $user->name,
+                'Email' => $user->email,
+                'WhatsApp' => $data['whatsapp'],
+                'Rekening' => "{$data['bank']}, akhiran ".substr($data['account_number'], -4),
+                'Atas nama' => $data['account_name'],
+            ],
+            intro: 'Ada pendaftaran toko baru. Pastikan emailnya email UGM dan nama rekeningnya sama dengan nama pendaftar sebelum menyetujui.',
+        ));
 
         return redirect('/seller/daftar')->with('success', 'Pendaftaran terkirim. Super admin akan memeriksa email UGM dan rekeningmu.');
     }

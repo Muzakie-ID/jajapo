@@ -49,7 +49,20 @@ class PayoutService
 
             $this->ledger->record(LedgerEntry::AVAILABLE, -$amount, 'payout_requested', 'Pengajuan pencairan ke '.$account->label(), $shop, payout: $payout);
             AuditLog::record($user, 'payout.requested', $payout, ['amount' => $amount]);
-            Notify::superAdmins(new AdminAlert('Pencairan '.rupiah($amount)." dari {$shop->name}", "Transfer ke {$account->label()} a.n. {$account->account_name}.", '/admin#pencairan', 'money'));
+            Notify::superAdmins(new AdminAlert(
+                'Pencairan '.rupiah($amount)." dari {$shop->name}",
+                "Transfer ke {$account->label()} a.n. {$account->account_name}.",
+                '/admin#pencairan',
+                'money',
+                details: [
+                    'Toko' => $shop->name,
+                    'Rekening tujuan' => $account->label(),
+                    'Atas nama' => $account->account_name,
+                    'Diajukan oleh' => $user->name,
+                ],
+                highlight: ['label' => 'Perlu ditransfer', 'value' => rupiah($amount), 'note' => 'Paling lambat 1x24 jam hari kerja.'],
+                intro: "{$shop->name} mengajukan pencairan saldo.",
+            ));
 
             return $payout;
         });

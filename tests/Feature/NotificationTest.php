@@ -5,8 +5,10 @@ namespace Tests\Feature;
 use App\Console\Commands\RemindPickups;
 use App\Models\Order;
 use App\Models\Refund;
+use App\Models\Shop;
 use App\Models\User;
 use App\Notifications\AdminAlert;
+use App\Notifications\BankAccountReviewed;
 use App\Notifications\ComplaintUpdated;
 use App\Notifications\NewComplaint;
 use App\Notifications\NewPaidOrder;
@@ -15,6 +17,8 @@ use App\Notifications\PayoutUpdated;
 use App\Notifications\PickupReminder;
 use App\Notifications\RefundTransferred;
 use App\Notifications\ShopInvited;
+use App\Notifications\ShopReviewed;
+use App\Notifications\ShopSuspended;
 use App\Services\ComplaintService;
 use App\Services\OrderService;
 use App\Services\PayoutService;
@@ -169,6 +173,73 @@ class NotificationTest extends TestCase
         $payouts->reject($payouts->request($shop, 50000, $seller), $admin, 'Rekening sedang diperiksa.');
         Notification::assertSentTo($seller, PayoutUpdated::class, fn (PayoutUpdated $n) => str_contains($m = $html($n, $seller), 'Kembali ke saldo tersedia')
             && str_contains($m, 'Rekening sedang diperiksa.'));
+    }
+
+    public function test_shop_account_and_admin_emails_show_their_details(): void
+    {
+        Notification::fake();
+        $admin = $this->admin();
+        $html = fn ($n, $user) => (string) $n->toMail($user)->render();
+        $adminEmail = fn (string $title, array $needles) => Notification::assertSentTo($admin, AdminAlert::class, function (AdminAlert $n) use ($admin, $html, $title, $needles) {
+            if (! str_contains($n->title(), $title)) {
+                return false;
+            }
+            $m = $html($n, $admin);
+
+            return collect($needles)->every(fn ($needle) => str_contains($m, $needle)) && str_contains($m, 'Periksa sekarang');
+        });
+
+        // Pendaftaran toko baru sampai disetujui, dibekukan, dan aktif kembali.
+        $owner = $this->seller('Rani Kusuma');
+        $this->actingAs($owner)->post('/seller/daftar', [
+            'name' => 'Dapur Rani', 'slug' => 'dapur-rani', 'whatsapp' => '081234567890',
+            'bank' => 'BCA', 'account_number' => '1234564421', 'account_name' => 'Rani Kusuma',
+        ])->assertRedirect('/seller/daftar');
+        $adminEmail('Toko baru: Dapur Rani', ['Pendaftar', 'Rani Kusuma', '/dapur-rani', 'BCA, akhiran 4421']);
+
+        $shop = Shop::where('slug', 'dapur-rani')->sole();
+        $this->actingAs($admin)->post("/admin/toko/{$shop->id}/setujui");
+        Notification::assertSentTo($owner, ShopReviewed::class, fn (ShopReviewed $n) => str_contains($m = $html($n, $owner), 'Dapur Rani sudah aktif')
+            && str_contains($m, '/dapur-rani')
+            && str_contains($m, 'Buat PO pertama'));
+
+        $this->actingAs($admin)->post("/admin/toko/{$shop->id}/bekukan", ['reason' => 'Perlu klarifikasi komplain.']);
+        Notification::assertSentTo($owner, ShopSuspended::class, fn (ShopSuspended $n) => str_contains($m = $html($n, $owner), 'Dapur Rani dibekukan')
+            && str_contains($m, 'Perlu klarifikasi komplain.'));
+
+        // Ganti rekening, lalu ditolak.
+        $seller = $this->seller();
+        $ftp = $this->shopFor($seller);
+        $this->actingAs($seller)->post('/seller/pengaturan/rekening', ['bank' => 'Mandiri', 'account_number' => '9988776655', 'account_name' => 'Raka Pratama']);
+        $adminEmail('mengganti rekening', ['Rekening baru', 'Mandiri, akhiran 6655', 'Pembuat toko']);
+
+        $pending = $ftp->bankAccounts()->where('is_active', false)->sole();
+        $this->actingAs($admin)->post("/admin/rekening/{$pending->id}/tolak", ['note' => 'Nomor rekening tidak terbaca.']);
+        Notification::assertSentTo($seller, BankAccountReviewed::class, fn (BankAccountReviewed $n) => str_contains($m = $html($n, $seller), 'Ganti rekening ditolak')
+            && str_contains($m, 'Nomor rekening tidak terbaca.')
+            && str_contains($m, 'rekening lama'));
+
+        // Pencairan diajukan.
+        foreach (range(1, 5) as $i) {
+            $this->paidOrder($seller);
+        }
+        app(PayoutService::class)->request($ftp, 50000, $seller);
+        $adminEmail('Pencairan', ['Perlu ditransfer', rupiah(50000), 'Rekening tujuan']);
+
+        // Undangan anggota.
+        $this->actingAs($seller)->post('/seller/anggota/undang', ['email' => 'yoga.prasetyo@mail.ugm.ac.id', 'role' => 'member']);
+        Notification::assertSentOnDemand(ShopInvited::class, function (ShopInvited $n, $channels, AnonymousNotifiable $to) use ($html) {
+            $m = $html($n, $to);
+
+            return str_contains($m, 'Bergabung ke')
+                && str_contains($m, 'yoga.prasetyo@mail.ugm.ac.id')
+                && str_contains($m, 'Berlaku sampai')
+                && str_contains($m, 'Terima undangan');
+        });
+
+        // Masukan pengguna.
+        $this->actingAs($this->buyer())->post('/masukan', ['kind' => 'bug', 'message' => 'Tiket tidak muncul setelah bayar.', 'from' => '/pesanan']);
+        $adminEmail('Masukan baru', ['Tiket tidak muncul setelah bayar.', 'Dikirim dari', '/pesanan']);
     }
 
     public function test_push_is_only_used_for_users_with_a_subscription(): void

@@ -99,7 +99,20 @@ class SettingsController extends Controller
             'is_active' => false,
         ]);
         AuditLog::record($request->user(), 'bank_account.change_requested', $account, ['label' => $account->label()]);
-        Notify::superAdmins(new AdminAlert("{$shop->name} mengganti rekening", "Rekening baru {$account->bank} {$account->account_number} a.n. {$account->account_name}.", '/admin#toko', 'money'));
+        Notify::superAdmins(new AdminAlert(
+            "{$shop->name} mengganti rekening",
+            "Rekening baru {$account->bank} {$account->account_number} a.n. {$account->account_name}.",
+            '/admin#toko',
+            'money',
+            details: [
+                'Toko' => $shop->name,
+                'Rekening baru' => $account->label(),
+                'Atas nama' => $account->account_name,
+                'Pembuat toko' => $shop->creator->name,
+                'Diajukan oleh' => $request->user()->name,
+            ],
+            intro: 'Periksa rekening baru ini sebelum menyetujui. Sampai disetujui, pencairan tetap dikirim ke rekening lama.',
+        ));
 
         return back()->with('success', 'Pengajuan ganti rekening terkirim. Pencairan tetap ke rekening lama sampai super admin menyetujui.');
     }

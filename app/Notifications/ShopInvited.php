@@ -43,8 +43,46 @@ class ShopInvited extends JajapoNotification
 
     public function toMail(object $notifiable): MailMessage
     {
-        return parent::toMail($notifiable)
-            ->greeting('Halo,')
-            ->line('Tautan berlaku sampai '.tanggal($this->invitation->expires_at, withTime: true).'.');
+        return parent::toMail($notifiable)->greeting('Halo,');
+    }
+
+    protected function mailHero(): array
+    {
+        return ['eyebrow' => 'Undangan anggota toko', 'title' => "Bergabung ke {$this->invitation->shop->name}"];
+    }
+
+    protected function mailIntro(): string
+    {
+        $inviter = $this->invitation->inviter?->name ?? 'Admin toko';
+
+        return "{$inviter} mengundangmu ikut mengelola toko ini di Jajapo. Masuk dengan email yang diundang, lalu terima undangannya.";
+    }
+
+    protected function mailDetails(): array
+    {
+        $i = $this->invitation;
+
+        return array_filter([
+            'Toko' => $i->shop->name,
+            'Peran' => ShopInvitation::ROLES[$i->role] ?? $i->role,
+            'Bisa' => $i->role === 'admin'
+                ? 'Semua, termasuk rekening, anggota, dan pencairan'
+                : 'Mengelola PO, scan tiket, dan menanggapi komplain',
+            'Diundang oleh' => $i->inviter?->name,
+            'Masuk dengan' => $i->email,
+            'Berlaku sampai' => tanggal($i->expires_at, withTime: true),
+        ], fn ($v) => filled($v));
+    }
+
+    protected function mailAction(): string
+    {
+        return 'Terima undangan';
+    }
+
+    protected function mailPreheader(): string
+    {
+        $inviter = $this->invitation->inviter?->name ?? 'Admin toko';
+
+        return "{$inviter} mengundangmu bergabung ke {$this->invitation->shop->name}. Berlaku sampai ".tanggal($this->invitation->expires_at).'.';
     }
 }

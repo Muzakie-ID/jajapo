@@ -74,6 +74,12 @@ class Shop extends Model
         return $this->hasMany(LedgerEntry::class);
     }
 
+    /** "jajapo.app/danus-dies-ftp": alamat toko tanpa https:// untuk ditampilkan. */
+    public function addressLabel(): string
+    {
+        return preg_replace('#^https?://#', '', url($this->slug));
+    }
+
     public function bankAccounts(): HasMany
     {
         return $this->hasMany(BankAccount::class);

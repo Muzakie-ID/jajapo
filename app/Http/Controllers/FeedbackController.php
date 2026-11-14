@@ -58,6 +58,14 @@ class FeedbackController extends Controller
             $user->name.': '.Str::limit($data['message'], 120),
             '/admin/masukan',
             'feedback',
+            details: [
+                'Pengirim' => $user->name,
+                'Email' => $user->email,
+                'Jenis' => Feedback::KINDS[$data['kind']],
+                'Dikirim dari' => $from,
+                'Screenshot' => $feedback->photo_path ? 'Ada, lihat di Jajapo' : 'Tidak ada',
+            ],
+            intro: Str::limit($data['message'], 600),
         ));
 
         return redirect($from ?? '/akun')->with('success', 'Terima kasih, masukanmu sudah terkirim ke tim Jajapo.');

@@ -41,4 +41,34 @@ class ShopSuspended extends JajapoNotification
     {
         return '/seller';
     }
+
+    protected function mailHero(): array
+    {
+        return [
+            'eyebrow' => 'Status toko',
+            'title' => $this->shop->isActive() ? "{$this->shop->name} aktif kembali" : "{$this->shop->name} dibekukan",
+        ];
+    }
+
+    protected function mailIntro(): string
+    {
+        return $this->shop->isActive()
+            ? 'Panel penjual dan halaman tokomu sudah bisa dipakai lagi seperti biasa.'
+            : 'Panel penjual dan halaman tokomu ditutup sementara, dan PO-nya tidak tampil untuk pembeli. Hubungi pengelola Jajapo untuk tindak lanjut.';
+    }
+
+    protected function mailDetails(): array
+    {
+        return array_filter([
+            'Toko' => $this->shop->name,
+            'Alamat toko' => $this->shop->addressLabel(),
+            'Alasan' => $this->shop->isActive() ? null : ($this->shop->suspend_reason ?: 'Tidak disebutkan'),
+            'Dibekukan' => ! $this->shop->isActive() && $this->shop->suspended_at ? tanggal($this->shop->suspended_at, withTime: true) : null,
+        ], fn ($v) => filled($v));
+    }
+
+    protected function mailAction(): string
+    {
+        return $this->shop->isActive() ? 'Buka panel penjual' : 'Buka Jajapo';
+    }
 }

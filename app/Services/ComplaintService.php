@@ -114,6 +114,14 @@ class ComplaintService
             "{$complaint->shop->name} menolak refund ".rupiah($complaint->amount_requested).'. Alasan penjual: '.$response,
             '/admin/komplain',
             'complaint',
+            details: [
+                'Toko' => $complaint->shop->name,
+                'Pesanan' => $complaint->order->code,
+                'Alasan pembeli' => $complaint->reasonLabel(),
+                'Refund diminta' => rupiah($complaint->amount_requested),
+                'Tanggapan penjual' => $response,
+            ],
+            intro: 'Penjual menolak refund, jadi keputusan ada di super admin.',
         ));
     }
 
@@ -173,7 +181,20 @@ class ComplaintService
                 Notify::shop($order->shop, new ComplaintUpdated($complaint, forShop: true));
             }
             if ($amount > 0) {
-                Notify::superAdmins(new AdminAlert('Refund '.rupiah($amount)." untuk {$order->code} perlu ditransfer", "Transfer ke {$complaint->refund_to}.", '/admin/komplain', 'money'));
+                Notify::superAdmins(new AdminAlert(
+                    'Refund '.rupiah($amount)." untuk {$order->code} perlu ditransfer",
+                    "Transfer ke {$complaint->refund_to}.",
+                    '/admin/komplain',
+                    'money',
+                    details: [
+                        'Pesanan' => $order->code,
+                        'Toko' => $order->shop->name,
+                        'Transfer ke' => $complaint->refund_to,
+                        'Diputuskan oleh' => $asAdmin ? 'Super admin' : 'Penjual',
+                    ],
+                    highlight: ['label' => 'Perlu ditransfer ke pembeli', 'value' => rupiah($amount), 'note' => 'Paling lambat 1x24 jam hari kerja.'],
+                    intro: 'Refund komplain sudah diputuskan dan perlu ditransfer ke pembeli.',
+                ));
             }
 
             return $complaint;

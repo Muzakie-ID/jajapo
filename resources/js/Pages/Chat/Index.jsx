@@ -11,7 +11,7 @@ export default function Index({ tab, unreadOnly, shopFilter, shops, back, tabUnr
     };
 
     return (
-        <BuyerLayout title="Obrolan" active="account">
+        <BuyerLayout title="Obrolan" active={back === '/' ? 'home' : 'account'}>
             <TopBar back={back} title="Obrolan" />
 
             {isSeller && (

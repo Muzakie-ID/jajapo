@@ -189,6 +189,9 @@ class ChatTest extends TestCase
         $this->actingAs($this->buyer)->get('/obrolan?tab=penjual')->assertInertia(fn ($p) => $p->where('tab', 'pembeli')->has('shops', 0));
         $this->actingAs($this->owner)->get('/obrolan?tab=penjual&dari=/seller')
             ->assertInertia(fn ($p) => $p->where('tab', 'penjual')->has('shops', 1)->where('back', '/seller'));
+        // Dari tombol di beranda, kembali ke beranda; alamat lain diabaikan.
+        $this->actingAs($this->buyer)->get('/obrolan?dari=%2F')->assertInertia(fn ($p) => $p->where('back', '/'));
+        $this->actingAs($this->buyer)->get('/obrolan?dari=https://jahat.example')->assertInertia(fn ($p) => $p->where('back', '/akun'));
     }
 
     public function test_whatsapp_number_of_the_shop_is_no_longer_sent_to_buyers(): void

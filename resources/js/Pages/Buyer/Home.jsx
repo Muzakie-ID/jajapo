@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react';
 import BuyerLayout from '@/Layouts/BuyerLayout';
 import Icon from '@/Components/Icon';
 import NotificationBell from '@/Components/NotificationBell';
+import ChatButton from '@/Components/ChatButton';
 import { PlateTile } from '@/Components/Plate';
 import { rupiah } from '@/lib/format';
 import { closesIn } from '@/lib/time';
@@ -99,7 +100,10 @@ export default function Home({ points, filters, closingSoon, preorders, pendingO
                         ))}
                     </select>
                 </label>
-                <NotificationBell />
+                <div className="flex items-center gap-2">
+                    <ChatButton from="/" />
+                    <NotificationBell />
+                </div>
             </header>
 
             <form

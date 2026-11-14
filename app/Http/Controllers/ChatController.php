@@ -273,7 +273,7 @@ class ChatController extends Controller
 
     private function back(Request $request): string
     {
-        return in_array($request->query('dari'), ['/seller', '/akun'], true) ? $request->query('dari') : '/akun';
+        return in_array($request->query('dari'), ['/', '/seller', '/akun'], true) ? $request->query('dari') : '/akun';
     }
 
     /** "14.05" untuk hari ini, "Kemarin", nama hari dalam seminggu, selebihnya "05/11". */

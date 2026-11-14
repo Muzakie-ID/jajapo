@@ -101,6 +101,8 @@ class AdminShopTest extends TestCase
         $this->get('/'.$shop->slug)->assertNotFound();
         $this->get('/')->assertOk()->assertInertia(fn ($p) => $p->has('preorders', 0));
         $this->actingAs($seller)->get('/seller')->assertRedirect('/seller/daftar');
+        // Toko dibekukan bukan toko aktif, jadi halaman daftar tampil (tidak saling mengalihkan).
+        $this->actingAs($seller)->get('/seller/daftar')->assertOk();
 
         // Tidak bisa dibekukan dua kali.
         $this->actingAs($admin)->post("/admin/toko/{$shop->id}/bekukan", ['reason' => 'lagi'])->assertStatus(422);

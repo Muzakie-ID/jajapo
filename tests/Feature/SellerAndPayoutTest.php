@@ -196,10 +196,19 @@ class SellerAndPayoutTest extends TestCase
 
         $this->assertDatabaseHas('shops', ['slug' => 'danus-wisuda', 'status' => 'pending']);
         $this->actingAs($seller)->get('/seller')->assertRedirect('/seller/daftar');
+        // Selama menunggu persetujuan, halaman daftar tetap tampil dengan status tinjauannya.
+        $this->actingAs($seller)->get('/seller/daftar')->assertOk()
+            ->assertInertia(fn ($p) => $p->where('pendingShop.name', 'Danus Wisuda'));
 
         $shop = $seller->shops()->first();
         $this->actingAs($this->admin())->post("/admin/toko/{$shop->id}/setujui")->assertRedirect();
         $this->actingAs($seller)->get('/seller')->assertOk();
+
+        // Sudah jadi penjual: halaman daftar dialihkan ke panel, dan tidak bisa mendaftar toko lagi.
+        $this->actingAs($seller)->get('/seller/daftar')->assertRedirect('/seller');
+        $this->actingAs($seller)->post('/seller/daftar', [...$valid, 'name' => 'Toko Kedua', 'slug' => 'toko-kedua'])
+            ->assertRedirect('/seller')->assertSessionHas('error');
+        $this->assertDatabaseMissing('shops', ['slug' => 'toko-kedua']);
     }
 
     public function test_reserved_words_are_not_treated_as_shop_pages(): void

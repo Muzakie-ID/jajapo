@@ -17,9 +17,12 @@ use Inertia\Response;
 
 class RegisterController extends Controller
 {
-    public function create(Request $request): Response
+    public function create(Request $request): Response|RedirectResponse
     {
         $user = $request->user();
+        if ($this->isSeller($request)) {
+            return redirect('/seller');
+        }
         $pending = $user->shops()->where('shops.status', Shop::STATUS_PENDING)->first();
 
         return Inertia::render('Seller/Register', [
@@ -35,6 +38,9 @@ class RegisterController extends Controller
     public function store(Request $request): RedirectResponse
     {
         $user = $request->user();
+        if ($this->isSeller($request)) {
+            return redirect('/seller')->with('error', 'Akunmu sudah menjadi penjual.');
+        }
         abort_unless($user->isUgmEmail(), 403, 'Daftar toko hanya untuk email @'.config('jajapo.seller_email_domain').'.');
 
         $data = $request->validate([
@@ -94,5 +100,11 @@ class RegisterController extends Controller
         ));
 
         return redirect('/seller/daftar')->with('success', 'Pendaftaran terkirim. Super admin akan memeriksa email UGM dan rekeningmu.');
+    }
+
+    /** Sudah punya toko aktif. Toko yang menunggu persetujuan atau dibekukan tetap melihat halaman daftar. */
+    private function isSeller(Request $request): bool
+    {
+        return $request->user()->shops()->where('shops.status', Shop::STATUS_ACTIVE)->exists();
     }
 }

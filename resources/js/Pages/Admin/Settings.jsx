@@ -45,6 +45,14 @@ export default function Settings({ values, defaults }) {
                             value={form.data.max_qty_per_order}
                             onChange={(v) => form.setData('max_qty_per_order', v)}
                         />
+                        <Field
+                            label="Maksimal toko per akun"
+                            unit="toko"
+                            hint={`Jumlah toko yang boleh dibuat satu akun, misalnya toko organisasi dan toko pribadi. Toko yang ditolak tidak dihitung. Bawaan ${defaults.max_shops_per_user} toko.`}
+                            error={form.errors.max_shops_per_user}
+                            value={form.data.max_shops_per_user}
+                            onChange={(v) => form.setData('max_shops_per_user', v)}
+                        />
                     </PanelCard>
 
                     <button

@@ -2,7 +2,8 @@ import { useForm, usePage } from '@inertiajs/react';
 import BuyerLayout, { TopBar } from '@/Layouts/BuyerLayout';
 import BankSelect from '@/Components/BankSelect';
 
-export default function Register({ allowed, domain, email, pendingShop, ownerName, banks }) {
+export default function Register({ allowed, domain, email, pendingShop, blocked, ownerName, banks, back, another, owned, maxShops }) {
+    const title = another ? 'Buat toko lain' : 'Daftar jadi penjual';
     const { appHost } = usePage().props;
     const form = useForm({ name: '', slug: '', instagram: '', whatsapp: '', bank: '', account_number: '', account_name: ownerName });
 
@@ -17,15 +18,21 @@ export default function Register({ allowed, domain, email, pendingShop, ownerNam
     };
 
     return (
-        <BuyerLayout title="Daftar jadi penjual" active="account">
-            <TopBar back="/akun" title="Daftar jadi penjual" />
+        <BuyerLayout title={title} active="account">
+            <TopBar back={back} title={title} />
 
             {pendingShop ? (
                 <div className="flex flex-col gap-2 rounded-[20px] border border-line bg-white p-5">
                     <h2 className="m-0 text-lg font-bold">{pendingShop.name} sedang ditinjau</h2>
                     <p className="m-0 text-sm text-body">
-                        Didaftarkan {pendingShop.created}. Super admin memeriksa email UGM dan rekeningmu. Panel penjual terbuka setelah disetujui.
+                        Didaftarkan {pendingShop.created}. Super admin memeriksa email UGM dan rekeningmu.{' '}
+                        {another ? 'Toko ini muncul di menu pindah toko setelah disetujui.' : 'Panel penjual terbuka setelah disetujui.'}
                     </p>
+                </div>
+            ) : blocked ? (
+                <div className="flex flex-col gap-2 rounded-[20px] border border-line bg-white p-5">
+                    <h2 className="m-0 text-lg font-bold">Belum bisa membuat toko baru</h2>
+                    <p className="m-0 text-sm text-body">{blocked}</p>
                 </div>
             ) : !allowed ? (
                 <div className="flex flex-col gap-2 rounded-[20px] border border-line bg-white p-5">
@@ -42,6 +49,11 @@ export default function Register({ allowed, domain, email, pendingShop, ownerNam
                     }}
                     className="flex flex-col gap-4"
                 >
+                    {another && (
+                        <p className="m-0 rounded-2xl bg-white/70 px-4 py-3 text-[13px] leading-[1.5] text-body">
+                            Toko baru punya saldo, rekening pencairan, anggota, dan URL sendiri, terpisah dari tokomu yang lain. Ini toko ke-{owned + 1} dari maksimal {maxShops}.
+                        </p>
+                    )}
                     <Section title="Toko">
                         <Field label="Nama toko" error={form.errors.name}>
                             <input value={form.data.name} onChange={(e) => setName(e.target.value)} placeholder="Danus Dies FTP" className={inputCls} required />

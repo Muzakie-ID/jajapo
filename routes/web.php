@@ -53,6 +53,7 @@ Route::middleware('auth')->group(function () {
     Route::prefix('seller')->middleware('shop-member')->group(function () {
         Route::get('/', [Seller\DashboardController::class, 'index']);
         Route::post('/toko', [Seller\DashboardController::class, 'switchShop']);
+        Route::get('/toko-baru', [Seller\RegisterController::class, 'createAnother']);
         Route::get('/scan', [Seller\ScanController::class, 'index']);
         Route::post('/scan', [Seller\ScanController::class, 'store'])->middleware('throttle:120,1');
         Route::get('/saldo', [Seller\BalanceController::class, 'index']);

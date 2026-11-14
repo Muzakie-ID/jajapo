@@ -46,30 +46,36 @@ export function ShopSwitcher({ shop }) {
     const { auth } = usePage().props;
     const shops = auth.user.shops.filter((s) => s.status === 'active');
     return (
-        <label className="relative flex items-center gap-2.5 rounded-[14px] border border-panel-line bg-white p-2.5">
-            <span className="flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-[10px] bg-forest text-[13px] font-bold text-white">
-                {shop.logo_url ? <img src={shop.logo_url} alt="" className="h-full w-full object-cover" /> : shop.initials}
-            </span>
-            <span className="flex min-w-0 flex-1 flex-col gap-px">
-                <span className="truncate text-sm font-bold">{shop.name}</span>
-                <span className="text-xs text-muted">{shops.length > 1 ? 'Ganti toko' : 'Toko aktif'}</span>
-            </span>
-            <Icon name="updown" size={18} className="text-muted" />
-            {shops.length > 1 && (
-                <select
-                    aria-label="Ganti toko"
-                    value={shop.id}
-                    onChange={(e) => router.post('/seller/toko', { shop_id: Number(e.target.value) })}
-                    className="absolute inset-0 cursor-pointer opacity-0"
-                >
-                    {shops.map((s) => (
-                        <option key={s.id} value={s.id}>
-                            {s.name}
-                        </option>
-                    ))}
-                </select>
-            )}
-        </label>
+        <div className="flex flex-col gap-1">
+            <label className="relative flex items-center gap-2.5 rounded-[14px] border border-panel-line bg-white p-2.5">
+                <span className="flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-[10px] bg-forest text-[13px] font-bold text-white">
+                    {shop.logo_url ? <img src={shop.logo_url} alt="" className="h-full w-full object-cover" /> : shop.initials}
+                </span>
+                <span className="flex min-w-0 flex-1 flex-col gap-px">
+                    <span className="truncate text-sm font-bold">{shop.name}</span>
+                    <span className="text-xs text-muted">{shops.length > 1 ? 'Ganti toko' : 'Toko aktif'}</span>
+                </span>
+                <Icon name="updown" size={18} className="text-muted" />
+                {shops.length > 1 && (
+                    <select
+                        aria-label="Ganti toko"
+                        value={shop.id}
+                        onChange={(e) => router.post('/seller/toko', { shop_id: Number(e.target.value) })}
+                        className="absolute inset-0 cursor-pointer opacity-0"
+                    >
+                        {shops.map((s) => (
+                            <option key={s.id} value={s.id}>
+                                {s.name}
+                            </option>
+                        ))}
+                    </select>
+                )}
+            </label>
+            <Link href="/seller/toko-baru" className="flex min-h-9 items-center gap-1.5 px-2.5 text-[13px] font-semibold text-leaf no-underline hover:text-forest">
+                <Icon name="plus" size={16} strokeWidth={2.2} />
+                Buat toko lain
+            </Link>
+        </div>
     );
 }
 

@@ -17,6 +17,7 @@ class SettingsController extends Controller
         'payment_ttl_minutes' => ['required', 'integer', 'min:5', 'max:60'],
         'min_payout' => ['required', 'integer', 'min:10000', 'max:1000000'],
         'max_qty_per_order' => ['required', 'integer', 'min:1', 'max:100'],
+        'max_shops_per_user' => ['required', 'integer', 'min:1', 'max:10'],
     ];
 
     public function show(): Response
@@ -26,6 +27,7 @@ class SettingsController extends Controller
                 'payment_ttl_minutes' => Setting::int('payment_ttl_minutes'),
                 'min_payout' => Setting::int('min_payout'),
                 'max_qty_per_order' => Setting::int('max_qty_per_order'),
+                'max_shops_per_user' => Setting::int('max_shops_per_user'),
             ],
             'defaults' => config('jajapo.defaults'),
         ]);
@@ -38,6 +40,8 @@ class SettingsController extends Controller
             'payment_ttl_minutes.max' => 'Batas bayar maksimal 60 menit.',
             'min_payout.min' => 'Minimal pencairan paling kecil Rp10.000.',
             'max_qty_per_order.min' => 'Maksimal porsi paling kecil 1.',
+            'max_shops_per_user.min' => 'Maksimal toko per akun paling kecil 1.',
+            'max_shops_per_user.max' => 'Maksimal toko per akun paling besar 10.',
         ]);
 
         $before = [];
@@ -55,7 +59,7 @@ class SettingsController extends Controller
         }
 
         return back()->with('success', $changed
-            ? 'Pengaturan disimpan. Berlaku untuk pesanan dan pencairan berikutnya.'
+            ? 'Pengaturan disimpan. Berlaku untuk pesanan, pencairan, dan pendaftaran toko berikutnya.'
             : 'Tidak ada yang berubah.');
     }
 }

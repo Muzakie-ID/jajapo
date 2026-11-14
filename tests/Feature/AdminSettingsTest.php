@@ -25,12 +25,14 @@ class AdminSettingsTest extends TestCase
             'payment_ttl_minutes' => 2,
             'min_payout' => 50000,
             'max_qty_per_order' => 10,
+            'max_shops_per_user' => 3,
         ])->assertSessionHasErrors('payment_ttl_minutes');
 
         $this->actingAs($admin)->post('/admin/pengaturan', [
             'payment_ttl_minutes' => 30,
             'min_payout' => 75000,
             'max_qty_per_order' => 3,
+            'max_shops_per_user' => 3,
         ])->assertSessionHas('success');
 
         $this->assertSame(30, Setting::int('payment_ttl_minutes'));

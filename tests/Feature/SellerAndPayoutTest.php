@@ -204,11 +204,8 @@ class SellerAndPayoutTest extends TestCase
         $this->actingAs($this->admin())->post("/admin/toko/{$shop->id}/setujui")->assertRedirect();
         $this->actingAs($seller)->get('/seller')->assertOk();
 
-        // Sudah jadi penjual: halaman daftar dialihkan ke panel, dan tidak bisa mendaftar toko lagi.
+        // Sudah jadi penjual: halaman daftar dialihkan ke panel. Toko berikutnya lewat /seller/toko-baru.
         $this->actingAs($seller)->get('/seller/daftar')->assertRedirect('/seller');
-        $this->actingAs($seller)->post('/seller/daftar', [...$valid, 'name' => 'Toko Kedua', 'slug' => 'toko-kedua'])
-            ->assertRedirect('/seller')->assertSessionHas('error');
-        $this->assertDatabaseMissing('shops', ['slug' => 'toko-kedua']);
     }
 
     public function test_reserved_words_are_not_treated_as_shop_pages(): void

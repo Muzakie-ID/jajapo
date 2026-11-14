@@ -12,6 +12,7 @@ return [
         'payment_ttl_minutes' => 15,
         'min_payout' => 50000,
         'max_qty_per_order' => 10,
+        'max_shops_per_user' => 3,
     ],
 
     // Kata pertama rute aplikasi. Slug toko tidak boleh memakai kata ini.

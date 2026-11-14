@@ -257,6 +257,9 @@ export default function Dashboard({ shop, active, kpis, perDay, rekap, orders, s
                         <PanelCard id="pesanan" className="overflow-hidden">
                             <div className="flex flex-wrap items-center justify-between gap-3 px-[18px] pb-3 pt-4">
                                 <h2 className="m-0 text-[17px] font-bold">Pesanan terbaru</h2>
+                                <Link href="/seller/pesanan" className="text-[13px] font-semibold text-leaf no-underline">
+                                    Lihat semua pesanan
+                                </Link>
                             </div>
                             <div role="group" aria-label="Filter status" className="flex flex-wrap gap-1.5 px-[18px] pb-3.5">
                                 {FILTERS.map((f) => {
@@ -287,7 +290,9 @@ export default function Dashboard({ shop, active, kpis, perDay, rekap, orders, s
                                     </div>
                                     {orders.map((o) => (
                                         <div key={o.code} className="grid grid-cols-[0.8fr_1.3fr_1.2fr_1.2fr_0.9fr_1fr] items-center gap-3 border-t border-[#EDF1EB] px-[18px] py-3 text-[13.5px]">
-                                            <span className="tabular font-bold">{o.code}</span>
+                                            <Link href={`/seller/pesanan/${o.code}`} className="tabular font-bold text-ink no-underline hover:text-leaf">
+                                                {o.code}
+                                            </Link>
                                             <span>{o.buyer}</span>
                                             <span className="text-body">{o.item}</span>
                                             <span className="text-body">{o.slot}</span>
@@ -312,7 +317,9 @@ export default function Dashboard({ shop, active, kpis, perDay, rekap, orders, s
                                 {orders.map((o) => (
                                     <div key={o.code} className="flex flex-col gap-1.5 rounded-2xl border border-panel-line px-3.5 py-3">
                                         <span className="flex items-center justify-between gap-2">
-                                            <span className="tabular text-sm font-bold">{o.code}</span>
+                                            <Link href={`/seller/pesanan/${o.code}`} className="tabular text-sm font-bold text-ink no-underline">
+                                                {o.code}
+                                            </Link>
                                             <StatusPill status={o.status} />
                                         </span>
                                         <span className="text-[13.5px]">

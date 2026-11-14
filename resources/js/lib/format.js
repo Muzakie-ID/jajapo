@@ -24,3 +24,6 @@ export const STATUS_STYLE = {
     po_closed: { label: 'Selesai', cls: 'bg-[#ECEFEA] text-[#4A564C]' },
     po_cancelled: { label: 'Dibatalkan', cls: 'bg-[#FCE4E1] text-[#A3281C]' },
 };
+
+/** Pesanan antar yang sudah disiapkan menunggu kurir, jadi labelnya "Siap diantar", bukan "Siap diambil". */
+export const pillLabel = (order) => (order.is_delivery && order.status === 'ready' ? 'Siap diantar' : undefined);

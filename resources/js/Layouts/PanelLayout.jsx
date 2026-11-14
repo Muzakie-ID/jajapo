@@ -6,7 +6,7 @@ import Flash from '@/Components/Flash';
 const SELLER_NAV = [
     { key: 'home', label: 'Beranda', icon: 'home', href: '/seller' },
     { key: 'po', label: 'PO dan menu', icon: 'box', href: '/seller/po' },
-    { key: 'orders', label: 'Pesanan', icon: 'list', href: '/seller#pesanan' },
+    { key: 'orders', label: 'Pesanan', icon: 'list', href: '/seller/pesanan' },
     { key: 'scan', label: 'Scan tiket', icon: 'scan', href: '/seller/scan' },
     { key: 'deliveries', label: 'Pengantaran', icon: 'truck', href: '/seller/antar' },
     { key: 'complaints', label: 'Komplain', icon: 'flag', href: '/seller/komplain' },
@@ -297,7 +297,7 @@ function MoreSheet({ dark, shop, badges, onClose }) {
                         </Link>
                     )}
                     {!dark && (
-                        <Link href="/seller#pesanan" onClick={onClose} className="flex min-h-12 items-center gap-3 text-sm font-semibold text-ink no-underline">
+                        <Link href="/seller/pesanan" onClick={onClose} className="flex min-h-12 items-center gap-3 text-sm font-semibold text-ink no-underline">
                             <Icon name="list" size={20} className="text-leaf" />
                             Pesanan
                         </Link>

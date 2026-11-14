@@ -79,6 +79,9 @@ Route::middleware('auth')->group(function () {
         Route::get('/po/{preorder}/lpj', [Seller\ReportController::class, 'lpj'])->whereNumber('preorder');
         Route::get('/po/{preorder}/ekspor', [Seller\ReportController::class, 'export'])->whereNumber('preorder');
         Route::post('/pesanan/siap', [Seller\PickupController::class, 'ready']);
+        Route::get('/pesanan', [Seller\OrderController::class, 'index']);
+        Route::get('/pesanan/{code}', [Seller\OrderController::class, 'show']);
+        Route::post('/pesanan/{code}/diserahkan', [Seller\OrderController::class, 'handOver']);
         Route::get('/antar', [Seller\DeliveryController::class, 'index']);
         Route::post('/antar/mulai', [Seller\DeliveryController::class, 'start']);
         Route::post('/antar/{code}/terkirim', [Seller\DeliveryController::class, 'delivered']);

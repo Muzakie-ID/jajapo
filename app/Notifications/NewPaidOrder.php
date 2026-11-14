@@ -47,7 +47,7 @@ class NewPaidOrder extends JajapoNotification
 
     public function url(): string
     {
-        return '/seller#pesanan';
+        return "/seller/pesanan/{$this->order->code}";
     }
 
     protected function mailHero(): array

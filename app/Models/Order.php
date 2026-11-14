@@ -61,6 +61,11 @@ class Order extends Model
         return $this->hasMany(Complaint::class);
     }
 
+    public function pickedUpBy(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'picked_up_by');
+    }
+
     public function courier(): BelongsTo
     {
         return $this->belongsTo(User::class, 'courier_id');

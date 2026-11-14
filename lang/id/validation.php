@@ -42,7 +42,7 @@ return [
 
     'attributes' => [
         'title' => 'judul PO',
-        'slug' => 'alamat',
+        'slug' => 'URL',
         'description' => 'deskripsi',
         'labels' => 'label',
         'opens_at' => 'waktu buka',

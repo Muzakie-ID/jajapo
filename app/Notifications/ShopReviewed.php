@@ -57,7 +57,7 @@ class ShopReviewed extends JajapoNotification
 
         return array_filter([
             'Toko' => $this->shop->name,
-            'Alamat toko' => $this->shop->addressLabel(),
+            'URL toko' => $this->shop->addressLabel(),
             'Rekening pencairan' => $account ? "{$account->label()} a.n. {$account->account_name}" : null,
             'Didaftarkan' => tanggal($this->shop->created_at, withTime: true),
             'Disetujui' => $this->shop->approved_at ? tanggal($this->shop->approved_at, withTime: true) : null,

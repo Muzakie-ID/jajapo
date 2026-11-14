@@ -188,8 +188,8 @@ class PreorderController extends Controller
             'slots.*.start' => ['required', 'date_format:H:i'],
             'slots.*.end' => ['required', 'date_format:H:i', 'after:slots.*.start'],
         ], [
-            'slug.regex' => 'Alamat PO hanya huruf kecil, angka, dan tanda hubung.',
-            'slug.unique' => 'Alamat ini sudah dipakai PO lain di tokomu.',
+            'slug.regex' => 'URL PO hanya huruf kecil, angka, dan tanda hubung.',
+            'slug.unique' => 'URL ini sudah dipakai PO lain di tokomu.',
             'closes_at.after' => 'Waktu tutup harus setelah waktu buka.',
             'delivery_date.required_if_accepted' => 'Isi tanggal antar.',
             'delivery_start.required_if_accepted' => 'Isi jam mulai antar.',

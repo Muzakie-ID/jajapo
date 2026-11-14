@@ -114,6 +114,10 @@ Route::middleware('auth')->group(function () {
         Route::post('/komplain/{complaint}/putuskan', [Admin\ComplaintController::class, 'decide']);
         Route::post('/refund/{refund}/selesai', [Admin\ComplaintController::class, 'transferred']);
         Route::get('/masukan', [Admin\FeedbackController::class, 'index']);
+        Route::get('/bank', [Admin\BankController::class, 'index']);
+        Route::post('/bank', [Admin\BankController::class, 'store']);
+        Route::put('/bank/{bank}', [Admin\BankController::class, 'update'])->whereNumber('bank');
+        Route::delete('/bank/{bank}', [Admin\BankController::class, 'destroy'])->whereNumber('bank');
         Route::post('/masukan/{feedback}/status', [Admin\FeedbackController::class, 'update'])->whereNumber('feedback');
     });
 });

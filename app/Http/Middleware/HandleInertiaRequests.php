@@ -51,6 +51,8 @@ class HandleInertiaRequests extends Middleware
                 'error' => fn () => $request->session()->get('error'),
             ],
             'isLocal' => app()->environment('local'),
+            // "jajapo.app": domain dari APP_URL, untuk menampilkan URL toko dan PO.
+            'appHost' => preg_replace('#^https?://#', '', rtrim((string) config('app.url'), '/')),
             'ticketHref' => fn () => $this->ticketHref($request),
             'panelBadges' => fn () => $this->panelBadges($request),
         ];

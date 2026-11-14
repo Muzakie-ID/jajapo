@@ -29,6 +29,7 @@ const ADMIN_NAV = [
     { key: 'feedback', label: 'Masukan pengguna', icon: 'message', href: '/admin/masukan' },
     { key: 'notifications', label: 'Notifikasi', icon: 'bell', href: '/notifikasi?dari=%2Fadmin' },
     { key: 'log', label: 'Jejak tindakan', icon: 'list', href: '/admin/log' },
+    { key: 'banks', label: 'Bank dan e-wallet', icon: 'bank', href: '/admin/bank' },
     { key: 'settings', label: 'Pengaturan', icon: 'sliders', href: '/admin/pengaturan' },
 ];
 
@@ -255,6 +256,12 @@ function MoreSheet({ dark, shop, badges, onClose }) {
                         <Link href="/admin/rekonsiliasi" onClick={onClose} className="flex min-h-12 items-center gap-3 text-sm font-semibold text-ink no-underline">
                             <Icon name="scale" size={20} className="text-leaf" />
                             Rekonsiliasi
+                        </Link>
+                    )}
+                    {dark && (
+                        <Link href="/admin/bank" onClick={onClose} className="flex min-h-12 items-center gap-3 text-sm font-semibold text-ink no-underline">
+                            <Icon name="bank" size={20} className="text-leaf" />
+                            Bank dan e-wallet
                         </Link>
                     )}
                     {dark && (

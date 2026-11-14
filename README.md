@@ -16,7 +16,7 @@ Dibangun dengan Laravel 13, Inertia v3 + React 19, Tailwind CSS v4, dan PostgreS
 - Kirim masukan dari halaman Akun (pembeli) atau menu penjual: lapor error, saran fitur, atau lainnya, dengan screenshot opsional. Halaman asal dan jenis perangkat ikut tercatat.
 
 **Penjual (desktop dan mobile)**
-- Daftar toko: terbuka untuk siapa saja ber-email `@mail.ugm.ac.id`, perorangan maupun kepanitiaan. Alamat toko unik, rekening wajib atas nama pembuat toko.
+- Daftar toko: terbuka untuk siapa saja ber-email `@mail.ugm.ac.id`, perorangan maupun kepanitiaan. URL toko unik, rekening wajib atas nama pembuat toko.
 - PO dan menu: buat PO (draf atau langsung terbit), atur menu, varian, harga, kuota, foto per menu, titik ambil (tempat, patokan, jam), pengantaran (jadwal antar, area dan ongkir per area), poster, dan gambar story. Titik ambil dan area antar milik masing-masing PO, dengan saran dari yang pernah dipakai toko. Ubah, salin, tutup lebih awal, atau hapus PO yang belum punya pesanan. Menu, varian, dan slot yang sudah dipesan terkunci dari penghapusan, dan kuota tidak bisa turun di bawah porsi terjual.
 - Paket bundling: gabungkan varian menu dengan harga paket (misalnya 1 Mac n Cheese + 1 Es Teh). Paket memotong kuota tiap menu isinya, bisa diberi kuota sendiri, tampil dengan harga coret dan hematnya, dan dipecah ke menu isinya di rekap produksi. Isi paket yang sudah dipesan dikunci.
 - Tombol Bagikan ikut mengirim gambar story ke menu bagikan HP, siap dipasang di story.
@@ -40,6 +40,7 @@ Dibangun dengan Laravel 13, Inertia v3 + React 19, Tailwind CSS v4, dan PostgreS
 - Halaman toko: saldo, omzet, PO, pesanan, anggota, rekening, pencairan, dan jejak tindakannya. Toko bermasalah bisa dibekukan dengan alasan, lalu diaktifkan kembali.
 - Jejak tindakan: siapa melakukan apa, dengan filter per jenis dan pencarian pelaku.
 - Pengaturan platform: batas waktu bayar, minimal pencairan, dan maksimal porsi per pesanan.
+- Bank dan e-wallet: pilihan yang muncul di form rekening penjual. Tambah, ganti nama (rekening yang memakai nama lama ikut diperbarui), sembunyikan, atau hapus yang belum dipakai.
 - Masukan pengguna: daftar laporan bug dan saran dengan pengirim, toko, halaman asal, perangkat, dan screenshot. Filter per status dan jenis, tandai ditangani atau selesai, dan beri catatan internal. Jumlah masukan baru tampil di menu.
 - Rekonsiliasi buku besar dengan pembayaran lunas per tanggal, riwayat 14 hari, daftar callback gateway beserta tanda tangan yang ditolak, dan ekspor pendapatan platform ke Excel.
 
@@ -109,7 +110,7 @@ Dengan driver gateway `fake`, halaman bayar punya tombol **Simulasikan bayar** s
 | `JAJAPO_TIMEZONE` | Zona waktu tampilan, bawaan `Asia/Jakarta` (database tetap UTC) |
 | `JAJAPO_SELLER_EMAIL_DOMAIN` | Domain email yang boleh mendaftar toko, bawaan `mail.ugm.ac.id` |
 
-Aturan lain (batas bayar 15 menit, minimal pencairan, maksimal porsi, alamat yang dilindungi) ada di `config/jajapo.php`.
+Aturan lain (batas bayar 15 menit, minimal pencairan, maksimal porsi, URL yang dilindungi) ada di `config/jajapo.php`.
 
 ## Payment gateway: QRIS Muzakie
 

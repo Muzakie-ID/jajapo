@@ -1,10 +1,11 @@
-import { Link } from '@inertiajs/react';
+import { Link, usePage } from '@inertiajs/react';
 import BuyerLayout, { TopBar } from '@/Layouts/BuyerLayout';
 import { PlateTile } from '@/Components/Plate';
 import { rupiah } from '@/lib/format';
 import { closesIn } from '@/lib/time';
 
 export default function Shop({ shop, open, past }) {
+    const { appHost } = usePage().props;
     return (
         <BuyerLayout title={shop.name} active="shops">
             <TopBar back="/toko" />
@@ -14,7 +15,7 @@ export default function Shop({ shop, open, past }) {
                 </span>
                 <div className="flex min-w-0 flex-col gap-1">
                     <h1 className="m-0 text-xl font-bold">{shop.name}</h1>
-                    <span className="text-[13px] text-muted">jajapo.app/{shop.slug}</span>
+                    <span className="text-[13px] text-muted">{appHost}/{shop.slug}</span>
                     {shop.instagram && (
                         <a href={`https://instagram.com/${shop.instagram}`} target="_blank" rel="noreferrer" className="text-[13px] font-semibold no-underline">
                             @{shop.instagram}

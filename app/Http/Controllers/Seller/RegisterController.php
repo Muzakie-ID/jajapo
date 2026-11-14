@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Seller;
 
 use App\Http\Controllers\Controller;
+use App\Models\Bank;
 use App\Models\BankAccount;
 use App\Models\Shop;
 use App\Notifications\AdminAlert;
@@ -27,6 +28,7 @@ class RegisterController extends Controller
             'email' => $user->email,
             'pendingShop' => $pending ? ['name' => $pending->name, 'created' => tanggal($pending->created_at, withTime: true)] : null,
             'ownerName' => $user->name,
+            'banks' => Bank::options(),
         ]);
     }
 
@@ -40,15 +42,17 @@ class RegisterController extends Controller
             'slug' => ['required', 'string', 'min:3', 'max:40', 'regex:/^[a-z0-9]+(-[a-z0-9]+)*$/', 'unique:shops,slug', Rule::notIn(config('jajapo.reserved_slugs'))],
             'instagram' => ['nullable', 'string', 'max:40'],
             'whatsapp' => ['required', 'regex:/^(\+62|62|0)8[0-9]{7,12}$/'],
-            'bank' => ['required', 'string', 'max:40'],
+            'bank' => ['required', Rule::exists('banks', 'name')->where('is_active', true)],
             'account_number' => ['required', 'regex:/^[0-9]{6,20}$/'],
             'account_name' => ['required', 'string', 'max:80'],
         ], [
-            'slug.regex' => 'Alamat toko hanya huruf kecil, angka, dan tanda hubung.',
-            'slug.not_in' => 'Alamat ini dipakai halaman Jajapo. Pilih alamat lain.',
-            'slug.unique' => 'Alamat ini sudah dipakai toko lain.',
+            'slug.regex' => 'URL toko hanya huruf kecil, angka, dan tanda hubung.',
+            'slug.not_in' => 'URL ini dipakai halaman Jajapo. Pilih URL lain.',
+            'slug.unique' => 'URL ini sudah dipakai toko lain.',
             'whatsapp.regex' => 'Nomor WhatsApp belum benar. Contoh: 081234567890.',
             'account_number.regex' => 'Nomor rekening hanya angka.',
+            'bank.required' => 'Pilih bank atau e-wallet.',
+            'bank.exists' => 'Pilih bank atau e-wallet dari daftar.',
         ]);
 
         if (mb_strtolower(trim($data['account_name'])) !== mb_strtolower(trim($user->name))) {
@@ -79,7 +83,7 @@ class RegisterController extends Controller
             '/admin#toko',
             details: [
                 'Toko' => $data['name'],
-                'Alamat toko' => preg_replace('#^https?://#', '', url($data['slug'])),
+                'URL toko' => preg_replace('#^https?://#', '', url($data['slug'])),
                 'Pendaftar' => $user->name,
                 'Email' => $user->email,
                 'WhatsApp' => $data['whatsapp'],

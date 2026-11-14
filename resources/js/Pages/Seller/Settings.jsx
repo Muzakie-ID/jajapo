@@ -1,9 +1,10 @@
-import { router, useForm } from '@inertiajs/react';
+import { router, useForm, usePage } from '@inertiajs/react';
 import { useEffect, useState } from 'react';
 import PanelLayout, { PanelCard } from '@/Layouts/PanelLayout';
 import Icon from '@/Components/Icon';
+import BankSelect from '@/Components/BankSelect';
 
-export default function Settings({ shop, profile, account, pendingAccount, rejectedAccount, children }) {
+export default function Settings({ shop, profile, account, pendingAccount, rejectedAccount, banks, children }) {
     return (
         <PanelLayout variant="seller" active="settings" title="Pengaturan toko" shop={shop}>
             <div className="flex flex-col gap-4 px-4 pt-4 lg:gap-5 lg:px-8 lg:pt-7">
@@ -13,7 +14,7 @@ export default function Settings({ shop, profile, account, pendingAccount, rejec
                 </div>
                 <div className="grid gap-4 lg:grid-cols-2 lg:items-start lg:gap-5">
                     <ProfileCard profile={profile} />
-                    <AccountCard profile={profile} account={account} pending={pendingAccount} rejected={rejectedAccount} />
+                    <AccountCard profile={profile} account={account} pending={pendingAccount} rejected={rejectedAccount} banks={banks} />
                 </div>
                 {children}
             </div>
@@ -35,6 +36,7 @@ function Field({ label, error, hint, children }) {
 }
 
 function ProfileCard({ profile }) {
+    const { appHost } = usePage().props;
     const form = useForm({ name: profile.name, instagram: profile.instagram, whatsapp: profile.whatsapp, logo: null, remove_logo: false });
     const [preview, setPreview] = useState(null);
     useEffect(() => {
@@ -88,8 +90,8 @@ function ProfileCard({ profile }) {
                 <Field label="Nama toko" error={form.errors.name}>
                     <input value={form.data.name} onChange={(e) => form.setData('name', e.target.value)} maxLength={60} className={inputCls} />
                 </Field>
-                <Field label="Alamat toko" hint="Alamat tidak bisa diganti supaya tautan yang sudah dibagikan tetap jalan.">
-                    <input value={`jajapo.app/${profile.slug}`} readOnly className={`${inputCls} bg-[#F6F8F5] text-muted`} />
+                <Field label="URL toko" hint="URL tidak bisa diganti supaya tautan yang sudah dibagikan tetap jalan.">
+                    <input value={`${appHost}/${profile.slug}`} readOnly className={`${inputCls} bg-[#F6F8F5] text-muted`} />
                 </Field>
                 <Field label="Instagram (opsional)" error={form.errors.instagram}>
                     <input value={form.data.instagram} onChange={(e) => form.setData('instagram', e.target.value)} placeholder="@danusdiesftp" className={inputCls} />
@@ -105,7 +107,7 @@ function ProfileCard({ profile }) {
     );
 }
 
-function AccountCard({ profile, account, pending, rejected }) {
+function AccountCard({ profile, account, pending, rejected, banks }) {
     const [open, setOpen] = useState(false);
     const form = useForm({ bank: '', account_number: '', account_name: profile.owner });
 
@@ -165,7 +167,7 @@ function AccountCard({ profile, account, pending, rejected }) {
                         className="flex flex-col gap-3 rounded-2xl border border-line p-3.5"
                     >
                         <Field label="Bank atau e-wallet" error={form.errors.bank}>
-                            <input value={form.data.bank} onChange={(e) => form.setData('bank', e.target.value)} placeholder="BNI" className={inputCls} />
+                            <BankSelect banks={banks} value={form.data.bank} onChange={(v) => form.setData('bank', v)} className={inputCls} />
                         </Field>
                         <Field label="Nomor rekening" error={form.errors.account_number}>
                             <input inputMode="numeric" value={form.data.account_number} onChange={(e) => form.setData('account_number', e.target.value.replace(/\D/g, ''))} className={inputCls} />

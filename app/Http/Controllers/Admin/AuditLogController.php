@@ -15,7 +15,7 @@ class AuditLogController extends Controller
     private const GROUPS = [
         'toko' => ['shop.approved', 'shop.rejected', 'shop.suspended', 'shop.reactivated', 'shop.updated'],
         'uang' => ['payout.requested', 'payout.transferred', 'payout.rejected', 'order.mark_paid_manual', 'order.refund_requested', 'refund.transferred'],
-        'rekening' => ['bank_account.change_requested', 'bank_account.approved', 'bank_account.rejected'],
+        'rekening' => ['bank_account.change_requested', 'bank_account.approved', 'bank_account.rejected', 'bank.created', 'bank.updated', 'bank.deleted'],
         'komplain' => ['complaint.opened', 'complaint.seller_rejected', 'complaint.approved_by_seller', 'complaint.decided_by_admin'],
         'anggota' => ['shop.member_invited', 'shop.member_joined', 'shop.member_removed', 'shop.member_role_changed', 'user.super_admin_granted', 'user.super_admin_revoked'],
         'po' => ['preorder.closed_early', 'preorder.deleted'],

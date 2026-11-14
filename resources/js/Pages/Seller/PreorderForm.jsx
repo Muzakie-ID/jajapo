@@ -1,4 +1,4 @@
-import { Link, useForm } from '@inertiajs/react';
+import { Link, useForm, usePage } from '@inertiajs/react';
 import { useEffect, useMemo, useState } from 'react';
 import PanelLayout, { PanelCard } from '@/Layouts/PanelLayout';
 import Icon from '@/Components/Icon';
@@ -52,6 +52,7 @@ function bundlesFromServer(bundles, products) {
 }
 
 export default function PreorderForm({ shop, preorder, suggestions }) {
+    const { appHost } = usePage().props;
     const editing = Boolean(preorder?.id);
     const stage = preorder?.stage ?? 'draft';
     const isDraft = stage === 'draft';
@@ -194,7 +195,7 @@ export default function PreorderForm({ shop, preorder, suggestions }) {
                             <Field label="Judul PO" error={errors.title}>
                                 <input value={data.title} onChange={(e) => setTitle(e.target.value)} placeholder="Mac n Cheese Panggang" className={inputCls} maxLength={80} />
                             </Field>
-                            <Field label="Alamat PO" error={errors.slug} hint={`jajapo.app/${shop.slug}/${data.slug || 'nama-po'}`}>
+                            <Field label="URL PO" error={errors.slug} hint={`${appHost}/${shop.slug}/${data.slug || 'nama-po'}`}>
                                 <input
                                     value={data.slug}
                                     onChange={(e) => {

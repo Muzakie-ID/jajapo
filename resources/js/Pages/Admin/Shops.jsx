@@ -30,7 +30,7 @@ export default function Shops({ shops, status, q, counts }) {
                             type="search"
                             value={term}
                             onChange={(e) => setTerm(e.target.value)}
-                            placeholder="Nama atau alamat toko"
+                            placeholder="Nama atau URL toko"
                             aria-label="Cari toko"
                             className="min-w-0 flex-1 border-0 bg-transparent text-sm text-ink outline-none"
                         />

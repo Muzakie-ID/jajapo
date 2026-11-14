@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Seller;
 
 use App\Http\Controllers\Controller;
 use App\Models\AuditLog;
+use App\Models\Bank;
 use App\Models\BankAccount;
 use App\Models\Shop;
 use App\Notifications\AdminAlert;
@@ -11,6 +12,7 @@ use App\Support\Notify;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Validation\Rule;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -23,6 +25,7 @@ class SettingsController extends Controller
 
         return Inertia::render('Seller/Settings', [
             'shop' => DashboardController::shopPropsFor($shop),
+            'banks' => Bank::options(),
             'profile' => [
                 'name' => $shop->name,
                 'slug' => $shop->slug,
@@ -81,10 +84,14 @@ class SettingsController extends Controller
     {
         $shop = $this->shop($request)->load('creator');
         $data = $request->validate([
-            'bank' => ['required', 'string', 'max:40'],
+            'bank' => ['required', Rule::exists('banks', 'name')->where('is_active', true)],
             'account_number' => ['required', 'regex:/^[0-9]{6,20}$/'],
             'account_name' => ['required', 'string', 'max:80'],
-        ], ['account_number.regex' => 'Nomor rekening hanya angka.']);
+        ], [
+            'account_number.regex' => 'Nomor rekening hanya angka.',
+            'bank.required' => 'Pilih bank atau e-wallet.',
+            'bank.exists' => 'Pilih bank atau e-wallet dari daftar.',
+        ]);
 
         if (mb_strtolower(trim($data['account_name'])) !== mb_strtolower(trim($shop->creator->name))) {
             return back()->withErrors(['account_name' => "Rekening harus atas nama pembuat toko ({$shop->creator->name})."]);

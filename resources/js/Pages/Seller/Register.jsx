@@ -1,7 +1,9 @@
-import { useForm } from '@inertiajs/react';
+import { useForm, usePage } from '@inertiajs/react';
 import BuyerLayout, { TopBar } from '@/Layouts/BuyerLayout';
+import BankSelect from '@/Components/BankSelect';
 
-export default function Register({ allowed, domain, email, pendingShop, ownerName }) {
+export default function Register({ allowed, domain, email, pendingShop, ownerName, banks }) {
+    const { appHost } = usePage().props;
     const form = useForm({ name: '', slug: '', instagram: '', whatsapp: '', bank: '', account_number: '', account_name: ownerName });
 
     const setName = (value) => {
@@ -44,7 +46,7 @@ export default function Register({ allowed, domain, email, pendingShop, ownerNam
                         <Field label="Nama toko" error={form.errors.name}>
                             <input value={form.data.name} onChange={(e) => setName(e.target.value)} placeholder="Danus Dies FTP" className={inputCls} required />
                         </Field>
-                        <Field label="Alamat toko" error={form.errors.slug} hint={`jajapo.app/${form.data.slug || 'nama-toko'}`}>
+                        <Field label="URL toko" error={form.errors.slug} hint={`${appHost}/${form.data.slug || 'nama-toko'}`}>
                             <input value={form.data.slug} onChange={(e) => form.setData('slug', e.target.value.toLowerCase())} className={inputCls} required />
                         </Field>
                         <Field label="Instagram (opsional)" error={form.errors.instagram}>
@@ -57,7 +59,7 @@ export default function Register({ allowed, domain, email, pendingShop, ownerNam
 
                     <Section title="Rekening pencairan">
                         <Field label="Bank atau e-wallet" error={form.errors.bank}>
-                            <input value={form.data.bank} onChange={(e) => form.setData('bank', e.target.value)} placeholder="BNI" className={inputCls} required />
+                            <BankSelect banks={banks} value={form.data.bank} onChange={(v) => form.setData('bank', v)} className={inputCls} />
                         </Field>
                         <Field label="Nomor rekening" error={form.errors.account_number}>
                             <input inputMode="numeric" value={form.data.account_number} onChange={(e) => form.setData('account_number', e.target.value.replace(/\D/g, ''))} className={inputCls} required />

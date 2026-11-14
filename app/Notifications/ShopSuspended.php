@@ -61,7 +61,7 @@ class ShopSuspended extends JajapoNotification
     {
         return array_filter([
             'Toko' => $this->shop->name,
-            'Alamat toko' => $this->shop->addressLabel(),
+            'URL toko' => $this->shop->addressLabel(),
             'Alasan' => $this->shop->isActive() ? null : ($this->shop->suspend_reason ?: 'Tidak disebutkan'),
             'Dibekukan' => ! $this->shop->isActive() && $this->shop->suspended_at ? tanggal($this->shop->suspended_at, withTime: true) : null,
         ], fn ($v) => filled($v));

@@ -1,4 +1,4 @@
-@props(['preheader' => null])
+@props(['preheader' => null, 'hero' => null])
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml" lang="{{ str_replace('_', '-', app()->getLocale()) }}">
 <head>
@@ -19,6 +19,14 @@ padding: 0 12px !important;
 
 .content-cell {
 padding: 24px !important;
+}
+
+.hero {
+padding: 22px 24px 20px !important;
+}
+
+.hero-title {
+font-size: 19px !important;
 }
 
 .footer {
@@ -51,6 +59,16 @@ width: 100% !important;
 <tr>
 <td class="body" width="100%" cellpadding="0" cellspacing="0" style="border: hidden !important;">
 <table class="inner-body" align="center" width="570" cellpadding="0" cellspacing="0" role="presentation">
+@if (! empty($hero))
+<tr>
+<td class="hero">
+@if (! empty($hero['eyebrow']))
+<p class="hero-eyebrow">{{ $hero['eyebrow'] }}</p>
+@endif
+<p class="hero-title">{{ $hero['title'] }}</p>
+</td>
+</tr>
+@endif
 <!-- Body content -->
 <tr>
 <td class="content-cell">

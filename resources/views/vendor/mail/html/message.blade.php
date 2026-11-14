@@ -1,5 +1,5 @@
-@props(['preheader' => null])
-<x-mail::layout :preheader="$preheader">
+@props(['preheader' => null, 'hero' => null])
+<x-mail::layout :preheader="$preheader" :hero="$hero">
 {{-- Header --}}
 <x-slot:header>
 <x-mail::header :url="config('app.url')">

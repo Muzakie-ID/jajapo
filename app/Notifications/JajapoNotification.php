@@ -77,7 +77,7 @@ abstract class JajapoNotification extends Notification implements ShouldQueue
         $mail = (new MailMessage)
             ->subject($this->title())
             ->greeting('Halo'.(isset($notifiable->name) ? ' '.strtok($notifiable->name, ' ') : '').',')
-            ->line($this->body());
+            ->line($this->mailIntro());
 
         // Rincian ditaruh sebelum tombol supaya terbaca tanpa menggulir.
         foreach ($this->mailLines() as $line) {
@@ -85,12 +85,50 @@ abstract class JajapoNotification extends Notification implements ShouldQueue
         }
 
         return $mail
-            ->action('Buka Jajapo', url($this->url()))
+            ->action($this->mailAction(), url($this->url()))
             ->salutation('Salam, Jajapo')
             ->markdown('notifications::email', [
                 'preheader' => $this->mailPreheader(),
+                'hero' => $this->mailHero(),
                 'highlight' => $this->mailHighlight(),
+                'details' => $this->mailDetails(),
             ]);
+    }
+
+    /** Label kecil dan judul besar di pita hijau bagian atas email. */
+    protected function mailHero(): array
+    {
+        $eyebrow = [
+            'order' => 'Pesanan',
+            'reminder' => 'Pesanan',
+            'complaint' => 'Komplain',
+            'money' => 'Saldo dan pencairan',
+            'shop' => 'Toko',
+            'feedback' => 'Masukan pengguna',
+        ][$this->kind()] ?? 'Jajapo';
+
+        return ['eyebrow' => $eyebrow, 'title' => $this->title()];
+    }
+
+    /** Paragraf pembuka email. Bawaannya sama dengan teks di lonceng. */
+    protected function mailIntro(): string
+    {
+        return $this->body();
+    }
+
+    /**
+     * Rincian berupa pasangan label dan nilai, tampil seperti struk.
+     *
+     * @return array<string, string>
+     */
+    protected function mailDetails(): array
+    {
+        return [];
+    }
+
+    protected function mailAction(): string
+    {
+        return 'Buka Jajapo';
     }
 
     /** Cuplikan yang tampil di daftar inbox sebelum email dibuka. */

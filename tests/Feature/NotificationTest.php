@@ -98,7 +98,29 @@ class NotificationTest extends TestCase
                 // Tema Jajapo: tombol hijau tua, logo, dan cuplikan inbox sebelum kepala email.
                 && str_contains($html, 'background-color: #1f3a26')
                 && str_contains($html, 'icons/icon-192.png')
-                && strpos($html, rupiah($order->shopAmount()).' masuk ke saldo') < strpos($html, 'class="wordmark"');
+                && strpos($html, rupiah($order->shopAmount()).' masuk ke saldo') < strpos($html, 'class="wordmark"')
+                // Pita judul dan rincian seperti struk.
+                && str_contains($html, "{$order->code} sudah dibayar")
+                && str_contains($html, 'class="details-label"')
+                && str_contains($html, e($order->buyer->name))
+                && str_contains($html, 'Lihat pesanan');
+        });
+    }
+
+    public function test_buyer_payment_email_lists_the_ticket_details(): void
+    {
+        Notification::fake();
+        $buyer = $this->buyer();
+        $order = $this->paidOrder($this->seller(), $buyer);
+
+        Notification::assertSentTo($buyer, OrderPaid::class, function (OrderPaid $n) use ($buyer, $order) {
+            $html = (string) $n->toMail($buyer)->render();
+
+            return str_contains($html, $order->preorder->title)
+                && str_contains($html, $order->code)
+                && str_contains($html, rupiah($order->total))
+                && str_contains($html, $order->scheduleLabel())
+                && str_contains($html, 'Lihat tiket');
         });
     }
 

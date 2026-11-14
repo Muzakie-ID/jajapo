@@ -1,4 +1,4 @@
-<x-mail::message :preheader="$preheader ?? null">
+<x-mail::message :preheader="$preheader ?? null" :hero="$hero ?? null">
 {{-- Greeting --}}
 @if (! empty($greeting))
 # {{ $greeting }}
@@ -25,6 +25,18 @@
 <p class="highlight-note">{{ $highlight['note'] }}</p>
 @endif
 </x-mail::panel>
+@endif
+
+{{-- Rincian: label kecil dan nilai tebal, seperti tiket di aplikasi --}}
+@if (! empty($details))
+<table class="details" width="100%" cellpadding="0" cellspacing="0" role="presentation">
+@foreach ($details as $label => $value)
+<tr>
+<td class="details-label" width="38%">{{ $label }}</td>
+<td class="details-value">{{ $value }}</td>
+</tr>
+@endforeach
+</table>
 @endif
 
 {{-- Action Button --}}
@@ -63,7 +75,7 @@
     [
         'actionText' => $actionText,
     ]
-) <span class="break-all">[{{ $displayableActionUrl }}]({{ $actionUrl }})</span>
+) <br><span class="break-all">[{{ $displayableActionUrl }}]({{ $actionUrl }})</span>
 </x-slot:subcopy>
 @endisset
 </x-mail::message>

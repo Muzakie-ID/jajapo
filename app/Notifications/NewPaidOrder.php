@@ -50,11 +50,39 @@ class NewPaidOrder extends JajapoNotification
         return '/seller#pesanan';
     }
 
-    protected function mailLines(): array
+    protected function mailHero(): array
     {
-        $this->order->loadMissing('preorder');
+        $this->order->loadMissing('shop');
 
-        return ["PO: {$this->order->preorder->title}."];
+        return ['eyebrow' => "Pesanan baru · {$this->order->shop->name}", 'title' => "{$this->order->code} sudah dibayar"];
+    }
+
+    protected function mailIntro(): string
+    {
+        return 'Ada pesanan baru yang sudah lunas. Siapkan sesuai rincian di bawah.';
+    }
+
+    protected function mailDetails(): array
+    {
+        $o = $this->order->loadMissing('buyer', 'items', 'preorder', 'slot', 'deliveryZone');
+        $delivery = $o->isDelivery();
+
+        return array_filter([
+            'Pembeli' => $o->buyer->name,
+            'WhatsApp' => $delivery ? $o->buyer_phone : null,
+            'Pesanan' => $o->itemsLabel(),
+            $delivery ? 'Antar ke' : 'Ambil di' => $delivery
+                ? trim(($o->deliveryZone?->name ?? '').($o->address_note ? ', '.$o->address_note : ''), ', ')
+                : $o->slot?->place,
+            'Jadwal' => $o->scheduleLabel(),
+            'Catatan' => $o->note,
+            'PO' => $o->preorder->title,
+        ], fn ($v) => filled($v));
+    }
+
+    protected function mailAction(): string
+    {
+        return 'Lihat pesanan';
     }
 
     protected function mailPreheader(): string

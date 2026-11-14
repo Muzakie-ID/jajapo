@@ -120,6 +120,16 @@ class Order extends Model
         return $this->isDelivery() ? 'Antar ke '.($this->deliveryZone?->name ?? 'alamat pembeli') : ($this->slot?->place ?? '-');
     }
 
+    /** "Sab 14 Nov, 10.00–12.00": jadwal ambil, atau jadwal antar untuk pesanan antar. */
+    public function scheduleLabel(): ?string
+    {
+        [$start, $end] = $this->isDelivery()
+            ? [$this->preorder?->delivery_starts_at, $this->preorder?->delivery_ends_at]
+            : [$this->slot?->starts_at, $this->slot?->ends_at];
+
+        return $start ? str_replace(',', '', tanggal($start)).', '.jam($start).'–'.jam($end) : null;
+    }
+
     /** "FTP, Sab 14 Nov, 10.00–12.00" atau "Antar ke FEB, Sab 14 Nov, 10.00–14.00" */
     public function slotLabel(): string
     {

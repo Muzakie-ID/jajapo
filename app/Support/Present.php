@@ -27,7 +27,8 @@ class Present
             'pickup_label' => $slot ? str_replace(',', '', tanggal($slot->starts_at)).' di '.$slot->place : 'Diantar',
             'delivery' => $po->delivery_enabled,
             'seed' => $po->id,
-            'poster_url' => $po->posterUrl(),
+            // Kartu menampilkan nama makanan, jadi gambarnya foto menu. Poster PO hanya cadangan.
+            'image_url' => $po->products->reject->is_bundle->first(fn ($p) => $p->photo_path)?->photoUrl() ?? $po->posterUrl(),
             'category' => $po->category,
         ];
     }

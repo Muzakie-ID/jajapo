@@ -17,14 +17,25 @@ export default function Preorder({ preorder, pendingOrder, savedPhone }) {
                     ...v,
                     name: p.is_bundle ? p.name : v.name,
                     productName: p.name,
-                    multi: !p.is_bundle && preorder.products.filter((x) => !x.is_bundle).length > 1,
+                    productId: p.id,
                     isBundle: p.is_bundle,
-                    photoUrl: p.photo_url,
                     contents: p.contents,
                     normalPrice: p.normal_price,
                 })),
             ),
         [preorder],
+    );
+
+    const groups = useMemo(
+        () =>
+            preorder.products.map((p) => ({
+                id: p.id,
+                name: p.name,
+                photoUrl: p.photo_url,
+                isBundle: p.is_bundle,
+                variants: variants.filter((v) => v.productId === p.id),
+            })),
+        [preorder, variants],
     );
 
     const initialQty = useMemo(() => {
@@ -193,59 +204,62 @@ export default function Preorder({ preorder, pendingOrder, savedPhone }) {
                         <span className="text-xs text-muted">Boleh lebih dari satu</span>
                     </div>
                     <div className="overflow-hidden rounded-[20px] border border-line bg-white">
-                        {variants.map((v, i) => (
-                            <div key={v.id} className={`flex items-center justify-between gap-3 py-2 pl-4 pr-2 ${i ? 'border-t border-[#E6EDE3]' : ''}`}>
-                                {v.photoUrl && (
-                                    <img
-                                        src={v.photoUrl}
-                                        alt=""
-                                        className="h-12 w-12 shrink-0 rounded-[14px] border border-line object-cover"
-                                    />
+                        {groups.map((g, gi) => (
+                            <div key={g.id} className={gi ? 'border-t border-line' : ''}>
+                                {!g.isBundle && (
+                                    <div className="flex items-center gap-3 px-4 pb-1 pt-3">
+                                        {g.photoUrl && <img src={g.photoUrl} alt={`Foto ${g.name}`} className="h-14 w-14 shrink-0 rounded-[14px] border border-line object-cover" />}
+                                        <span className="text-[15px] font-bold">{g.name}</span>
+                                    </div>
                                 )}
-                                <div className="flex min-w-0 flex-1 flex-col gap-0.5">
-                                    <span className="flex items-center gap-1.5 text-[15px] font-semibold">
-                                        {v.isBundle && <span className="rounded-full bg-amber-bg px-2 py-0.5 text-[11px] font-bold text-amber-ink">Paket</span>}
-                                        {v.multi ? `${v.productName}, ${v.name}` : v.name}
-                                    </span>
-                                    {v.isBundle && <span className="text-xs text-body">{v.contents}</span>}
-                                    <span className="tabular text-[13px] text-muted">
-                                        {rupiah(v.price)}
-                                        {v.isBundle && v.normalPrice > v.price && (
-                                            <>
-                                                {' '}
-                                                <span className="line-through">{rupiah(v.normalPrice)}</span>{' '}
-                                                <span className="font-semibold text-leaf">hemat {rupiah(v.normalPrice - v.price)}</span>
-                                            </>
-                                        )}
-                                    </span>
-                                </div>
-                                <div className="flex items-center gap-0.5">
-                                    <button
-                                        type="button"
-                                        aria-label={`Kurangi ${v.name}`}
-                                        onClick={() => bump(v.id, -1)}
-                                        disabled={qty[v.id] === 0}
-                                        className="flex h-11 w-11 items-center justify-center"
-                                    >
-                                        <span className={`flex h-8 w-8 items-center justify-center rounded-full border border-line ${qty[v.id] === 0 ? 'text-[#A8B4AA]' : 'text-ink'}`}>
-                                            <Icon name="minus" size={16} strokeWidth={2.2} />
-                                        </span>
-                                    </button>
-                                    <span aria-live="polite" className="tabular min-w-5 text-center text-[15px] font-bold">
-                                        {qty[v.id]}
-                                    </span>
-                                    <button
-                                        type="button"
-                                        aria-label={`Tambah ${v.name}`}
-                                        onClick={() => bump(v.id, 1)}
-                                        disabled={!preorder.is_open}
-                                        className="flex h-11 w-11 items-center justify-center"
-                                    >
-                                        <span className="flex h-8 w-8 items-center justify-center rounded-full bg-leaf text-white">
-                                            <Icon name="plus" size={16} strokeWidth={2.2} />
-                                        </span>
-                                    </button>
-                                </div>
+                                {g.variants.map((v, i) => (
+                                    <div key={v.id} className={`flex items-center justify-between gap-3 py-2 pl-4 pr-2 ${i ? 'border-t border-[#E6EDE3]' : ''}`}>
+                                        <div className="flex min-w-0 flex-1 flex-col gap-0.5">
+                                            <span className="flex items-center gap-1.5 text-[15px] font-semibold">
+                                                {v.isBundle && <span className="rounded-full bg-amber-bg px-2 py-0.5 text-[11px] font-bold text-amber-ink">Paket</span>}
+                                                {v.name}
+                                            </span>
+                                            {v.isBundle && <span className="text-xs text-body">{v.contents}</span>}
+                                            <span className="tabular text-[13px] text-muted">
+                                                {rupiah(v.price)}
+                                                {v.isBundle && v.normalPrice > v.price && (
+                                                    <>
+                                                        {' '}
+                                                        <span className="line-through">{rupiah(v.normalPrice)}</span>{' '}
+                                                        <span className="font-semibold text-leaf">hemat {rupiah(v.normalPrice - v.price)}</span>
+                                                    </>
+                                                )}
+                                            </span>
+                                        </div>
+                                        <div className="flex items-center gap-0.5">
+                                            <button
+                                                type="button"
+                                                aria-label={`Kurangi ${v.isBundle ? v.name : `${v.productName} ${v.name}`}`}
+                                                onClick={() => bump(v.id, -1)}
+                                                disabled={qty[v.id] === 0}
+                                                className="flex h-11 w-11 items-center justify-center"
+                                            >
+                                                <span className={`flex h-8 w-8 items-center justify-center rounded-full border border-line ${qty[v.id] === 0 ? 'text-[#A8B4AA]' : 'text-ink'}`}>
+                                                    <Icon name="minus" size={16} strokeWidth={2.2} />
+                                                </span>
+                                            </button>
+                                            <span aria-live="polite" className="tabular min-w-5 text-center text-[15px] font-bold">
+                                                {qty[v.id]}
+                                            </span>
+                                            <button
+                                                type="button"
+                                                aria-label={`Tambah ${v.isBundle ? v.name : `${v.productName} ${v.name}`}`}
+                                                onClick={() => bump(v.id, 1)}
+                                                disabled={!preorder.is_open}
+                                                className="flex h-11 w-11 items-center justify-center"
+                                            >
+                                                <span className="flex h-8 w-8 items-center justify-center rounded-full bg-leaf text-white">
+                                                    <Icon name="plus" size={16} strokeWidth={2.2} />
+                                                </span>
+                                            </button>
+                                        </div>
+                                    </div>
+                                ))}
                             </div>
                         ))}
                     </div>

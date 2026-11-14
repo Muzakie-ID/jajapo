@@ -43,7 +43,7 @@ export default function Shop({ shop, open, past }) {
             <div className="flex flex-col gap-3">
                 {open.map((p) => (
                     <Link key={p.id} href={p.url} className="flex items-center gap-3 rounded-[18px] border border-line bg-white p-2.5 text-ink no-underline hover:text-ink">
-                        <PlateTile seed={p.seed} image={p.poster_url} className="h-[72px] w-[72px] shrink-0 rounded-[14px]" plateSize={62} />
+                        <PlateTile seed={p.seed} image={p.image_url} className="h-[72px] w-[72px] shrink-0 rounded-[14px]" plateSize={62} />
                         <div className="flex min-w-0 flex-1 flex-col gap-1">
                             <span className="text-[15px] font-bold">{p.title}</span>
                             <span className="text-xs text-muted">Ambil {p.pickup_label}</span>

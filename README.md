@@ -163,7 +163,7 @@ Setiap kejadian penting tersimpan di lonceng aplikasi (`/notifikasi`), dikirim k
 | --- | --- | --- |
 | Pembayaran diterima, pesanan siap diambil atau diantar, pengingat 2 jam sebelum ambil/antar, pesanan sedang diantar | Pembeli | pembayaran saja |
 | Komplain diputuskan, refund ditransfer | Pembeli | ya |
-| Pesanan baru lunas | Anggota toko | tidak (hanya lonceng) |
+| Pesanan baru lunas | Anggota toko | admin toko saja (anggota lain hanya lonceng) |
 | Komplain baru, komplain diputuskan super admin | Anggota toko | ya |
 | Pencairan ditransfer/ditolak, rekening disetujui/ditolak | Admin toko | ya |
 | Toko disetujui/ditolak | Pembuat toko | ya |

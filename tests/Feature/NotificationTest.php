@@ -50,7 +50,9 @@ class NotificationTest extends TestCase
 
         $order = $this->paidOrder($seller, $buyer);
         Notification::assertSentTo($buyer, OrderPaid::class, fn ($n, $channels) => in_array('mail', $channels, true) && in_array('database', $channels, true));
-        Notification::assertSentTo([$seller, $member], NewPaidOrder::class, fn ($n, $channels) => $channels === ['database']);
+        // Admin toko mendapat email; anggota biasa cukup lonceng.
+        Notification::assertSentTo($seller, NewPaidOrder::class, fn ($n, $channels) => $channels === ['database', 'mail']);
+        Notification::assertSentTo($member, NewPaidOrder::class, fn ($n, $channels) => $channels === ['database']);
 
         $complaints = app(ComplaintService::class);
         $complaint = $complaints->open($order->load('preorder.slots', 'shop'), $buyer, ['reason' => 'missing_item', 'description' => 'Kurang satu kotak.', 'amount' => 12000, 'refund_to' => 'BCA 123456 a.n. X']);
@@ -76,6 +78,24 @@ class NotificationTest extends TestCase
 
         $this->actingAs($seller)->post('/seller/anggota/undang', ['email' => 'yoga.prasetyo@mail.ugm.ac.id', 'role' => 'member']);
         Notification::assertSentOnDemand(ShopInvited::class, fn ($n, $channels, AnonymousNotifiable $notifiable) => $notifiable->routes['mail'] === 'yoga.prasetyo@mail.ugm.ac.id');
+    }
+
+    public function test_shop_admin_email_for_a_paid_order_shows_the_amount_and_po(): void
+    {
+        Notification::fake();
+        $seller = $this->seller();
+        $this->shopFor($seller);
+        $order = $this->paidOrder($seller, $this->buyer());
+
+        Notification::assertSentTo($seller, NewPaidOrder::class, function (NewPaidOrder $n) use ($seller, $order) {
+            $html = (string) $n->toMail($seller)->render();
+
+            return str_contains($n->toMail($seller)->subject, $order->code)
+                && str_contains($html, $order->preorder->title)
+                && str_contains($html, rupiah($order->shopAmount()))
+                && str_contains($html, 'saldo tersedia')
+                && ! str_contains($html, 'trouble clicking');
+        });
     }
 
     public function test_push_is_only_used_for_users_with_a_subscription(): void

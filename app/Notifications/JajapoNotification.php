@@ -77,15 +77,16 @@ abstract class JajapoNotification extends Notification implements ShouldQueue
         $mail = (new MailMessage)
             ->subject($this->title())
             ->greeting('Halo'.(isset($notifiable->name) ? ' '.strtok($notifiable->name, ' ') : '').',')
-            ->line($this->body())
-            ->action('Buka Jajapo', url($this->url()))
-            ->salutation('Salam, Jajapo');
+            ->line($this->body());
 
+        // Rincian ditaruh sebelum tombol supaya terbaca tanpa menggulir.
         foreach ($this->mailLines() as $line) {
             $mail->line($line);
         }
 
-        return $mail;
+        return $mail
+            ->action('Buka Jajapo', url($this->url()))
+            ->salutation('Salam, Jajapo');
     }
 
     /** Baris tambahan khusus email. */

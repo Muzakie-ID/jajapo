@@ -94,7 +94,11 @@ class NotificationTest extends TestCase
                 && str_contains($html, $order->preorder->title)
                 && str_contains($html, rupiah($order->shopAmount()))
                 && str_contains($html, 'saldo tersedia')
-                && ! str_contains($html, 'trouble clicking');
+                && ! str_contains($html, 'trouble clicking')
+                // Tema Jajapo: tombol hijau tua, logo, dan cuplikan inbox sebelum kepala email.
+                && str_contains($html, 'background-color: #1f3a26')
+                && str_contains($html, 'icons/icon-192.png')
+                && strpos($html, rupiah($order->shopAmount()).' masuk ke saldo') < strpos($html, 'class="wordmark"');
         });
     }
 

@@ -3,6 +3,7 @@
 namespace App\Notifications;
 
 use App\Models\Order;
+use App\Models\Setting;
 
 /**
  * Untuk anggota toko: lonceng aplikasi saja supaya HP tidak berbunyi setiap ada pesanan.
@@ -51,11 +52,26 @@ class NewPaidOrder extends JajapoNotification
 
     protected function mailLines(): array
     {
-        $this->order->loadMissing('shop', 'preorder');
+        $this->order->loadMissing('preorder');
+
+        return ["PO: {$this->order->preorder->title}."];
+    }
+
+    protected function mailPreheader(): string
+    {
+        $this->order->loadMissing('shop');
+
+        return rupiah($this->order->shopAmount())." masuk ke saldo {$this->order->shop->name}. ".$this->body();
+    }
+
+    protected function mailHighlight(): ?array
+    {
+        $this->order->loadMissing('shop');
 
         return [
-            "PO: {$this->order->preorder->title}.",
-            rupiah($this->order->shopAmount())." sudah masuk ke saldo tersedia {$this->order->shop->name} dan bisa dicairkan kapan saja.",
+            'label' => "Masuk ke saldo tersedia {$this->order->shop->name}",
+            'value' => rupiah($this->order->shopAmount()),
+            'note' => 'Bisa dicairkan kapan saja mulai '.rupiah(Setting::int('min_payout')).'.',
         ];
     }
 }

@@ -86,7 +86,27 @@ abstract class JajapoNotification extends Notification implements ShouldQueue
 
         return $mail
             ->action('Buka Jajapo', url($this->url()))
-            ->salutation('Salam, Jajapo');
+            ->salutation('Salam, Jajapo')
+            ->markdown('notifications::email', [
+                'preheader' => $this->mailPreheader(),
+                'highlight' => $this->mailHighlight(),
+            ]);
+    }
+
+    /** Cuplikan yang tampil di daftar inbox sebelum email dibuka. */
+    protected function mailPreheader(): string
+    {
+        return $this->body();
+    }
+
+    /**
+     * Angka atau fakta utama yang ditonjolkan di email.
+     *
+     * @return array{label: string, value: string, note?: string}|null
+     */
+    protected function mailHighlight(): ?array
+    {
+        return null;
     }
 
     /** Baris tambahan khusus email. */

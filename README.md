@@ -170,6 +170,8 @@ Setiap kejadian penting tersimpan di lonceng aplikasi (`/notifikasi`), dikirim k
 | Toko baru, pencairan, komplain ditolak penjual, refund perlu ditransfer, ganti rekening, masukan pengguna baru | Super admin | ya |
 | Undangan anggota | Email yang diundang | ya |
 
+Email memakai tema Jajapo (logo, warna hijau, sorotan nominal, dan cuplikan untuk daftar inbox). Templatenya ada di `resources/views/vendor/mail` dan `resources/views/vendor/notifications`, warnanya di `resources/views/vendor/mail/html/themes/jajapo.css`. Logo diambil dari `APP_URL`, jadi baru tampil setelah server memakai alamat publik.
+
 Web push butuh kunci VAPID (`php artisan webpush:vapid`) dan HTTPS di produksi. Di iPhone, pembeli perlu memasang Jajapo ke layar utama dulu. Email memakai pengaturan `MAIL_*`.
 
 ## Tes

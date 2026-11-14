@@ -27,7 +27,7 @@ Platform pre-order makanan untuk mahasiswa UGM, perorangan maupun kepanitiaan. B
 - `app/Services`: `OrderService`, `PaymentService`, `PayoutService`, `Ledger`.
 - `app/Http/Controllers/{Buyer,Seller,Admin,Auth}`; `app/Support/Present.php` membentuk props untuk halaman.
 - `app/Console/Commands`: perintah terjadwal, dijadwalkan di `routes/console.php`.
-- `app/Notifications`: turunan `JajapoNotification` (lonceng + web push + email opsional, lewat antrean setelah commit). Kirim ke anggota toko atau super admin lewat `App\Support\Notify`.
+- `app/Notifications`: turunan `JajapoNotification` (lonceng + web push + email opsional, lewat antrean setelah commit). Kirim ke anggota toko atau super admin lewat `App\Support\Notify`. Tampilan email ada di `resources/views/vendor/{mail,notifications}`; rincian email lewat `mailLines()`, `mailHighlight()`, dan `mailPreheader()`.
 - `tests/Feature`: tes alur checkout, callback, penjual, dan pencairan. `tests/Concerns/BuildsShops.php` untuk data tes.
 
 ## Sebelum commit

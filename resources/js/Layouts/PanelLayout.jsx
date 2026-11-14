@@ -10,7 +10,7 @@ const SELLER_NAV = [
     { key: 'scan', label: 'Scan tiket', icon: 'scan', href: '/seller/scan' },
     { key: 'deliveries', label: 'Pengantaran', icon: 'truck', href: '/seller/antar' },
     { key: 'complaints', label: 'Komplain', icon: 'flag', href: '/seller/komplain' },
-    { key: 'rekap', label: 'Rekap produksi', icon: 'chart', href: '/seller#rekap' },
+    { key: 'rekap', label: 'Rekap produksi', icon: 'chart', href: '/seller/rekap' },
     { key: 'balance', label: 'Saldo dan pencairan', icon: 'wallet', href: '/seller/saldo' },
     { key: 'members', label: 'Anggota', icon: 'users', href: '/seller/anggota', adminOnly: true },
     { key: 'settings', label: 'Pengaturan toko', icon: 'sliders', href: '/seller/pengaturan', adminOnly: true },
@@ -303,7 +303,7 @@ function MoreSheet({ dark, shop, badges, onClose }) {
                         </Link>
                     )}
                     {!dark && (
-                        <Link href="/seller#rekap" onClick={onClose} className="flex min-h-12 items-center gap-3 text-sm font-semibold text-ink no-underline">
+                        <Link href="/seller/rekap" onClick={onClose} className="flex min-h-12 items-center gap-3 text-sm font-semibold text-ink no-underline">
                             <Icon name="chart" size={20} className="text-leaf" />
                             Rekap produksi
                         </Link>

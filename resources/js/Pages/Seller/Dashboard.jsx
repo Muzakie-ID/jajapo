@@ -351,7 +351,9 @@ export default function Dashboard({ shop, active, kpis, perDay, rekap, orders, s
                         <PanelCard id="rekap" className="flex flex-col gap-3 px-[18px] py-4">
                             <div className="flex items-baseline justify-between">
                                 <h2 className="m-0 text-[17px] font-bold">Rekap produksi</h2>
-                                <span className="text-[13px] text-muted">{rekap.reduce((a, r) => a + r.qty, 0)} porsi</span>
+                                <Link href="/seller/rekap" className="text-[13px] font-semibold text-leaf no-underline">
+                                    {rekap.reduce((a, r) => a + r.qty, 0)} porsi, lihat rincian
+                                </Link>
                             </div>
                             {rekap.length === 0 && <p className="m-0 text-sm text-muted">Belum ada pesanan lunas.</p>}
                             {active && rekap.length > 0 && (

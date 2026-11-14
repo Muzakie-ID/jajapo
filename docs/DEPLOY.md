@@ -136,6 +136,25 @@ sudo -u www-data bash deploy/deploy.sh main
 
 Skrip ini menurunkan situs sebentar, mengambil kode terbaru, memasang dependensi, build aset, menjalankan migrasi, me-restart worker, lalu menjalankan `jajapo:doctor`.
 
+## Kalau Jajapo berjalan di Docker
+
+Kalau server memakai `docker-compose.yml` (container `jajapo_app` dan `jajapo_worker`), kode disalin ke dalam image saat build. Jadi `git pull` saja tidak mengubah apa pun: image harus di-build ulang. Pakai skrip ini dari folder proyek:
+
+```sh
+git pull
+bash docker/update.sh main
+```
+
+Skrip ini mencadangkan file unggahan dari container ke `backups/` (lima cadangan terakhir disimpan), mengambil kode, build aset di host, build ulang image, menjalankan ulang `app` dan `worker`, lalu migrasi, `optimize`, dan `jajapo:doctor`.
+
+File unggahan (poster, foto menu, logo, bukti transfer, foto komplain, foto obrolan) disimpan di volume `jajapo_storage`, jadi tidak hilang saat image di-build ulang. Versi lama belum memakai volume dan menyimpan file di dalam container. Saat pertama kali menjalankan skrip ini, volume baru masih kosong dan skrip otomatis mengisinya dari cadangan tadi. Jangan menjalankan `docker compose up` dengan image baru sebelum file dicadangkan.
+
+Cadangkan juga volumenya secara berkala, misalnya:
+
+```sh
+docker run --rm -v jajapo_storage:/data -v "$PWD/backups":/out alpine tar czf /out/storage-$(date +%F).tar.gz -C /data .
+```
+
 ## Cadangan database
 
 Simpan cadangan harian di luar server:

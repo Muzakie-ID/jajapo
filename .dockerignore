@@ -10,3 +10,4 @@ tests/
 .Dockerfile
 deploy/
 docs/
+backups/

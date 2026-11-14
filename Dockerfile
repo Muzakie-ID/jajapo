@@ -45,7 +45,10 @@ RUN mkdir -p bootstrap/cache \
     storage/logs \
     && chown -R www-data:www-data storage bootstrap/cache \
     && chmod -R 775 storage bootstrap/cache \
-    && composer dump-autoload --optimize --no-dev --no-scripts
+    && composer dump-autoload --optimize --no-dev --no-scripts \
+    # public/storage dari host bisa berupa symlink ke path host yang tidak ada di container.
+    && rm -rf public/storage \
+    && ln -s /var/www/html/storage/app/public public/storage
 
 EXPOSE 80
 

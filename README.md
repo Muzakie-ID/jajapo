@@ -58,7 +58,7 @@ Dibangun dengan Laravel 13, Inertia v3 + React 19, Tailwind CSS v4, dan PostgreS
 
 ## Memasang di server
 
-Panduan lengkap ada di [docs/DEPLOY.md](docs/DEPLOY.md): Nginx, PostgreSQL, HTTPS, worker antrean, scheduler, login Google, super admin pertama, dan cadangan database. Berkas contohnya ada di folder `deploy/`. Periksa kesiapan server dengan `php artisan jajapo:doctor`.
+Panduan lengkap ada di [docs/DEPLOY.md](docs/DEPLOY.md): Nginx, PostgreSQL, HTTPS, worker antrean, scheduler, login Google, super admin pertama, dan cadangan database. Berkas contohnya ada di folder `deploy/`. Periksa kesiapan server dengan `php artisan jajapo:doctor`. Kalau Jajapo berjalan di Docker, perbarui dengan `bash docker/update.sh` (lihat bagian Docker di panduan itu), bukan `git pull` saja.
 
 ## Menjalankan di lokal
 

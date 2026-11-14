@@ -12,6 +12,10 @@ services:
     ports:
       - "127.0.0.1:8010:80"
     env_file: .env
+    volumes:
+      # File unggahan (poster, foto menu, bukti transfer, foto komplain dan obrolan) di luar container,
+      # supaya tidak hilang saat image di-build ulang.
+      - jajapo_storage:/var/www/html/storage/app
     networks:
       - qrismuz_default
 
@@ -26,8 +30,14 @@ services:
     working_dir: /var/www/html
     command: sh -c "php artisan schedule:work & exec php artisan queue:work --sleep=3 --tries=3 --max-time=3600"
     env_file: .env
+    volumes:
+      - jajapo_storage:/var/www/html/storage/app
     networks:
       - qrismuz_default
+
+volumes:
+  jajapo_storage:
+    name: jajapo_storage
 
 networks:
   qrismuz_default:
